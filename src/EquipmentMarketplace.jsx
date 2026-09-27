@@ -689,6 +689,7 @@ export default function EquipmentMarketplace() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [showRequestForm, setShowRequestForm] = useState(false);
   const [detailListing, setDetailListing] = useState(null);
+  const [aiOpen, setAiOpen] = useState(false);
   const [requests, setRequests] = useState([]);
   const [toast, setToast] = useState(null);
   const [user, setUser] = useState(null);
@@ -703,7 +704,13 @@ export default function EquipmentMarketplace() {
     flashToast("Email скопійовано: demolis@ukr.net");
   };
   const [reviews, setReviews] = useState([]);
-  const [dispatcherUnlocked, setDispatcherUnlocked] = useState(false);
+  const [dispatcherUnlocked, setDispatcherUnlocked] = useState(() => {
+    try {
+      return typeof window !== "undefined" && window.localStorage.getItem("techmaydanchik_dispatcher_unlocked") === "true";
+    } catch {
+      return false;
+    }
+  });
   const [showDispatcherAuth, setShowDispatcherAuth] = useState(false);
   const [filterMaxPrice, setFilterMaxPrice] = useState("");
   const [favorites, setFavorites] = useState(new Set());
@@ -1902,7 +1909,7 @@ export default function EquipmentMarketplace() {
             <button
               onClick={() => {
                 setRole("client");
-                scrollToApp();
+                setAiOpen(true);
               }}
               className="glass-cta"
               style={{ display: "inline-flex", alignItems: "center", gap: 8 }}
@@ -1913,7 +1920,7 @@ export default function EquipmentMarketplace() {
             <button
               onClick={() => {
                 setRole("owner");
-                scrollToApp();
+                setShowAddForm(true);
               }}
               style={smallBtn}
             >
@@ -2424,6 +2431,9 @@ export default function EquipmentMarketplace() {
           <DispatcherAuthForm
             onSuccess={() => {
               setDispatcherUnlocked(true);
+              try {
+                window.localStorage.setItem("techmaydanchik_dispatcher_unlocked", "true");
+              } catch {}
               setShowDispatcherAuth(false);
               setRole("dispatcher");
             }}
@@ -2445,11 +2455,15 @@ export default function EquipmentMarketplace() {
       <AiAssistant
         user={user}
         t={t}
+        listings={listings}
+        open={aiOpen}
+        setOpen={setAiOpen}
         onPrefillRequest={(data) => {
           setAiPrefill(data);
           setRole("client");
           setShowRequestForm(true);
         }}
+        onViewListing={(l) => setDetailListing(l)}
       />
 
       <div className="sticky-cta">
@@ -3193,20 +3207,25 @@ function ProfileForm({ user, onSave, onLogout }) {
 }
 
 const AI_ASSISTANT_SYSTEM_PROMPT = `Ти — помічник сайту ТехМайданчик, біржі оренди будівельної техніки в Україні.
-Клієнт вільним текстом описує завдання (наприклад: "потрібно викопати траншею під фундамент гаража в Ужгороді").
-Визнач з опису:
-- type: одне значення зі списку [${TYPES.join(", ")}], або null якщо незрозуміло
+
+Клієнт може написати ДВА типи повідомлень:
+1. Опис завдання (наприклад: "потрібно викопати траншею під фундамент гаража в Ужгороді") — визнач, яка техніка потрібна, і чому саме вона.
+2. Загальне питання про техніку (наприклад: "чим екскаватор відрізняється від навантажувача") — дай коротку, конкретну відповідь по суті, без зайвого.
+
+Визнач з повідомлення:
+- type: одне значення зі списку [${TYPES.join(", ")}], або null якщо це не запит на техніку
 - region: одне значення зі списку [${REGIONS.join(", ")}], або null якщо не згадано
 - budget: число (гривні), або null якщо не згадано
-- comment: короткий переказ задачі клієнта, 1 речення, українською
-- reply: твоя дружня відповідь клієнту, 1-2 речення українською — поясни, що порадив, і онукуй уточнення, якщо чогось не вистачає
+- comment: короткий переказ задачі клієнта, 1 речення, українською (для заявки)
+- reply: твоя відповідь клієнту, 2-3 речення українською.
+  Якщо це завдання — ОБОВ'ЯЗКОВО поясни, чому саме цей тип техніки підходить (яка функція вирішує задачу), а не просто назви тип.
+  Якщо це питання — дай пряму, конкретну відповідь по суті питання.
 
 Відповідай ЛИШЕ у форматі JSON, без жодного тексту навколо, без markdown-обгортки:
 {"type": ..., "region": ..., "budget": ..., "comment": "...", "reply": "..."}`;
 
 // ---- AI assistant: free-text task -> equipment/region/budget suggestion -> prefilled request form ----
-function AiAssistant({ user, onPrefillRequest, t }) {
-  const [open, setOpen] = useState(false);
+function AiAssistant({ user, onPrefillRequest, onViewListing, listings, t, open, setOpen }) {
   const [messages, setMessages] = useState([
     { role: "assistant", text: t("ai_greeting") },
   ]);
@@ -3300,7 +3319,19 @@ function AiAssistant({ user, onPrefillRequest, t }) {
       const parsed = JSON.parse(clean);
       const replyText = parsed.reply || "Готово.";
 
-      setMessages((prev) => [...prev, { role: "assistant", text: replyText, suggestion: parsed.type ? parsed : null }]);
+      // Ground the recommendation in real inventory: find an actual available listing
+      // matching the type (and region, if given) instead of only suggesting an abstract type.
+      let matchedListing = null;
+      if (parsed.type && listings) {
+        const byTypeAndRegion = listings.filter((l) => l.available && l.type === parsed.type && (!parsed.region || l.region === parsed.region));
+        const byTypeOnly = listings.filter((l) => l.available && l.type === parsed.type);
+        matchedListing = byTypeAndRegion[0] || byTypeOnly[0] || null;
+      }
+
+      setMessages((prev) => [
+        ...prev,
+        { role: "assistant", text: replyText, suggestion: parsed.type ? parsed : null, matchedListing },
+      ]);
       speak(replyText);
     } catch (err) {
       const errText = "Вибачте, не вдалося обробити запит. Спробуйте ще раз або скористайтесь звичайною формою заявки.";
@@ -3346,6 +3377,31 @@ function AiAssistant({ user, onPrefillRequest, t }) {
             {messages.map((m, i) => (
               <div key={i} className={`ai-bubble ${m.role}`}>
                 {m.text}
+                {m.matchedListing && (
+                  <div
+                    onClick={() => onViewListing && onViewListing(m.matchedListing)}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 10,
+                      marginTop: 8,
+                      padding: 10,
+                      background: "#191C1F",
+                      borderRadius: 12,
+                      cursor: "pointer",
+                    }}
+                  >
+                    <div style={{ color: "#FF6A1A", flexShrink: 0 }}>
+                      <EquipmentIcon type={m.matchedListing.type} size={30} />
+                    </div>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: "#F4F4F1" }}>{m.matchedListing.brand}</div>
+                      <div style={{ fontSize: 11, color: "#A3A8AD" }}>
+                        {m.matchedListing.region} · {m.matchedListing.price} ₴/{m.matchedListing.unit}
+                      </div>
+                    </div>
+                  </div>
+                )}
                 {m.suggestion && (
                   <button
                     className="ai-suggestion-btn"
