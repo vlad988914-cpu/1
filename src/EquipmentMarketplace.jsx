@@ -1184,6 +1184,30 @@ export default function EquipmentMarketplace() {
           flex-shrink: 0;
         }
 
+        .hero-video-drip-zone .drip {
+          position: absolute;
+          top: 30%;
+          width: 5px;
+          height: 12px;
+          border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+          background: linear-gradient(180deg, #FFC862, #FF6A1A);
+          opacity: 0;
+          pointer-events: none;
+          box-shadow: 0 0 4px rgba(255,106,26,0.5);
+        }
+        .hero-video-drip-zone:hover .drip {
+          animation: dripFall 1.4s ease-in infinite;
+        }
+        @keyframes dripFall {
+          0% { opacity: 0; transform: translateY(0) scaleY(0.6); }
+          15% { opacity: 1; transform: translateY(0) scaleY(1); }
+          85% { opacity: 1; }
+          100% { opacity: 0; transform: translateY(160px) scaleY(1.4); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .hero-video-drip-zone:hover .drip { animation: none; opacity: 0; }
+        }
+
         @keyframes statusBreathe {
           0%, 100% { opacity: 1; }
           50% { opacity: 0.45; }
@@ -1613,19 +1637,31 @@ export default function EquipmentMarketplace() {
         </button>
 
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <div style={{ position: "relative", display: "flex", background: "#191C1F", padding: 4, border: "1px solid #63696D", borderRadius: 980, width: 260 }}>
+          <div
+            style={{
+              position: "relative",
+              display: "flex",
+              background: "linear-gradient(160deg, #3a3a3c 0%, #17181a 55%, #0c0d0e 100%)",
+              padding: 6,
+              borderRadius: 980,
+              width: 272,
+              boxShadow:
+                "inset 0 1px 0 rgba(255,255,255,0.12), inset 0 -2px 3px rgba(0,0,0,0.6), 0 6px 14px rgba(0,0,0,0.5), 0 0 0 1px rgba(0,0,0,0.4)",
+            }}
+          >
             <div
               style={{
                 position: "absolute",
-                top: 4,
-                bottom: 4,
-                left: 4,
-                width: "calc(50% - 4px)",
+                top: 6,
+                bottom: 6,
+                left: 6,
+                width: "calc(50% - 6px)",
                 borderRadius: 980,
-                background: "linear-gradient(90deg, #FF6A1A, #FFB52E)",
+                background: "linear-gradient(180deg, #FFC862 0%, #FF6A1A 55%, #C9500E 100%)",
                 transform: role === "owner" ? "translateX(calc(100% + 0px))" : "translateX(0%)",
                 transition: "transform 0.45s cubic-bezier(0.65, 0, 0.35, 1)",
-                boxShadow: "0 2px 10px rgba(255,90,31,0.35)",
+                boxShadow:
+                  "inset 0 1.5px 0 rgba(255,255,255,0.6), inset 0 -3px 4px rgba(0,0,0,0.35), 0 2px 8px rgba(255,90,31,0.5)",
               }}
             />
             {[
@@ -1639,38 +1675,74 @@ export default function EquipmentMarketplace() {
                   position: "relative",
                   zIndex: 1,
                   flex: 1,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 6,
                   fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
                   fontSize: 12,
                   letterSpacing: "0.06em",
                   textTransform: "none",
-                  padding: "9px 16px",
+                  padding: "9px 14px",
                   border: "none",
                   cursor: "pointer",
                   background: "transparent",
-                  color: role === r.key ? "#08090A" : "#ffffff",
+                  color: role === r.key ? "#1a0f05" : "#8e8e93",
+                  textShadow: role === r.key ? "0 1px 0 rgba(255,255,255,0.25)" : "none",
                   transition: "color 0.3s ease",
                 }}
               >
+                <span
+                  style={{
+                    width: 6,
+                    height: 6,
+                    borderRadius: "50%",
+                    background: role === r.key ? "radial-gradient(circle at 35% 30%, #FFE08A, #FF6A1A 75%)" : "radial-gradient(circle at 35% 30%, #8e8e93, transparent)",
+                    boxShadow: role === r.key ? "0 0 5px 2px rgba(255,197,90,0.8)" : "-1px -1px 2px rgba(255,255,255,0.12), 0 1px 2px rgba(0,0,0,0.5)",
+                    flexShrink: 0,
+                  }}
+                />
                 {r.label}
               </button>
             ))}
           </div>
 
-          <div style={{ display: "flex", gap: 2 }}>
+          <div style={{ display: "flex", gap: 4 }}>
             {["uk", "ru", "en"].map((l) => (
               <button
                 key={l}
                 onClick={() => setLang(l)}
                 style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 5,
                   fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
                   fontSize: 10.5,
-                  padding: "5px 7px",
-                  border: "1px solid #63696D",
-                  background: lang === l ? "#FF6A1A" : "transparent",
-                  color: lang === l ? "#08090A" : "#A3A8AD",
+                  padding: "6px 9px",
+                  borderRadius: 8,
+                  border: "none",
+                  background: "#1c1c1e",
+                  boxShadow:
+                    lang === l
+                      ? "inset 3px 3px 6px rgba(0,0,0,0.55), inset -2px -2px 4px rgba(255,255,255,0.03)"
+                      : "3px 3px 6px rgba(0,0,0,0.4), -2px -2px 5px rgba(255,255,255,0.025)",
+                  color: "#A3A8AD",
                   cursor: "pointer",
                 }}
               >
+                <span
+                  style={{
+                    width: 6,
+                    height: 6,
+                    borderRadius: "50%",
+                    flexShrink: 0,
+                    background:
+                      lang === l
+                        ? "radial-gradient(circle at 35% 30%, #FFC862, #FF6A1A 70%)"
+                        : "radial-gradient(circle at 35% 30%, #8e8e93, transparent)",
+                    boxShadow: lang === l ? "0 0 5px 1.5px rgba(255,106,26,0.65)" : "-1px -1px 2px rgba(255,255,255,0.15), 0 1px 2px rgba(0,0,0,0.5)",
+                  }}
+                />
                 {l.toUpperCase()}
               </button>
             ))}
@@ -1717,14 +1789,21 @@ export default function EquipmentMarketplace() {
           background: "radial-gradient(ellipse 700px 380px at 50% -10%, rgba(255,176,32,0.16), rgba(255,90,31,0.08) 45%, transparent 70%)",
         }}
       >
-        <video
-          autoPlay
-          muted
-          loop
-          playsInline
-          src="/hero-video.mp4"
-          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", zIndex: 0 }}
-        />
+        <div className="hero-video-drip-zone" style={{ position: "absolute", inset: 0, zIndex: 0 }}>
+          <video
+            autoPlay
+            muted
+            loop
+            playsInline
+            src="/hero-video.mp4"
+            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+          />
+          <span className="drip" style={{ left: "38%", animationDelay: "0s" }} />
+          <span className="drip" style={{ left: "45%", animationDelay: "0.35s" }} />
+          <span className="drip" style={{ left: "52%", animationDelay: "0.7s" }} />
+          <span className="drip" style={{ left: "58%", animationDelay: "0.2s" }} />
+          <span className="drip" style={{ left: "48%", animationDelay: "0.5s" }} />
+        </div>
         <div
           aria-hidden="true"
           style={{
@@ -2446,11 +2525,10 @@ function DispatcherPanel({ requests, owners, onDispatch, onOwnerAction, user, t 
               onClick={() => setFilter(c.key)}
               style={{
                 display: "flex",
-                justifyContent: "space-between",
                 alignItems: "center",
+                gap: 8,
                 background: active ? "#191C1F" : "transparent",
                 border: "none",
-                borderLeft: active ? "2px solid #FF6A1A" : "2px solid transparent",
                 color: active ? "#F4F4F1" : "#A3A8AD",
                 fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
                 fontSize: 13,
@@ -2459,7 +2537,19 @@ function DispatcherPanel({ requests, owners, onDispatch, onOwnerAction, user, t 
                 textAlign: "left",
               }}
             >
-              {c.label}
+              <span
+                style={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: "50%",
+                  flexShrink: 0,
+                  background: active
+                    ? "radial-gradient(circle at 35% 30%, #FFC862, #FF6A1A 70%)"
+                    : "radial-gradient(circle at 35% 30%, #8e8e93, transparent)",
+                  boxShadow: active ? "0 0 5px 1.5px rgba(255,106,26,0.65)" : "-1px -1px 2px rgba(255,255,255,0.12), 0 1px 2px rgba(0,0,0,0.5)",
+                }}
+              />
+              <span style={{ flex: 1 }}>{c.label}</span>
               <span style={{ fontSize: 11, color: "#70777D" }}>{count}</span>
             </button>
           );
@@ -2871,6 +2961,7 @@ const DISPATCHER_PASSWORD = "techmaydanchik2026";
 
 function DispatcherAuthForm({ onSuccess }) {
   const [password, setPassword] = useState("");
+  const [remember, setRemember] = useState(false);
   const [error, setError] = useState(false);
 
   const submit = (e) => {
@@ -2882,12 +2973,33 @@ function DispatcherAuthForm({ onSuccess }) {
     }
   };
 
+  const neuBase = "#1c1c1e";
+  const neuRaised = {
+    background: neuBase,
+    borderRadius: 14,
+    boxShadow: "6px 6px 12px rgba(0,0,0,0.55), -4px -4px 10px rgba(255,255,255,0.03)",
+    border: "none",
+  };
+  const neuInset = {
+    background: neuBase,
+    borderRadius: 12,
+    boxShadow: "inset 4px 4px 8px rgba(0,0,0,0.6), inset -3px -3px 6px rgba(255,255,255,0.025)",
+    border: "none",
+    color: "#F4F4F1",
+    padding: "12px 16px",
+    fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
+    fontSize: 14,
+    outline: "none",
+  };
+
   return (
-    <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+    <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 16, padding: 6 }}>
       <div style={{ fontSize: 12, color: "#A3A8AD", fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif" }}>
         Цей розділ бачить телефони клієнтів — доступ лише для диспетчера.
       </div>
-      <Field label="Пароль">
+
+      <div>
+        <Label>Пароль</Label>
         <input
           type="password"
           value={password}
@@ -2895,12 +3007,53 @@ function DispatcherAuthForm({ onSuccess }) {
             setPassword(e.target.value);
             setError(false);
           }}
-          style={inputStyle}
+          style={{ ...neuInset, width: "100%", marginTop: 8 }}
           autoFocus
         />
         {error && <ErrorText>Невірний пароль</ErrorText>}
-      </Field>
-      <button className="btn-premium-hover" type="submit" style={{ ...primaryBtn, width: "100%" }}>
+      </div>
+
+      <button
+        type="button"
+        onClick={() => setRemember((r) => !r)}
+        style={{
+          ...(remember ? neuInset : neuRaised),
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          padding: "12px 16px",
+          cursor: "pointer",
+          fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
+          fontSize: 13,
+          color: "#F4F4F1",
+        }}
+      >
+        <span
+          style={{
+            width: 9,
+            height: 9,
+            borderRadius: "50%",
+            background: remember ? "#FF6A1A" : "#48484a",
+            boxShadow: remember ? "0 0 6px 2px rgba(255,106,26,0.6)" : "none",
+            flexShrink: 0,
+          }}
+        />
+        Запам'ятати мене
+      </button>
+
+      <button
+        type="submit"
+        className="btn-premium-hover"
+        style={{
+          ...neuRaised,
+          padding: "14px 20px",
+          color: "#F4F4F1",
+          fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
+          fontSize: 14,
+          fontWeight: 600,
+          cursor: "pointer",
+        }}
+      >
         Увійти
       </button>
     </form>
