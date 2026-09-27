@@ -16,6 +16,35 @@ const TRANSLATIONS = {
     nav_owner: "Здаю техніку",
     nav_my_requests: "Мої заявки",
     hero_badge: "Перша біржа будтехніки",
+    ai_hint_line1: "Знайомтесь, ваш AI-помічник ТехМайданчика,",
+    ai_hint_line2: "завжди на зв'язку в чаті внизу екрана",
+    hero_typed: "Раді бачити. Розкажіть, яка техніка потрібна — а ми вже подбаємо про решту.",
+    pill_catalog: "Каталог техніки",
+    pill_request: "Залишити заявку",
+    pill_add: "Додати техніку",
+    pill_contact: "Зв'язок: demolis@ukr.net",
+    how_it_works_label: "ПРОЦЕС",
+    how_it_works_title: "Як це працює",
+    step_1: "Розкажіть, що потрібно",
+    step_2: "Диспетчер знаходить техніку",
+    step_3: "Власники отримують заявку",
+    step_4: "Один із них підтверджує",
+    step_5: "Ви отримуєте контакт",
+    status_available: "ДОСТУПНА",
+    status_busy: "ЗАЙНЯТА",
+    guide_listing_one: "оголошення в каталозі",
+    guide_listing_many: "оголошень у каталозі",
+    guide_parts_label: "Основні частини",
+    guide_uses_label: "Де використовується",
+    guide_choose_btn: "Обрати цю техніку",
+    dispatcher_all: "Усі заявки",
+    dispatcher_new: "Нові",
+    dispatcher_progress: "В роботі",
+    dispatcher_done: "Виконані",
+    request_step_1: "Що потрібно виконати",
+    request_step_2: "Техніка та локація",
+    request_step_3: "Терміни та бюджет",
+    request_step_4: "Контакт",
     hero_title_1: "Техніка знаходиться за годину,",
     hero_title_2: "не за тиждень",
     hero_sub: "Клієнти залишають заявку — власники техніки самі відгукуються. Диспетчер контролює кожну відправку вручну, тож жодна заявка не губиться.",
@@ -69,6 +98,35 @@ const TRANSLATIONS = {
     nav_owner: "Сдаю технику",
     nav_my_requests: "Мои заявки",
     hero_badge: "Первая биржа стройтехники",
+    ai_hint_line1: "Знакомьтесь, ваш AI-помощник ТехМайданчика,",
+    ai_hint_line2: "всегда на связи в чате внизу экрана",
+    hero_typed: "Рады видеть. Расскажите, какая техника нужна — а мы уже позаботимся об остальном.",
+    pill_catalog: "Каталог техники",
+    pill_request: "Оставить заявку",
+    pill_add: "Добавить технику",
+    pill_contact: "Связь: demolis@ukr.net",
+    how_it_works_label: "ПРОЦЕСС",
+    how_it_works_title: "Как это работает",
+    step_1: "Расскажите, что нужно",
+    step_2: "Диспетчер находит технику",
+    step_3: "Владельцы получают заявку",
+    step_4: "Один из них подтверждает",
+    step_5: "Вы получаете контакт",
+    status_available: "ДОСТУПНА",
+    status_busy: "ЗАНЯТА",
+    guide_listing_one: "объявление в каталоге",
+    guide_listing_many: "объявлений в каталоге",
+    guide_parts_label: "Основные части",
+    guide_uses_label: "Где используется",
+    guide_choose_btn: "Выбрать эту технику",
+    dispatcher_all: "Все заявки",
+    dispatcher_new: "Новые",
+    dispatcher_progress: "В работе",
+    dispatcher_done: "Выполненные",
+    request_step_1: "Что нужно выполнить",
+    request_step_2: "Техника и локация",
+    request_step_3: "Сроки и бюджет",
+    request_step_4: "Контакт",
     hero_title_1: "Техника находится за час,",
     hero_title_2: "а не за неделю",
     hero_sub: "Клиенты оставляют заявку — владельцы техники сами откликаются. Диспетчер контролирует каждую отправку вручную, поэтому ни одна заявка не теряется.",
@@ -122,6 +180,35 @@ const TRANSLATIONS = {
     nav_owner: "Rent out equipment",
     nav_my_requests: "My requests",
     hero_badge: "First construction equipment exchange",
+    ai_hint_line1: "Meet TechMaydanchyk's AI assistant,",
+    ai_hint_line2: "always available in the chat below",
+    hero_typed: "Good to see you. Tell us what equipment you need — we'll take care of the rest.",
+    pill_catalog: "Equipment catalog",
+    pill_request: "Post a request",
+    pill_add: "Add equipment",
+    pill_contact: "Contact: demolis@ukr.net",
+    how_it_works_label: "PROCESS",
+    how_it_works_title: "How it works",
+    step_1: "Tell us what you need",
+    step_2: "Dispatcher finds equipment",
+    step_3: "Owners receive the request",
+    step_4: "One of them confirms",
+    step_5: "You get the contact",
+    status_available: "AVAILABLE",
+    status_busy: "BUSY",
+    guide_listing_one: "listing in catalog",
+    guide_listing_many: "listings in catalog",
+    guide_parts_label: "Main parts",
+    guide_uses_label: "Used for",
+    guide_choose_btn: "Choose this equipment",
+    dispatcher_all: "All requests",
+    dispatcher_new: "New",
+    dispatcher_progress: "In progress",
+    dispatcher_done: "Completed",
+    request_step_1: "What needs to be done",
+    request_step_2: "Equipment and location",
+    request_step_3: "Timing and budget",
+    request_step_4: "Contact",
     hero_title_1: "Equipment found in an hour,",
     hero_title_2: "not a week",
     hero_sub: "Clients post a request — equipment owners respond themselves. A dispatcher manually controls every send, so no request gets lost.",
@@ -304,70 +391,77 @@ function FaqAccordion({ items }) {
   );
 }
 
-// ---- Equipment icons: technical blueprint line-glyphs (own original geometry) ----
-const iconLine = { fill: "none", stroke: "currentColor", strokeWidth: 1.5, strokeLinecap: "square", strokeLinejoin: "miter" };
+// ---- Equipment icons: filled realistic silhouettes (own original geometry, no brand marks) ----
+const ICON_DARK = "rgba(0,0,0,0.55)";
 
 function IconExcavator({ size = 24, style }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 32 32" style={style} {...iconLine}>
-      <rect x="2" y="24" width="15" height="3.4" />
-      <path d="M5.5 24v-5h7v5" />
-      <path d="M12.5 19L25 7" />
-      <path d="M25 7l-4.5 7.5" />
-      <path d="M20.5 14.5l4.5 2.6-2.3 3-4.4-2.8z" />
+    <svg width={size} height={size} viewBox="0 0 32 32" style={style} fill="currentColor">
+      <path d="M2 24.5c0-1 .8-1.8 1.8-1.8h13.4c1 0 1.8.8 1.8 1.8v1.7H2z" />
+      <rect x="4" y="19.5" width="8.5" height="4" rx="0.8" />
+      <path d="M11 20.5l1.6-1.3 12-9.8c.6-.5 1.5-.4 2 .2s.4 1.5-.2 2l-8.2 8-.9 3.4z" />
+      <path d="M15.5 24.8l4.2-4.1 3 2.4-2.6 3.4-4.2-.4z" />
+      <rect x="2.5" y="18.5" width="1.6" height="8" rx="0.6" fill={ICON_DARK} />
+      <circle cx="6" cy="26.5" r="1.4" fill={ICON_DARK} />
+      <circle cx="10.5" cy="26.5" r="1.4" fill={ICON_DARK} />
     </svg>
   );
 }
 function IconLoader({ size = 24, style }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 32 32" style={style} {...iconLine}>
-      <rect x="4" y="18.5" width="10" height="5" />
-      <circle cx="7" cy="26.5" r="2.2" />
-      <circle cx="14.5" cy="26.5" r="2.2" />
-      <path d="M13 18.5L21.5 9" />
-      <path d="M19.5 8l5 2.3-2.6 4-5-2.4z" />
+    <svg width={size} height={size} viewBox="0 0 32 32" style={style} fill="currentColor">
+      <path d="M3 18.5c0-1 .8-1.8 1.8-1.8h9.4c1 0 1.8.8 1.8 1.8v6.8H3z" />
+      <path d="M14 22.3l7.4-8.6c.5-.6 1.4-.6 2-.1s.6 1.4.1 2l-6 7.6z" />
+      <path d="M18.2 21.6l4-4.6 2.6 2.3-3.4 4.2-3.2-1.9z" />
+      <circle cx="7.5" cy="26.5" r="2.6" fill={ICON_DARK} />
+      <circle cx="15" cy="26.5" r="2.6" fill={ICON_DARK} />
+      <circle cx="7.5" cy="26.5" r="1" fill="currentColor" />
+      <circle cx="15" cy="26.5" r="1" fill="currentColor" />
     </svg>
   );
 }
 function IconDumpTruck({ size = 24, style }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 32 32" style={style} {...iconLine}>
-      <rect x="3" y="13" width="8" height="9" />
-      <path d="M11 22V12l5-4h9v14z" />
-      <circle cx="7" cy="25.5" r="2.4" />
-      <circle cx="21" cy="25.5" r="2.4" />
-      <path d="M3 25.5h2M23.5 25.5h3" />
+    <svg width={size} height={size} viewBox="0 0 32 32" style={style} fill="currentColor">
+      <path d="M2.5 15c0-.8.6-1.4 1.4-1.4h6.6c.8 0 1.4.6 1.4 1.4v9.5H2.5z" />
+      <path d="M4.5 16.2h4.5v3.6H4.5z" fill={ICON_DARK} />
+      <path d="M12 24.5V14l4.4-3.5h9.6c.8 0 1.4.6 1.4 1.4v12.6z" />
+      <circle cx="7" cy="26.5" r="2.6" fill={ICON_DARK} />
+      <circle cx="21" cy="26.5" r="2.6" fill={ICON_DARK} />
+      <circle cx="7" cy="26.5" r="1" fill="currentColor" />
+      <circle cx="21" cy="26.5" r="1" fill="currentColor" />
     </svg>
   );
 }
 function IconHammer({ size = 24, style }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 32 32" style={style} {...iconLine}>
-      <rect x="10.5" y="3" width="7" height="12" />
-      <rect x="9" y="15" width="10" height="3.6" />
-      <path d="M12 18.6L11.4 27" />
-      <path d="M16 18.6L15.6 27" />
+    <svg width={size} height={size} viewBox="0 0 32 32" style={style} fill="currentColor">
+      <path d="M11 2.5h9c.8 0 1.4.6 1.4 1.4v10.6h-11.8V3.9c0-.8.6-1.4 1.4-1.4z" />
+      <rect x="9.5" y="15.5" width="12" height="3.6" rx="0.6" fill={ICON_DARK} />
+      <path d="M12.5 19.5h2.4l-.9 8h-.6z" />
+      <path d="M16.6 19.5h2.4l-.9 8h-.6z" />
     </svg>
   );
 }
 function IconCrane({ size = 24, style }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 32 32" style={style} {...iconLine}>
-      <path d="M5 28V4" />
-      <path d="M5 4L26 7" />
-      <path d="M5 4L1.5 8" />
-      <path d="M19.5 7.3V16" />
-      <circle cx="19.5" cy="17.4" r="1.4" />
-      <path d="M1 28h11" />
+    <svg width={size} height={size} viewBox="0 0 32 32" style={style} fill="currentColor">
+      <path d="M2.5 25h13.5v2.3H2.5z" fill={ICON_DARK} />
+      <path d="M5.7 4h2.6v22H5.7z" />
+      <path d="M6.2 3.2l21 3.4c.9.15 1.35 1.2.8 1.9-.35.45-.95.65-1.5.5l-20.3-5.4z" />
+      <path d="M6.2 3.2L1 8.2l1.3 1.4 4.6-5.1z" />
+      <path d="M20.5 6.5l1.3.2v8.6h-1.3z" fill={ICON_DARK} />
+      <circle cx="21.1" cy="16.2" r="1.6" fill={ICON_DARK} />
     </svg>
   );
 }
 function IconBulldozer({ size = 24, style }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 32 32" style={style} {...iconLine}>
-      <rect x="8" y="10.5" width="12" height="6" />
-      <rect x="3" y="16.5" width="5.5" height="7" />
-      <rect x="5" y="24" width="18" height="2.6" />
+    <svg width={size} height={size} viewBox="0 0 32 32" style={style} fill="currentColor">
+      <path d="M2.5 17c0-.9.7-1.6 1.6-1.6h4.4c.9 0 1.6.7 1.6 1.6v6.5H2.5z" fill={ICON_DARK} />
+      <path d="M9 10.5c0-.8.6-1.4 1.4-1.4h9.2c.8 0 1.4.6 1.4 1.4v6.5H9z" />
+      <path d="M9 16.7h4.5v3.2H9z" fill={ICON_DARK} />
+      <rect x="4" y="23.5" width="21" height="2.6" rx="0.8" fill={ICON_DARK} />
     </svg>
   );
 }
@@ -431,7 +525,7 @@ const EQUIPMENT_INFO = {
   },
 };
 
-function EquipmentGuide({ listings, onSelectCategory }) {
+function EquipmentGuide({ listings, onSelectCategory, t }) {
   const [index, setIndex] = useState(0);
   const touchStartX = useRef(null);
   const type = TYPES[index];
@@ -475,7 +569,7 @@ function EquipmentGuide({ listings, onSelectCategory }) {
           {type}
         </h3>
         <div style={{ fontSize: 12, color: "#70777D", marginBottom: 14 }}>
-          {count} {count === 1 ? "оголошення в каталозі" : "оголошень у каталозі"}
+          {count} {count === 1 ? t("guide_listing_one") : t("guide_listing_many")}
         </div>
 
         <p style={{ color: "#A3A8AD", fontSize: 13.5, lineHeight: 1.6, maxWidth: 360, margin: "0 auto 18px" }}>
@@ -483,7 +577,7 @@ function EquipmentGuide({ listings, onSelectCategory }) {
         </p>
 
         <div style={{ textAlign: "left", marginBottom: 16 }}>
-          <Label>Основні частини</Label>
+          <Label>{t("guide_parts_label")}</Label>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
             {info.parts.map((p) => (
               <span key={p} style={{ fontSize: 12, color: "#F4F4F1", background: "#191C1F", borderRadius: 980, padding: "4px 12px" }}>
@@ -494,7 +588,7 @@ function EquipmentGuide({ listings, onSelectCategory }) {
         </div>
 
         <div style={{ textAlign: "left", marginBottom: 22 }}>
-          <Label>Де використовується</Label>
+          <Label>{t("guide_uses_label")}</Label>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
             {info.uses.map((u) => (
               <span key={u} style={{ fontSize: 12, color: "#FFB52E", background: "rgba(255,176,32,0.12)", border: "1px solid rgba(255,176,32,0.3)", borderRadius: 980, padding: "4px 12px" }}>
@@ -505,7 +599,7 @@ function EquipmentGuide({ listings, onSelectCategory }) {
         </div>
 
         <button onClick={() => onSelectCategory(type)} style={{ ...primaryBtn, width: "100%" }}>
-          Обрати цю техніку
+          {t("guide_choose_btn")}
         </button>
       </div>
 
@@ -603,11 +697,7 @@ export default function EquipmentMarketplace() {
   const [aiPrefill, setAiPrefill] = useState(null);
   const [showMyRequests, setShowMyRequests] = useState(false);
   const [heroSearch, setHeroSearch] = useState("");
-  const { displayed: typedIntro, done: typedIntroDone } = useTypewriter(
-    "Раді бачити. Розкажіть, яка техніка потрібна — а ми вже подбаємо про решту.",
-    32,
-    500
-  );
+  const { displayed: typedIntro, done: typedIntroDone } = useTypewriter(t("hero_typed"), 32, 500);
   const copyContactEmail = () => {
     navigator.clipboard?.writeText("demolis@ukr.net");
     flashToast("Email скопійовано: demolis@ukr.net");
@@ -1519,7 +1609,7 @@ export default function EquipmentMarketplace() {
           onMouseEnter={(e) => (e.currentTarget.style.color = "#F4F4F1")}
           onMouseLeave={(e) => (e.currentTarget.style.color = "#A3A8AD")}
         >
-          Як це працює
+          {t("how_it_works_title")}
         </button>
 
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -1624,7 +1714,7 @@ export default function EquipmentMarketplace() {
           borderBottom: "1px solid #202428",
           overflow: "hidden",
           position: "relative",
-          background: "#08090A",
+          background: "radial-gradient(ellipse 700px 380px at 50% -10%, rgba(255,176,32,0.16), rgba(255,90,31,0.08) 45%, transparent 70%)",
         }}
       >
         <video
@@ -1640,7 +1730,7 @@ export default function EquipmentMarketplace() {
           style={{
             position: "absolute",
             inset: 0,
-            background: "linear-gradient(180deg, rgba(8,9,10,0.55) 0%, rgba(8,9,10,0.72) 55%, rgba(8,9,10,0.94) 100%)",
+            background: "linear-gradient(180deg, rgba(8,9,10,0.5) 0%, rgba(8,9,10,0.68) 55%, rgba(8,9,10,0.92) 100%)",
             zIndex: 0,
           }}
         />
@@ -1677,15 +1767,15 @@ export default function EquipmentMarketplace() {
               ...parallaxStyle(6),
             }}
           >
-            <ScrambleText text={t("hero_badge")} hoverText="Краща біржа будтехніки" />
+            {t("hero_badge")}
           </div>
           <div
             className="blur-fade-in"
             style={{ fontSize: "clamp(13px,3vw,16px)", lineHeight: 1.3, color: "#A3A8AD", marginBottom: 10, animationDelay: "0.1s" }}
           >
-            Знайомтесь, ваш AI-помічник ТехМайданчика,
+            {t("ai_hint_line1")}
             <br />
-            завжди на зв'язку в чаті внизу екрана
+            {t("ai_hint_line2")}
           </div>
           <h1
             className="reveal-wipe"
@@ -1736,7 +1826,9 @@ export default function EquipmentMarketplace() {
                 scrollToApp();
               }}
               className="glass-cta"
+              style={{ display: "inline-flex", alignItems: "center", gap: 8 }}
             >
+              <IconExcavator size={16} />
               {t("hero_cta_client")}
             </button>
             <button
@@ -1751,16 +1843,16 @@ export default function EquipmentMarketplace() {
           </div>
           <div className="reveal reveal-2" style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 8, marginBottom: 8 }}>
             <button className="hero-pill" onClick={() => scrollToApp()}>
-              Каталог техніки
+              {t("pill_catalog")}
             </button>
             <button className="hero-pill" onClick={() => { setShowRequestForm(true); }}>
-              Залишити заявку
+              {t("pill_request")}
             </button>
             <button className="hero-pill" onClick={() => { setRole("owner"); setShowAddForm(true); }}>
-              Додати техніку
+              {t("pill_add")}
             </button>
             <button className="hero-pill hero-pill-outline" onClick={copyContactEmail}>
-              Зв'язок: demolis@ukr.net
+              {t("pill_contact")}
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1">
                 <rect x="1" y="1" width="7" height="7" />
                 <rect x="4" y="4" width="7" height="7" />
@@ -1775,18 +1867,12 @@ export default function EquipmentMarketplace() {
       {/* How it works — the request workflow, as a technical process line */}
       <section id="how-it-works" style={{ padding: "48px 24px", borderBottom: "1px solid #202428" }}>
         <div style={{ maxWidth: 900, margin: "0 auto" }}>
-          <SectionDivider n={2} of={7} title="ПРОЦЕС" />
+          <SectionDivider n={2} of={7} title={t("how_it_works_label")} />
           <h2 style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif", fontSize: 24, margin: "0 0 32px" }}>
-            Як це працює
+            {t("how_it_works_title")}
           </h2>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 24 }}>
-            {[
-              "Розкажіть, що потрібно",
-              "Диспетчер знаходить техніку",
-              "Власники отримують заявку",
-              "Один із них підтверджує",
-              "Ви отримуєте контакт",
-            ].map((step, i) => (
+            {[t("step_1"), t("step_2"), t("step_3"), t("step_4"), t("step_5")].map((step, i) => (
               <div key={i} style={{ flex: "1 1 150px", minWidth: 140 }}>
                 <div style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 12, color: "#70777D" }}>
                   {String(i + 1).padStart(2, "0")}
@@ -1809,6 +1895,7 @@ export default function EquipmentMarketplace() {
             </h2>
           </div>
           <EquipmentGuide
+            t={t}
             listings={listings}
             onSelectCategory={(type) => {
               setRole("client");
@@ -1887,7 +1974,7 @@ export default function EquipmentMarketplace() {
       )}
 
       {role === "dispatcher" && (
-        <DispatcherPanel requests={requests} owners={seedOwners} onDispatch={handleDispatch} onOwnerAction={handleOwnerAction} user={user} />
+        <DispatcherPanel requests={requests} owners={seedOwners} onDispatch={handleDispatch} onOwnerAction={handleOwnerAction} user={user} t={t} />
       )}
 
       {/* Filters (client view) */}
@@ -1993,7 +2080,7 @@ export default function EquipmentMarketplace() {
                 <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 3 }}>
                   <span className={l.available ? "status-dot-available" : ""} style={{ width: 6, height: 6, borderRadius: "50%", background: l.available ? "#5FA876" : "#70777D", display: "inline-block" }} />
                   <span style={{ fontSize: 10.5, color: "#70777D", fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif" }}>
-                    {l.available ? "ДОСТУПНА" : "ЗАЙНЯТА"}
+                    {l.available ? t("status_available") : t("status_busy")}
                   </span>
                 </div>
                 <Label>{l.type}</Label>
@@ -2177,7 +2264,7 @@ export default function EquipmentMarketplace() {
 
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
               <span className={detailListing.available ? "status-dot-available" : ""} style={{ width: 6, height: 6, borderRadius: "50%", background: detailListing.available ? "#5FA876" : "#70777D" }} />
-              <span style={{ fontSize: 11, color: "#70777D" }}>{detailListing.available ? "ДОСТУПНА" : "ЗАЙНЯТА"}</span>
+              <span style={{ fontSize: 11, color: "#70777D" }}>{detailListing.available ? t("status_available") : t("status_busy")}</span>
             </div>
 
             <div>
@@ -2244,7 +2331,7 @@ export default function EquipmentMarketplace() {
           }}
           title={t("request_title")}
         >
-          <RequestForm onSubmit={handleSubmitRequest} user={user} initial={aiPrefill} />
+          <RequestForm onSubmit={handleSubmitRequest} user={user} initial={aiPrefill} t={t} />
         </Modal>
       )}
       {showMyRequests && user && (
@@ -2323,14 +2410,14 @@ export default function EquipmentMarketplace() {
 }
 
 // ---- Dispatcher panel ----
-function DispatcherPanel({ requests, owners, onDispatch, onOwnerAction, user }) {
+function DispatcherPanel({ requests, owners, onDispatch, onOwnerAction, user, t }) {
   const [filter, setFilter] = useState("all");
 
   const categories = [
-    { key: "all", label: "Усі заявки", test: () => true },
-    { key: "new", label: "Нові", test: (r) => r.status === "new" },
-    { key: "dispatched", label: "В роботі", test: (r) => r.status === "dispatched" },
-    { key: "taken", label: "Виконані", test: (r) => r.status === "taken" },
+    { key: "all", label: t("dispatcher_all"), test: () => true },
+    { key: "new", label: t("dispatcher_new"), test: (r) => r.status === "new" },
+    { key: "dispatched", label: t("dispatcher_progress"), test: (r) => r.status === "dispatched" },
+    { key: "taken", label: t("dispatcher_done"), test: (r) => r.status === "taken" },
   ];
 
   const filtered = requests.filter(categories.find((c) => c.key === filter).test);
@@ -2451,55 +2538,6 @@ function useTypewriter(text, speed = 38, startDelay = 500) {
   }, [text, speed, startDelay]);
 
   return { displayed, done };
-}
-
-function ScrambleText({ text, hoverText, style, className }) {
-  const [display, setDisplay] = useState(text);
-  const intervalRef = useRef(null);
-  const SCRAMBLE_CHARS = "АБВГҐДЕЄЖЗИІЇЙКЛМНОПРСТУФХЦЧШЩЬЮЯ";
-
-  const scrambleTo = (target) => {
-    clearInterval(intervalRef.current);
-    const reduced = typeof window !== "undefined" && window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduced) {
-      setDisplay(target);
-      return;
-    }
-    let frame = 0;
-    const totalFrames = 14;
-    intervalRef.current = setInterval(() => {
-      frame++;
-      const revealCount = Math.ceil((frame / totalFrames) * target.length);
-      let output = "";
-      for (let i = 0; i < target.length; i++) {
-        if (target[i] === " ") {
-          output += " ";
-        } else if (i < revealCount) {
-          output += target[i];
-        } else {
-          output += SCRAMBLE_CHARS[Math.floor(Math.random() * SCRAMBLE_CHARS.length)];
-        }
-      }
-      setDisplay(output);
-      if (frame >= totalFrames) {
-        clearInterval(intervalRef.current);
-        setDisplay(target);
-      }
-    }, 32);
-  };
-
-  useEffect(() => () => clearInterval(intervalRef.current), []);
-
-  return (
-    <span
-      className={className}
-      style={{ ...style, display: "inline-block", cursor: "default" }}
-      onMouseEnter={() => scrambleTo(hoverText)}
-      onMouseLeave={() => scrambleTo(text)}
-    >
-      {display}
-    </span>
-  );
 }
 
 function StarRating({ value, onChange, readOnly }) {
@@ -3432,7 +3470,7 @@ function AddListingForm({ onSubmit, user }) {
 }
 
 // ---- Client request form ----
-function RequestForm({ onSubmit, user, initial }) {
+function RequestForm({ onSubmit, user, initial, t }) {
   const [form, setForm] = useState({
     type: initial?.type || TYPES[0],
     region: initial?.region || user?.region || REGIONS[0],
@@ -3467,7 +3505,7 @@ function RequestForm({ onSubmit, user, initial }) {
         </div>
       )}
 
-      <StepLabel n={1} of={4} text="Що потрібно виконати" />
+      <StepLabel n={1} of={4} text={t("request_step_1")} />
       <Field label="Опишіть задачу">
         <textarea
           value={form.comment}
@@ -3478,7 +3516,7 @@ function RequestForm({ onSubmit, user, initial }) {
         />
       </Field>
 
-      <StepLabel n={2} of={4} text="Техніка та локація" />
+      <StepLabel n={2} of={4} text={t("request_step_2")} />
       <Field label="Яка техніка потрібна">
         <select value={form.type} onChange={set("type")} style={inputStyle}>
           {TYPES.map((t) => <option key={t}>{t}</option>)}
@@ -3490,7 +3528,7 @@ function RequestForm({ onSubmit, user, initial }) {
         </select>
       </Field>
 
-      <StepLabel n={3} of={4} text="Терміни та бюджет" />
+      <StepLabel n={3} of={4} text={t("request_step_3")} />
       <Field label="Коли потрібно">
         <input type="date" value={form.dateFrom} onChange={set("dateFrom")} style={inputStyle} />
       </Field>
@@ -3498,7 +3536,7 @@ function RequestForm({ onSubmit, user, initial }) {
         <input type="number" value={form.budget} onChange={set("budget")} placeholder="1000" style={inputStyle} />
       </Field>
 
-      <StepLabel n={4} of={4} text="Контакт" />
+      <StepLabel n={4} of={4} text={t("request_step_4")} />
       <Field label="Контакт для зв'язку (телефон/Telegram)">
         <input value={form.contact} onChange={set("contact")} placeholder="+380..." style={inputStyle} />
       </Field>
