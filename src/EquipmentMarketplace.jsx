@@ -822,6 +822,14 @@ export default function EquipmentMarketplace() {
   };
 
   const handleSubmitRequest = (data) => {
+    // Надсилаємо заявку в Telegram (працює на реальному сайті; у чат-превью тихо ігнорується)
+    try {
+      fetch("/api/notify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      }).catch(() => {});
+    } catch (e) {}
     setRequests((prev) => [
       { ...data, id: prev.length + 1, status: "new", ownerStatuses: {}, log: [] },
       ...prev,
@@ -3224,6 +3232,95 @@ const AI_ASSISTANT_SYSTEM_PROMPT = `Ти — помічник сайту Тех�
 Відповідай ЛИШЕ у форматі JSON, без жодного тексту навколо, без markdown-обгортки:
 {"type": ..., "region": ..., "budget": ..., "comment": "...", "reply": "..."}`;
 
+// ---- AI assistant transport: server proxy -> direct (Claude sandbox) -> local on-topic fallback ----
+async function callAssistantApi(messages) {
+  // Anthropic вимагає, щоб перше повідомлення було від user (без привітання асистента)
+  const apiMessages = messages.map((m) => ({ role: m.role, content: m.text }));
+  while (apiMessages.length && apiMessages[0].role !== "user") apiMessages.shift();
+
+  const parseResponse = (data) => {
+    const raw = (data.content || []).map((b) => b.text || "").join("");
+    const clean = raw.replace(/```json|```/g, "").trim();
+    const start = clean.indexOf("{");
+    const end = clean.lastIndexOf("}");
+    return JSON.parse(start >= 0 && end > start ? clean.slice(start, end + 1) : clean);
+  };
+
+  // 1) Серверний проксі на Vercel (/api/chat) — працює на реальному сайті
+  try {
+    const r = await fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ messages: apiMessages }),
+    });
+    if (r.ok) return parseResponse(await r.json());
+  } catch (e) {}
+
+  // 2) Прямий виклик — працює всередині чату Claude (артефакт)
+  const r2 = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-6",
+      max_tokens: 500,
+      system: AI_ASSISTANT_SYSTEM_PROMPT,
+      messages: apiMessages,
+    }),
+  });
+  if (!r2.ok) throw new Error("direct api failed");
+  return parseResponse(await r2.json());
+}
+
+// Локальний режим: працює без AI-сервера, відповідає по темі сайту за ключовими словами.
+const LOCAL_RULES = [
+  { type: "Екскаватор", keys: ["викопа", "котлован", "траншеј", "траншея", "траншею", "траншеї", "копа", "ров ", "екскават", "экскават", "выкоп", "котлован", "фундамент", "яму", "яма"],
+    why: "Екскаватор — основна машина для земляних робіт: копає котловани, траншеї та ями і вантажить ґрунт." },
+  { type: "Навантажувач", keys: ["навантаж", "погруз", "сніг", "снег", "пісок", "песок", "щебін", "щебен", "перемістити ґрунт", "сипуч"],
+    why: "Навантажувач швидко переміщує та вантажить сипучі матеріали (пісок, щебінь, сніг) на невеликих майданчиках." },
+  { type: "Самоскид", keys: ["вивез", "вывоз", "самоскид", "самосвал", "перевез", "доставк", "сміття", "мусор"],
+    why: "Самоскид вивозить ґрунт, щебінь і сміття з об'єкта та доставляє матеріали." },
+  { type: "Гідромолот", keys: ["зруйн", "знести", "знос", "снести", "снос", "демонтаж", "розбит", "разбить", "бетон", "асфальт", "молот"],
+    why: "Гідромолот руйнує бетон, асфальт і фундаменти ударною силою — його встановлюють на екскаватор." },
+  { type: "Кран", keys: ["кран", "підйом", "подъем", "підняти", "поднять", "монтаж", "плит", "перекритт", "перекрыти", "висот", "высот"],
+    why: "Кран піднімає і встановлює важкі вантажі та конструкції на висоту — плити, балки, блоки." },
+  { type: "Бульдозер", keys: ["бульдозер", "розрівн", "выровн", "планув", "планиров", "розчист", "расчист", "зрізат", "срезат", "відвал"],
+    why: "Бульдозер розрівнює ділянку, зрізає ґрунт і розчищає територію відвалом." },
+];
+const REGION_ALIASES = { "Ужгород": ["ужгород"], "Мукачево": ["мукачев"], "Львів": ["львів", "львов"], "Київ": ["київ", "києв", "киев"], "Миколаїв": ["миколаїв", "миколає", "николаев"], "Одеса": ["одес"] };
+
+function localAssistantReply(text) {
+  const q = text.toLowerCase();
+  const rule = LOCAL_RULES.find((r) => r.keys.some((k) => q.includes(k)));
+  let region = null;
+  for (const [name, aliases] of Object.entries(REGION_ALIASES)) {
+    if (aliases.some((a) => q.includes(a))) { region = name; break; }
+  }
+  const budgetMatch = q.match(/(\d[\d\s]{2,})\s*(грн|₴|гривень|гривні|uah)/);
+  const budget = budgetMatch ? Number(budgetMatch[1].replace(/\s/g, "")) : null;
+
+  // Питання-порівняння ("чим відрізняється…") — відповідаємо по суті, без підбору техніки
+  if (/відрізня|різниц|разниц|отлича|различ|difference|vs\b/.test(q)) {
+    const found = LOCAL_RULES.filter((r) => r.keys.some((k) => q.includes(k)));
+    if (found.length >= 2) {
+      return { type: null, region: null, budget: null, comment: "",
+        reply: found.map((r) => `${r.type}: ${r.why}`).join(" ") + " Опишіть вашу задачу — підкажу, що саме підійде." };
+    }
+  }
+  if (rule) {
+    return {
+      type: rule.type, region, budget,
+      comment: text.slice(0, 140),
+      reply: `${rule.why} Для вашої задачі раджу тип техніки: ${rule.type}${region ? ` (${region})` : ""}. Нижче — підходяща техніка з каталогу, або залиште заявку — диспетчер підбере власника.`,
+    };
+  }
+  if (/як (це )?працю|как (это )?работает|як здати|как сдать|здат[иь] техніку|сдат[ьи] технику/.test(q)) {
+    return { type: null, region: null, budget: null, comment: "",
+      reply: "Клієнт залишає заявку → диспетчер підбирає та розсилає її власникам техніки → один із них підтверджує → ви отримуєте контакт. Щоб здати свою техніку, натисніть «Здаю техніку» і додайте оголошення." };
+  }
+  return { type: null, region: null, budget: null, comment: "",
+    reply: "Я допомагаю підібрати будівельну техніку. Опишіть задачу — наприклад: «потрібно викопати котлован у Миколаєві» — і я порадю тип техніки та знайду її в каталозі." };
+}
+
 // ---- AI assistant: free-text task -> equipment/region/budget suggestion -> prefilled request form ----
 function AiAssistant({ user, onPrefillRequest, onViewListing, listings, t, open, setOpen }) {
   const [messages, setMessages] = useState([
@@ -3303,20 +3400,13 @@ function AiAssistant({ user, onPrefillRequest, onViewListing, listings, t, open,
     setLoading(true);
 
     try {
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-6",
-          max_tokens: 400,
-          system: AI_ASSISTANT_SYSTEM_PROMPT,
-          messages: nextMessages.map((m) => ({ role: m.role, content: m.text })),
-        }),
-      });
-      const data = await response.json();
-      const raw = (data.content || []).map((b) => b.text || "").join("");
-      const clean = raw.replace(/```json|```/g, "").trim();
-      const parsed = JSON.parse(clean);
+      let parsed;
+      try {
+        parsed = await callAssistantApi(nextMessages);
+      } catch (apiErr) {
+        // AI-сервер недоступний — працюємо локально, по темі сайту
+        parsed = localAssistantReply(text);
+      }
       const replyText = parsed.reply || "Готово.";
 
       // Ground the recommendation in real inventory: find an actual available listing
