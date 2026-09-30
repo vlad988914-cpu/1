@@ -289,6 +289,14 @@ const TYPES = [
   "Каток",
 ];
 
+// Display-only translation of type names; TYPES stays the internal key everywhere (filters, icons, EQUIPMENT_INFO)
+const TYPE_LABELS = {
+  uk: { "Екскаватор": "Екскаватор", "Навантажувач": "Навантажувач", "Самоскид": "Самоскид", "Гідромолот": "Гідромолот", "Кран": "Кран", "Бульдозер": "Бульдозер", "Каток": "Каток" },
+  ru: { "Екскаватор": "Экскаватор", "Навантажувач": "Погрузчик", "Самоскид": "Самосвал", "Гідромолот": "Гидромолот", "Кран": "Кран", "Бульдозер": "Бульдозер", "Каток": "Каток" },
+  en: { "Екскаватор": "Excavator", "Навантажувач": "Loader", "Самоскид": "Dump Truck", "Гідромолот": "Hydraulic Hammer", "Кран": "Crane", "Бульдозер": "Bulldozer", "Каток": "Road Roller" },
+};
+const tType = (type, lang) => (TYPE_LABELS[lang] && TYPE_LABELS[lang][type]) || type;
+
 const REGIONS = [
   "Київ",
   "Харків",
@@ -2214,12 +2222,12 @@ export default function EquipmentMarketplace() {
           <select value={filterType} onChange={(e) => setFilterType(e.target.value)} style={selectStyle}>
             <option>{t("filter_all")}</option>
             {TYPES.map((ty) => (
-              <option key={ty}>{ty}</option>
+              <option key={ty} value={ty}>{tType(ty, lang)}</option>
             ))}
           </select>
           <select value={filterRegion} onChange={(e) => setFilterRegion(e.target.value)} style={selectStyle}>
             <option>{t("filter_all")}</option>
-            {REGIONS.map((r) => (
+            {REGIONS.filter((r) => r !== "Інше").map((r) => (
               <option key={r}>{r}</option>
             ))}
           </select>
@@ -2351,7 +2359,7 @@ export default function EquipmentMarketplace() {
                     {l.available ? t("status_available") : t("status_busy")}
                   </span>
                 </div>
-                <Label>{l.type}</Label>
+                <Label>{tType(l.type, lang)}</Label>
                 <div style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif", fontSize: 18, fontWeight: 600, marginTop: 2 }}>
                   {l.brand}
                 </div>
@@ -2426,6 +2434,8 @@ export default function EquipmentMarketplace() {
                 disabled={!l.available}
                 onClick={(e) => {
                   e.stopPropagation();
+                  const contact = user?.phone || window.prompt("Вкажіть телефон або Telegram, щоб власник міг з вами зв'язатися:");
+                  if (!contact || !contact.trim()) return;
                   trackViewed(l.id);
                   try {
                     fetch("/api/notify", {
@@ -2435,7 +2445,7 @@ export default function EquipmentMarketplace() {
                         type: l.type,
                         region: l.region,
                         comment: `Клієнт відгукнувся на оголошення: ${l.brand} (${l.owner})`,
-                        contact: user?.phone || "не вказано (натиснув «Відгукнутись» без входу)",
+                        contact,
                         requesterName: user?.name || "Гість сайту",
                       }),
                     }).catch(() => {});
@@ -2585,7 +2595,7 @@ export default function EquipmentMarketplace() {
             </div>
 
             <div>
-              <Label>{detailListing.type}</Label>
+              <Label>{tType(detailListing.type, lang)}</Label>
               <div style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif", fontSize: 22, fontWeight: 600 }}>
                 {detailListing.brand}
               </div>
@@ -2623,6 +2633,8 @@ export default function EquipmentMarketplace() {
             <button
               disabled={!detailListing.available}
               onClick={() => {
+                const contact = user?.phone || window.prompt("Вкажіть телефон або Telegram, щоб власник міг з вами зв'язатися:");
+                if (!contact || !contact.trim()) return;
                 trackViewed(detailListing.id);
                 try {
                   fetch("/api/notify", {
@@ -2632,7 +2644,7 @@ export default function EquipmentMarketplace() {
                       type: detailListing.type,
                       region: detailListing.region,
                       comment: `Клієнт відгукнувся на оголошення: ${detailListing.brand} (${detailListing.owner})`,
-                      contact: user?.phone || "не вказано (натиснув «Відгукнутись» без входу)",
+                      contact,
                       requesterName: user?.name || "Гість сайту",
                     }),
                   }).catch(() => {});
@@ -2650,7 +2662,7 @@ export default function EquipmentMarketplace() {
 
       {showAddForm && (
         <Modal onClose={() => setShowAddForm(false)} title={t("add_listing_title")}>
-          <AddListingForm onSubmit={handleAddListing} user={user} />
+          <AddListingForm onSubmit={handleAddListing} user={user} lang={lang} />
         </Modal>
       )}
       {showRequestForm && (
@@ -2661,7 +2673,7 @@ export default function EquipmentMarketplace() {
           }}
           title={t("request_title")}
         >
-          <RequestForm onSubmit={handleSubmitRequest} user={user} initial={aiPrefill} t={t} />
+          <RequestForm onSubmit={handleSubmitRequest} user={user} initial={aiPrefill} t={t} lang={lang} />
         </Modal>
       )}
       {showMyRequests && user && (
@@ -3522,7 +3534,30 @@ const LOCAL_RULES = [
   { type: "Бульдозер", keys: ["бульдозер", "розрівн", "выровн", "планув", "планиров", "розчист", "расчист", "зрізат", "срезат", "відвал"],
     why: "Бульдозер розрівнює ділянку, зрізає ґрунт і розчищає територію відвалом." },
 ];
-const REGION_ALIASES = { "Ужгород": ["ужгород"], "Мукачево": ["мукачев"], "Львів": ["львів", "львов"], "Київ": ["київ", "києв", "киев"], "Миколаїв": ["миколаїв", "миколає", "николаев"], "Одеса": ["одес"] };
+const REGION_ALIASES = {
+  "Київ": ["київ", "києв", "киев"],
+  "Харків": ["харків", "харьков"],
+  "Дніпро": ["дніпро", "днепр"],
+  "Одеса": ["одес"],
+  "Львів": ["львів", "львов"],
+  "Запоріжжя": ["запоріжж", "запорож"],
+  "Вінниця": ["вінниц", "винниц"],
+  "Житомир": ["житомир"],
+  "Івано-Франківськ": ["івано-франків", "ивано-франков"],
+  "Кропивницький": ["кропивниц"],
+  "Луцьк": ["луцьк", "луцк"],
+  "Миколаїв": ["миколаїв", "миколає", "николаев"],
+  "Полтава": ["полтав"],
+  "Рівне": ["рівне", "ровно"],
+  "Суми": ["суми", "сумы"],
+  "Тернопіль": ["тернопіл"],
+  "Ужгород": ["ужгород"],
+  "Хмельницький": ["хмельниц"],
+  "Черкаси": ["черкас"],
+  "Чернігів": ["чернігів", "чернигов"],
+  "Чернівці": ["чернівц", "черновц"],
+  "Мукачево": ["мукачев"],
+};
 
 // Комплексні задачі — коли потрібна не одна машина, а набір техніки
 const TASK_SCENARIOS = [
@@ -3976,7 +4011,7 @@ function Modal({ children, onClose, title, splitLeft }) {
 }
 
 // ---- Add listing form (owner side) ----
-function AddListingForm({ onSubmit, user }) {
+function AddListingForm({ onSubmit, user, lang }) {
   const [form, setForm] = useState({
     type: TYPES[0],
     brand: "",
@@ -4063,7 +4098,7 @@ function AddListingForm({ onSubmit, user }) {
       </Field>
       <Field label="Тип техніки">
         <select value={form.type} onChange={set("type")} style={inputStyle}>
-          {TYPES.map((t) => <option key={t}>{t}</option>)}
+          {TYPES.map((ty) => <option key={ty} value={ty}>{tType(ty, lang)}</option>)}
         </select>
       </Field>
       <Field label="Марка / модель">
@@ -4120,7 +4155,7 @@ function AddListingForm({ onSubmit, user }) {
 }
 
 // ---- Client request form ----
-function RequestForm({ onSubmit, user, initial, t }) {
+function RequestForm({ onSubmit, user, initial, t, lang }) {
   const [form, setForm] = useState({
     type: initial?.type || TYPES[0],
     region: initial?.region || user?.region || REGIONS[0],
@@ -4180,7 +4215,7 @@ function RequestForm({ onSubmit, user, initial, t }) {
       <StepLabel n={2} of={4} text={t("request_step_2")} />
       <Field label="Яка техніка потрібна">
         <select value={form.type} onChange={set("type")} style={inputStyle}>
-          {TYPES.map((t) => <option key={t}>{t}</option>)}
+          {TYPES.map((ty) => <option key={ty} value={ty}>{tType(ty, lang)}</option>)}
         </select>
       </Field>
       <Field label="Регіон / об'єкт">
