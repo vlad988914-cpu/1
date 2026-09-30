@@ -1223,6 +1223,19 @@ export default function EquipmentMarketplace() {
           .hero-video-drip-zone:hover .drip { animation: none; opacity: 0; }
         }
 
+        @keyframes badgePulse {
+          0%, 100% { color: #FFB52E; border-color: #FFB52E; box-shadow: 0 0 20px rgba(255,176,32,0.25); }
+          33% { color: #FF6A1A; border-color: #FF6A1A; box-shadow: 0 0 20px rgba(255,106,26,0.3); }
+          66% { color: #FFE08A; border-color: #FFE08A; box-shadow: 0 0 20px rgba(255,224,138,0.3); }
+        }
+        .badge-pulse {
+          border: 1px solid #FFB52E;
+          animation: badgePulse 3s ease-in-out infinite;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .badge-pulse { animation: none; color: #FFB52E; border-color: #FFB52E; }
+        }
+
         @keyframes statusBreathe {
           0%, 100% { opacity: 1; }
           50% { opacity: 0.45; }
@@ -1685,7 +1698,11 @@ export default function EquipmentMarketplace() {
             ].map((r) => (
               <button
                 key={r.key}
-                onClick={() => setRole(r.key)}
+                onClick={() => {
+                  setRole(r.key);
+                  if (r.key === "owner") setShowAddForm(true);
+                  else setAiOpen(true);
+                }}
                 style={{
                   position: "relative",
                   zIndex: 1,
@@ -1846,18 +1863,16 @@ export default function EquipmentMarketplace() {
         <span aria-hidden="true" style={{ position: "absolute", top: 14, right: 14, width: 14, height: 14, borderTop: "1.5px solid #48484a", borderRight: "1.5px solid #48484a" }} />
         <div style={{ maxWidth: 640, margin: "0 auto", position: "relative" }}>
           <div
-            className="reveal"
+            className="reveal badge-pulse"
             style={{
               display: "inline-block",
               fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
               fontSize: 11,
               letterSpacing: "0.14em",
               textTransform: "none",
-              color: "#FFB52E",
-              border: "1px solid #FFB52E",
               padding: "5px 12px",
               marginBottom: 18,
-              boxShadow: "0 0 20px rgba(255,176,32,0.25)",
+              borderRadius: 6,
               ...parallaxStyle(6),
             }}
           >
@@ -1865,7 +1880,18 @@ export default function EquipmentMarketplace() {
           </div>
           <div
             className="blur-fade-in"
-            style={{ fontSize: "clamp(13px,3vw,16px)", lineHeight: 1.3, color: "#A3A8AD", marginBottom: 10, animationDelay: "0.1s" }}
+            onClick={() => setAiOpen(true)}
+            style={{
+              fontSize: "clamp(13px,3vw,16px)",
+              lineHeight: 1.3,
+              color: "#A3A8AD",
+              marginBottom: 10,
+              animationDelay: "0.1s",
+              cursor: "pointer",
+              textDecoration: "underline",
+              textDecorationColor: "rgba(163,168,173,0.35)",
+              textUnderlineOffset: 4,
+            }}
           >
             {t("ai_hint_line1")}
             <br />
