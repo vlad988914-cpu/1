@@ -325,7 +325,7 @@ const seedListings = [
     unit: "год",
     specs: { "Об'єм ковша": "1.2 м³", "Вага": "20.5 т", "Виліт стріли": "9.9 м" },
     owner: "МиколаївБудуй",
-    photo: null,
+    photos: [],
     available: true,
   },
   {
@@ -337,7 +337,7 @@ const seedListings = [
     unit: "год",
     specs: { "Енергія удару": "950 Дж", "Вага молота": "950 кг" },
     owner: "БудТехСервіс",
-    photo: null,
+    photos: [],
     available: true,
   },
   {
@@ -349,7 +349,7 @@ const seedListings = [
     unit: "год",
     specs: { "Вантажопідйомність": "10 т", "Об'єм кузова": "6 м³" },
     owner: "ЛьвівБуд",
-    photo: null,
+    photos: [],
     available: false,
     busyUntil: "2026-09-12",
   },
@@ -362,7 +362,7 @@ const seedListings = [
     unit: "год",
     specs: { "Клас": "Середній (7 т)", "Тип вальця": "Гладковальцевий вібраційний" },
     owner: "КиївДорБуд",
-    photo: null,
+    photos: [],
     available: true,
   },
   {
@@ -374,7 +374,7 @@ const seedListings = [
     unit: "год",
     specs: { "Вантажопідйомність": "50 т", "Виліт стріли": "40 м" },
     owner: "КиївКранСервіс",
-    photo: null,
+    photos: [],
     available: true,
   },
 ];
@@ -747,6 +747,11 @@ export default function EquipmentMarketplace() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [showRequestForm, setShowRequestForm] = useState(false);
   const [detailListing, setDetailListing] = useState(null);
+  const [detailPhotoIndex, setDetailPhotoIndex] = useState(0);
+  const openDetail = (l) => {
+    setDetailListing(l);
+    setDetailPhotoIndex(0);
+  };
   const [aiOpen, setAiOpen] = useState(false);
   const [requests, setRequests] = useState([]);
   const [toast, setToast] = useState(null);
@@ -2248,7 +2253,7 @@ export default function EquipmentMarketplace() {
             key={l.id}
             className="equipment-card"
             style={{ padding: "14px 12px", cursor: "pointer" }}
-            onClick={() => setDetailListing(l)}
+            onClick={() => openDetail(l)}
           >
             <button
               onClick={(e) => {
@@ -2320,8 +2325,15 @@ export default function EquipmentMarketplace() {
                   {l.brand}
                 </div>
               </div>
-              {l.photo && l.photo.startsWith("data:") ? (
-                <img src={l.photo} alt={l.brand} style={{ width: 44, height: 44, objectFit: "cover", border: "1px solid #63696D" }} />
+              {l.photos && l.photos.length > 0 ? (
+                <div style={{ position: "relative" }}>
+                  <img src={l.photos[0]} alt={l.brand} style={{ width: 44, height: 44, objectFit: "cover", border: "1px solid #63696D" }} />
+                  {l.photos.length > 1 && (
+                    <span style={{ position: "absolute", bottom: -4, right: -4, fontSize: 9.5, fontWeight: 600, background: "#08090A", color: "#F4F4F1", border: "1px solid #63696D", borderRadius: 980, padding: "1px 5px" }}>
+                      +{l.photos.length - 1}
+                    </span>
+                  )}
+                </div>
               ) : (
                 <div className="icon-tilt" style={{ color: "#FF6A1A", filter: "drop-shadow(0 2px 3px rgba(0,0,0,0.4))" }}><EquipmentIcon type={l.type} size={46} /></div>
               )}
@@ -2357,7 +2369,7 @@ export default function EquipmentMarketplace() {
                     <span style={{ color: "#FFB52E" }}> · ★ {ownerRatings[l.owner].avg.toFixed(1)} ({ownerRatings[l.owner].count})</span>
                   )}
                 </div>
-                {l.photo && l.photo.startsWith("data:") && (
+                {l.photos && l.photos.length > 0 && (
                   <div
                     style={{
                       display: "inline-flex",
@@ -2505,12 +2517,36 @@ export default function EquipmentMarketplace() {
         <Modal onClose={() => setDetailListing(null)} title={detailListing.brand}>
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             <div style={{ display: "flex", justifyContent: "center", padding: "20px 0", background: "#191C1F", borderRadius: 12 }}>
-              {detailListing.photo && detailListing.photo.startsWith("data:") ? (
-                <img src={detailListing.photo} alt={detailListing.brand} style={{ maxWidth: "100%", maxHeight: 160, objectFit: "cover" }} />
+              {detailListing.photos && detailListing.photos.length > 0 ? (
+                <img
+                  src={detailListing.photos[detailPhotoIndex] || detailListing.photos[0]}
+                  alt={detailListing.brand}
+                  style={{ maxWidth: "100%", maxHeight: 160, objectFit: "cover" }}
+                />
               ) : (
                 <div style={{ color: "#FF6A1A" }}><EquipmentIcon type={detailListing.type} size={90} /></div>
               )}
             </div>
+            {detailListing.photos && detailListing.photos.length > 1 && (
+              <div style={{ display: "flex", gap: 6, justifyContent: "center" }}>
+                {detailListing.photos.map((p, i) => (
+                  <img
+                    key={i}
+                    src={p}
+                    alt={`Фото ${i + 1}`}
+                    onClick={() => setDetailPhotoIndex(i)}
+                    style={{
+                      width: 44,
+                      height: 44,
+                      objectFit: "cover",
+                      cursor: "pointer",
+                      borderRadius: 6,
+                      border: i === detailPhotoIndex ? "2px solid #FF6A1A" : "1px solid #63696D",
+                    }}
+                  />
+                ))}
+              </div>
+            )}
 
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
               <span className={detailListing.available ? "status-dot-available" : ""} style={{ width: 6, height: 6, borderRadius: "50%", background: detailListing.available ? "#5FA876" : "#70777D" }} />
@@ -2550,7 +2586,7 @@ export default function EquipmentMarketplace() {
 
             <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13 }}>
               {detailListing.owner}
-              {detailListing.photo && detailListing.photo.startsWith("data:") && <span style={{ color: "#FFB52E" }}>✓</span>}
+              {detailListing.photos && detailListing.photos.length > 0 && <span style={{ color: "#FFB52E" }}>✓</span>}
             </div>
 
             <button
@@ -2640,7 +2676,7 @@ export default function EquipmentMarketplace() {
           setRole("client");
           setShowRequestForm(true);
         }}
-        onViewListing={(l) => setDetailListing(l)}
+        onViewListing={(l) => openDetail(l)}
       />
 
       <div className="sticky-cta">
