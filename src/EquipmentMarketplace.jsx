@@ -3533,6 +3533,7 @@ function AiAssistant({ user, onPrefillRequest, onViewListing, listings, t, open,
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [lastType, setLastType] = useState(null);
   const [listening, setListening] = useState(false);
   const [voiceOn, setVoiceOn] = useState(false);
   const listRef = useRef(null);
@@ -3604,6 +3605,23 @@ function AiAssistant({ user, onPrefillRequest, onViewListing, listings, t, open,
     setInput("");
     setLoading(true);
 
+    // "Показати ще варіанти" — одразу показуємо більше техніки того ж типу, без нового звернення до AI
+    if (/показати ще|show more|ещё вариант/i.test(text) && lastType) {
+      const more = (listings || []).filter((l) => l.available && l.type === lastType);
+      setMessages((prev) => [
+        ...prev,
+        { role: "assistant", text: `Уся доступна техніка типу «${lastType}» з каталогу:`, matchedListings: more, showFollowUp: true },
+      ]);
+      setLoading(false);
+      return;
+    }
+    if (/інша задача|другая задача|new task/i.test(text)) {
+      setLastType(null);
+      setMessages((prev) => [...prev, { role: "assistant", text: "Добре, опишіть нову задачу — підберу техніку під неї.", showFollowUp: false }]);
+      setLoading(false);
+      return;
+    }
+
     try {
       let parsed;
       try {
@@ -3613,23 +3631,28 @@ function AiAssistant({ user, onPrefillRequest, onViewListing, listings, t, open,
         parsed = localAssistantReply(text);
       }
       const replyText = parsed.reply || "Готово.";
+      if (parsed.type) setLastType(parsed.type);
 
-      // Ground the recommendation in real inventory: find an actual available listing
-      // matching the type (and region, if given) instead of only suggesting an abstract type.
-      const findMatch = (ty) => {
-        if (!ty || !listings) return null;
-        const byTypeAndRegion = listings.filter((l) => l.available && l.type === ty && (!parsed.region || l.region === parsed.region));
-        const byTypeOnly = listings.filter((l) => l.available && l.type === ty);
-        return byTypeAndRegion[0] || byTypeOnly[0] || null;
+      // Ground the recommendation in real inventory: show every available listing
+      // that fits (not just one), sorted so same-region matches come first.
+      const findMatches = (ty) => {
+        if (!ty || !listings) return [];
+        return listings
+          .filter((l) => l.available && l.type === ty)
+          .sort((a, b) => {
+            const aReg = parsed.region && a.region === parsed.region ? 0 : 1;
+            const bReg = parsed.region && b.region === parsed.region ? 0 : 1;
+            return aReg - bReg;
+          })
+          .slice(0, 4);
       };
-      const matchedListing = findMatch(parsed.type);
       const matchedListings = Array.isArray(parsed.types)
-        ? parsed.types.map((ty) => findMatch(ty)).filter(Boolean)
-        : null;
+        ? parsed.types.map((ty) => findMatches(ty)[0]).filter(Boolean)
+        : findMatches(parsed.type);
 
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", text: replyText, suggestion: parsed.type ? parsed : null, matchedListing: matchedListings ? null : matchedListing, matchedListings },
+        { role: "assistant", text: replyText, suggestion: parsed.type ? parsed : null, matchedListing: null, matchedListings, showFollowUp: true },
       ]);
       speak(replyText);
     } catch (err) {
@@ -3749,9 +3772,12 @@ function AiAssistant({ user, onPrefillRequest, onViewListing, listings, t, open,
               </div>
             ))}
             {loading && <div className="ai-bubble assistant">Друкує…</div>}
-            {messages.length === 1 && !loading && (
+            {!loading && (messages.length === 1 || messages[messages.length - 1]?.role === "assistant") && (
               <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 6 }}>
-                {["Побудувати дорогу", "Знести будівлю", "Розчистити територію", "Підібрати екскаватор", "Створити заявку", "Пояснити різницю між технікою"].map((s) => (
+                {(messages.length === 1
+                  ? ["Побудувати дорогу", "Знести будівлю", "Розчистити територію", "Підібрати екскаватор", "Створити заявку", "Пояснити різницю між технікою"]
+                  : ["Показати ще варіанти", "Порівняти ціни", "Інша задача", "Залишити заявку"]
+                ).map((s) => (
                   <button
                     key={s}
                     onClick={() => setInput(s)}
