@@ -7,12 +7,12 @@ const cut = (s, n) => esc(String(s ?? "").slice(0, n));
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
-  const token = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_CHAT_ID;
+  // .trim() рятує від випадкового пробілу в кінці значення, вставленого в Vercel
+  const token = (process.env.TELEGRAM_BOT_TOKEN || "").trim();
+  const chatId = (process.env.TELEGRAM_CHAT_ID || "").trim();
   if (!token || !chatId) return res.status(500).json({ error: "Telegram is not configured" });
 
   const b = req.body || {};
-  // Мінімальна валідація, щоб не слати порожні/сміттєві повідомлення
   if (typeof b.type !== "string" || typeof b.contact !== "string" || b.contact.trim().length < 5) {
     return res.status(400).json({ error: "Invalid request" });
   }
@@ -36,9 +36,15 @@ export default async function handler(req, res) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ chat_id: chatId, text: lines.join("\n"), parse_mode: "HTML" }),
     });
-    if (!r.ok) return res.status(502).json({ error: "Telegram error" });
+    const data = await r.json().catch(() => null);
+    if (!r.ok) {
+      // Логуємо справжню причину відмови Telegram — видно у Vercel → Журнали
+      console.error("Telegram sendMessage failed:", r.status, data);
+      return res.status(502).json({ error: "Telegram error", detail: data?.description || null });
+    }
     return res.status(200).json({ ok: true });
-  } catch {
+  } catch (err) {
+    console.error("Telegram unreachable:", err?.message);
     return res.status(502).json({ error: "Telegram unreachable" });
   }
 }
