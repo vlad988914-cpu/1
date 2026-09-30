@@ -32,6 +32,9 @@ const TRANSLATIONS = {
     step_5: "Ви отримуєте контакт",
     status_available: "ДОСТУПНА",
     status_busy: "ЗАЙНЯТА",
+    sort_default: "За замовчуванням",
+    sort_price_asc: "Дешевші спочатку",
+    sort_price_desc: "Дорожчі спочатку",
     guide_listing_one: "оголошення в каталозі",
     guide_listing_many: "оголошень у каталозі",
     guide_parts_label: "Основні частини",
@@ -114,6 +117,9 @@ const TRANSLATIONS = {
     step_5: "Вы получаете контакт",
     status_available: "ДОСТУПНА",
     status_busy: "ЗАНЯТА",
+    sort_default: "По умолчанию",
+    sort_price_asc: "Сначала дешевле",
+    sort_price_desc: "Сначала дороже",
     guide_listing_one: "объявление в каталоге",
     guide_listing_many: "объявлений в каталоге",
     guide_parts_label: "Основные части",
@@ -196,6 +202,9 @@ const TRANSLATIONS = {
     step_5: "You get the contact",
     status_available: "AVAILABLE",
     status_busy: "BUSY",
+    sort_default: "Default",
+    sort_price_asc: "Price: low to high",
+    sort_price_desc: "Price: high to low",
     guide_listing_one: "listing in catalog",
     guide_listing_many: "listings in catalog",
     guide_parts_label: "Main parts",
@@ -713,6 +722,7 @@ export default function EquipmentMarketplace() {
   });
   const [showDispatcherAuth, setShowDispatcherAuth] = useState(false);
   const [filterMaxPrice, setFilterMaxPrice] = useState("");
+  const [sortBy, setSortBy] = useState("default");
   const [favorites, setFavorites] = useState(new Set());
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [recentlyViewed, setRecentlyViewed] = useState([]);
@@ -798,14 +808,30 @@ export default function EquipmentMarketplace() {
   const scrollToApp = () => appSectionRef.current?.scrollIntoView({ behavior: "smooth" });
 
   const filtered = useMemo(() => {
-    return listings.filter(
+    const base = listings.filter(
       (l) =>
         (filterType === "Усі" || l.type === filterType) &&
         (filterRegion === "Усі" || l.region === filterRegion) &&
         (!filterMaxPrice || l.price <= Number(filterMaxPrice)) &&
         (!showFavoritesOnly || favorites.has(l.id))
     );
-  }, [listings, filterType, filterRegion, filterMaxPrice, showFavoritesOnly, favorites]);
+    if (sortBy === "price_asc") return [...base].sort((a, b) => a.price - b.price);
+    if (sortBy === "price_desc") return [...base].sort((a, b) => b.price - a.price);
+    return base;
+  }, [listings, filterType, filterRegion, filterMaxPrice, showFavoritesOnly, favorites, sortBy]);
+
+  // Середній рейтинг власника — рахуємо з відгуків, прив'язаних до його імені
+  const ownerRatings = useMemo(() => {
+    const sums = {};
+    reviews.forEach((r) => {
+      if (!sums[r.ownerName]) sums[r.ownerName] = { total: 0, count: 0 };
+      sums[r.ownerName].total += r.rating;
+      sums[r.ownerName].count += 1;
+    });
+    const avg = {};
+    Object.entries(sums).forEach(([name, { total, count }]) => (avg[name] = { avg: total / count, count }));
+    return avg;
+  }, [reviews]);
 
   const flashToast = (msg) => {
     setToast(msg);
@@ -2112,6 +2138,11 @@ export default function EquipmentMarketplace() {
               <option key={r}>{r}</option>
             ))}
           </select>
+          <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} style={selectStyle}>
+            <option value="default">{t("sort_default")}</option>
+            <option value="price_asc">{t("sort_price_asc")}</option>
+            <option value="price_desc">{t("sort_price_desc")}</option>
+          </select>
           <input
             type="number"
             value={filterMaxPrice}
@@ -2170,6 +2201,38 @@ export default function EquipmentMarketplace() {
             style={{ padding: "18px 16px", cursor: "pointer" }}
             onClick={() => setDetailListing(l)}
           >
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                const url = `${window.location.origin}${window.location.pathname}#listing-${l.id}`;
+                navigator.clipboard?.writeText(url);
+                flashToast("Посилання скопійовано");
+              }}
+              aria-label="Поділитися"
+              style={{
+                position: "absolute",
+                top: 2,
+                right: 46,
+                width: 44,
+                height: 44,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                fontSize: 15,
+                color: "#70777D",
+                zIndex: 2,
+              }}
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4">
+                <circle cx="12.5" cy="3.5" r="2" />
+                <circle cx="3.5" cy="8" r="2" />
+                <circle cx="12.5" cy="12.5" r="2" />
+                <path d="M5.3 7L10.7 4.3M5.3 9L10.7 11.7" />
+              </svg>
+            </button>
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -2239,7 +2302,12 @@ export default function EquipmentMarketplace() {
                 >
                   {l.price} ₴<span style={{ fontSize: 12, color: "#A3A8AD", WebkitTextFillColor: "#A3A8AD" }}>/{l.unit}</span>
                 </div>
-                <div style={{ fontSize: 11, color: "#A3A8AD" }}>{l.region} · {l.owner}</div>
+                <div style={{ fontSize: 11, color: "#A3A8AD" }}>
+                  {l.region} · {l.owner}
+                  {ownerRatings[l.owner] && (
+                    <span style={{ color: "#FFB52E" }}> · ★ {ownerRatings[l.owner].avg.toFixed(1)} ({ownerRatings[l.owner].count})</span>
+                  )}
+                </div>
                 {l.photo && l.photo.startsWith("data:") && (
                   <div
                     style={{
@@ -3806,10 +3874,21 @@ function RequestForm({ onSubmit, user, initial, t }) {
     requesterName: user?.name || "",
   });
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
+  const [contactError, setContactError] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  const isValidContact = (v) => {
+    const digits = v.replace(/\D/g, "");
+    return digits.length >= 9 || /^@?[a-zA-Z0-9_]{5,}$/.test(v.trim());
+  };
 
   const submit = (e) => {
     e.preventDefault();
-    if (!form.contact) return;
+    if (!form.contact || !isValidContact(form.contact)) {
+      setContactError(true);
+      return;
+    }
+    setSubmitting(true);
     onSubmit(form);
   };
 
@@ -3863,10 +3942,24 @@ function RequestForm({ onSubmit, user, initial, t }) {
 
       <StepLabel n={4} of={4} text={t("request_step_4")} />
       <Field label="Контакт для зв'язку (телефон/Telegram)">
-        <input value={form.contact} onChange={set("contact")} placeholder="+380..." style={inputStyle} />
+        <input
+          value={form.contact}
+          onChange={(e) => {
+            setContactError(false);
+            set("contact")(e);
+          }}
+          placeholder="+380... або @username"
+          style={inputStyle}
+        />
+        {contactError && <ErrorText>Вкажіть номер телефону (мін. 9 цифр) або Telegram @username</ErrorText>}
       </Field>
-      <button className="btn-premium-hover" type="submit" style={{ ...primaryBtn, marginTop: 8, width: "100%" }}>
-        Надіслати заявку
+      <button
+        className="btn-premium-hover"
+        type="submit"
+        disabled={submitting}
+        style={{ ...primaryBtn, marginTop: 8, width: "100%", opacity: submitting ? 0.6 : 1, cursor: submitting ? "default" : "pointer" }}
+      >
+        {submitting ? "Надсилаємо..." : "Надіслати заявку"}
       </button>
     </form>
   );
