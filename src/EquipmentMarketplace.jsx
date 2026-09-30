@@ -567,7 +567,7 @@ function EquipmentIcon({ type, size = 24, style }) {
         alt={type}
         width={size}
         height={size}
-        style={{ objectFit: "cover", borderRadius: size > 32 ? 10 : 6, ...style }}
+        style={{ objectFit: "cover", borderRadius: size > 32 ? 10 : 6, border: "2px solid #FF6A1A", ...style }}
       />
     );
   }
@@ -1749,7 +1749,7 @@ export default function EquipmentMarketplace() {
               <span className="road-track">
                 <span className="road-fill" />
               </span>
-              <span className="tractor-icon"><img src={ICON_IMG_EXCAVATOR} alt="" width={30} height={30} style={{ objectFit: "cover", borderRadius: 6 }} /></span>
+              <span className="tractor-icon"><IconExcavator size={20} style={{ color: "#FF6A1A" }} /></span>
             </span>
           </span>
           <Label><MorphingTagline text="біржа будтехніки" /></Label>
