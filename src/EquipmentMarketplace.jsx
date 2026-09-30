@@ -286,15 +286,33 @@ const TYPES = [
   "Гідромолот",
   "Кран",
   "Бульдозер",
+  "Каток",
 ];
 
 const REGIONS = [
-  "Ужгород",
-  "Мукачево",
-  "Львів",
   "Київ",
-  "Миколаїв",
+  "Харків",
+  "Дніпро",
   "Одеса",
+  "Львів",
+  "Запоріжжя",
+  "Вінниця",
+  "Житомир",
+  "Івано-Франківськ",
+  "Кропивницький",
+  "Луцьк",
+  "Миколаїв",
+  "Полтава",
+  "Рівне",
+  "Суми",
+  "Тернопіль",
+  "Ужгород",
+  "Хмельницький",
+  "Черкаси",
+  "Чернігів",
+  "Чернівці",
+  "Мукачево",
+  "Інше",
 ];
 
 const seedListings = [
@@ -315,7 +333,7 @@ const seedListings = [
     type: "Гідромолот",
     brand: "CAT M320 + Hammer HM950",
     region: "Мукачево",
-    price: 980,
+    price: 1250,
     unit: "год",
     specs: { "Енергія удару": "950 Дж", "Вага молота": "950 кг" },
     owner: "БудТехСервіс",
@@ -327,13 +345,25 @@ const seedListings = [
     type: "Самоскид",
     brand: "МАЗ 5551",
     region: "Львів",
-    price: 750,
+    price: 850,
     unit: "год",
     specs: { "Вантажопідйомність": "10 т", "Об'єм кузова": "6 м³" },
     owner: "ЛьвівБуд",
     photo: null,
     available: false,
     busyUntil: "2026-09-12",
+  },
+  {
+    id: 5,
+    type: "Каток",
+    brand: "BOMAG BW 120 AD",
+    region: "Київ",
+    price: 1100,
+    unit: "год",
+    specs: { "Клас": "Середній (7 т)", "Тип вальця": "Гладковальцевий вібраційний" },
+    owner: "КиївДорБуд",
+    photo: null,
+    available: true,
   },
   {
     id: 4,
@@ -349,7 +379,7 @@ const seedListings = [
   },
 ];
 
-const TAGLINE_ICONS = [IconExcavator, IconLoader, IconDumpTruck, IconHammer, IconCrane, IconBulldozer];
+const TAGLINE_ICONS = [IconExcavator, IconLoader, IconDumpTruck, IconHammer, IconCrane, IconBulldozer, IconRoller];
 
 function MorphingTagline({ text }) {
   const letters = text.split("");
@@ -475,6 +505,19 @@ function IconBulldozer({ size = 24, style }) {
   );
 }
 
+function IconRoller({ size = 24, style }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 32 32" style={style} fill="currentColor">
+      <circle cx="7" cy="19" r="5.2" />
+      <circle cx="7" cy="19" r="2" fill={ICON_DARK} />
+      <path d="M11 15.5h11.5c.8 0 1.4.6 1.4 1.4v5.6H11z" fill={ICON_DARK} />
+      <path d="M13.5 16.7h5.2v3.2h-5.2z" />
+      <circle cx="24" cy="24" r="2.6" fill={ICON_DARK} />
+      <rect x="10" y="24" width="9" height="2.4" rx="0.6" fill={ICON_DARK} />
+    </svg>
+  );
+}
+
 const ICONS_BY_TYPE = {
   Екскаватор: IconExcavator,
   Навантажувач: IconLoader,
@@ -482,6 +525,7 @@ const ICONS_BY_TYPE = {
   Гідромолот: IconHammer,
   Кран: IconCrane,
   Бульдозер: IconBulldozer,
+  Каток: IconRoller,
 };
 
 function SectionDivider({ n, of, title }) {
@@ -531,6 +575,11 @@ const EQUIPMENT_INFO = {
     definition: "Гусенична машина з відвалом для розрівнювання, зрізання та переміщення великих обсягів ґрунту.",
     parts: ["Відвал", "Гусениці", "Кабіна"],
     uses: ["Розрівнювання ділянки", "Зрізання ґрунту", "Розчищення території"],
+  },
+  "Каток": {
+    definition: "Дорожня машина для ущільнення ґрунту, щебеню та асфальту вагою вальця. Легкі (до 5 т), середні (6-10 т) і важкі (понад 10 т) — залежно від товщини шару, що ущільнюється.",
+    parts: ["Валець", "Кабіна", "Вібраційний механізм"],
+    uses: ["Ущільнення асфальту", "Ущільнення ґрунту", "Будівництво доріг"],
   },
 };
 
@@ -2190,7 +2239,7 @@ export default function EquipmentMarketplace() {
         style={{
           padding: "16px 24px 64px",
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
+          gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
           gap: 16,
         }}
       >
@@ -2198,7 +2247,7 @@ export default function EquipmentMarketplace() {
           <Plate
             key={l.id}
             className="equipment-card"
-            style={{ padding: "18px 16px", cursor: "pointer" }}
+            style={{ padding: "14px 12px", cursor: "pointer" }}
             onClick={() => setDetailListing(l)}
           >
             <button
@@ -2335,6 +2384,19 @@ export default function EquipmentMarketplace() {
                 onClick={(e) => {
                   e.stopPropagation();
                   trackViewed(l.id);
+                  try {
+                    fetch("/api/notify", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        type: l.type,
+                        region: l.region,
+                        comment: `Клієнт відгукнувся на оголошення: ${l.brand} (${l.owner})`,
+                        contact: user?.phone || "не вказано (натиснув «Відгукнутись» без входу)",
+                        requesterName: user?.name || "Гість сайту",
+                      }),
+                    }).catch(() => {});
+                  } catch (e) {}
                   flashToast(`Запит надіслано власнику "${l.owner}"`);
                 }}
                 style={{
@@ -2495,6 +2557,19 @@ export default function EquipmentMarketplace() {
               disabled={!detailListing.available}
               onClick={() => {
                 trackViewed(detailListing.id);
+                try {
+                  fetch("/api/notify", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      type: detailListing.type,
+                      region: detailListing.region,
+                      comment: `Клієнт відгукнувся на оголошення: ${detailListing.brand} (${detailListing.owner})`,
+                      contact: user?.phone || "не вказано (натиснув «Відгукнутись» без входу)",
+                      requesterName: user?.name || "Гість сайту",
+                    }),
+                  }).catch(() => {});
+                } catch (e) {}
                 flashToast(`Запит надіслано власнику "${detailListing.owner}"`);
                 setDetailListing(null);
               }}
@@ -3382,8 +3457,44 @@ const LOCAL_RULES = [
 ];
 const REGION_ALIASES = { "Ужгород": ["ужгород"], "Мукачево": ["мукачев"], "Львів": ["львів", "львов"], "Київ": ["київ", "києв", "киев"], "Миколаїв": ["миколаїв", "миколає", "николаев"], "Одеса": ["одес"] };
 
+// Комплексні задачі — коли потрібна не одна машина, а набір техніки
+const TASK_SCENARIOS = [
+  {
+    name: "Будівництво дороги",
+    keys: ["побудувати дорог", "построить дорог", "будівництво дороги", "строительство дороги", "прокласти дорог", "проложить дорог", "асфальтуван", "асфальтирован"],
+    types: ["Бульдозер", "Самоскид", "Каток", "Навантажувач"],
+    why: "Для будівництва дороги зазвичай потрібен комплекс техніки: бульдозер розрівнює основу, самоскид підвозить щебінь і матеріали, каток ущільнює покриття, а навантажувач переміщує сипучі матеріали.",
+  },
+  {
+    name: "Знесення будівлі",
+    keys: ["знести буд", "снести зда", "демонтаж буд", "демонтаж здани", "розібрати буд", "разобрать зда", "знесення будівл"],
+    types: ["Гідромолот", "Екскаватор", "Самоскид"],
+    why: "Знесення будівлі — це зазвичай гідромолот (руйнує стіни і фундамент), екскаватор (розбирає та вантажить уламки) і самоскид (вивозить будівельне сміття з об'єкта).",
+  },
+  {
+    name: "Розчищення території",
+    keys: ["розчистити терит", "расчистить террит", "корчуван", "корчеван", "вирубк", "вырубк", "пнів", "пней", "очищення ділянки", "очистка участка"],
+    types: ["Бульдозер", "Екскаватор", "Самоскид"],
+    why: "Для розчищення території та корчування пнів найчастіше беруть бульдозер (зрізає та зсуває), екскаватор (виривання коріння і пнів) та самоскид (вивезення гілок і залишків).",
+  },
+];
+
 function localAssistantReply(text) {
   const q = text.toLowerCase();
+  const scenario = TASK_SCENARIOS.find((s) => s.keys.some((k) => q.includes(k)));
+  if (scenario) {
+    let region = null;
+    for (const [name, aliases] of Object.entries(REGION_ALIASES)) {
+      if (aliases.some((a) => q.includes(a))) { region = name; break; }
+    }
+    return {
+      type: scenario.types[0],
+      types: scenario.types,
+      region, budget: null,
+      comment: text.slice(0, 140),
+      reply: `${scenario.why} Нижче — підходяща техніка з кожної категорії з вашого каталогу.`,
+    };
+  }
   const rule = LOCAL_RULES.find((r) => r.keys.some((k) => q.includes(k)));
   let region = null;
   for (const [name, aliases] of Object.entries(REGION_ALIASES)) {
@@ -3505,16 +3616,20 @@ function AiAssistant({ user, onPrefillRequest, onViewListing, listings, t, open,
 
       // Ground the recommendation in real inventory: find an actual available listing
       // matching the type (and region, if given) instead of only suggesting an abstract type.
-      let matchedListing = null;
-      if (parsed.type && listings) {
-        const byTypeAndRegion = listings.filter((l) => l.available && l.type === parsed.type && (!parsed.region || l.region === parsed.region));
-        const byTypeOnly = listings.filter((l) => l.available && l.type === parsed.type);
-        matchedListing = byTypeAndRegion[0] || byTypeOnly[0] || null;
-      }
+      const findMatch = (ty) => {
+        if (!ty || !listings) return null;
+        const byTypeAndRegion = listings.filter((l) => l.available && l.type === ty && (!parsed.region || l.region === parsed.region));
+        const byTypeOnly = listings.filter((l) => l.available && l.type === ty);
+        return byTypeAndRegion[0] || byTypeOnly[0] || null;
+      };
+      const matchedListing = findMatch(parsed.type);
+      const matchedListings = Array.isArray(parsed.types)
+        ? parsed.types.map((ty) => findMatch(ty)).filter(Boolean)
+        : null;
 
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", text: replyText, suggestion: parsed.type ? parsed : null, matchedListing },
+        { role: "assistant", text: replyText, suggestion: parsed.type ? parsed : null, matchedListing: matchedListings ? null : matchedListing, matchedListings },
       ]);
       speak(replyText);
     } catch (err) {
@@ -3586,6 +3701,35 @@ function AiAssistant({ user, onPrefillRequest, onViewListing, listings, t, open,
                     </div>
                   </div>
                 )}
+                {m.matchedListings && m.matchedListings.length > 0 && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 8 }}>
+                    {m.matchedListings.map((l) => (
+                      <div
+                        key={l.id}
+                        onClick={() => onViewListing && onViewListing(l)}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 10,
+                          padding: 8,
+                          background: "#191C1F",
+                          borderRadius: 10,
+                          cursor: "pointer",
+                        }}
+                      >
+                        <div style={{ color: "#FF6A1A", flexShrink: 0 }}>
+                          <EquipmentIcon type={l.type} size={24} />
+                        </div>
+                        <div style={{ minWidth: 0 }}>
+                          <div style={{ fontSize: 12, fontWeight: 600, color: "#F4F4F1" }}>{l.type} · {l.brand}</div>
+                          <div style={{ fontSize: 10.5, color: "#A3A8AD" }}>
+                            {l.region} · {l.price} ₴/{l.unit}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
                 {m.suggestion && (
                   <button
                     className="ai-suggestion-btn"
@@ -3607,7 +3751,7 @@ function AiAssistant({ user, onPrefillRequest, onViewListing, listings, t, open,
             {loading && <div className="ai-bubble assistant">Друкує…</div>}
             {messages.length === 1 && !loading && (
               <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 6 }}>
-                {["Підібрати екскаватор", "Знайти техніку поруч", "Створити заявку", "Пояснити різницю між технікою"].map((s) => (
+                {["Побудувати дорогу", "Знести будівлю", "Розчистити територію", "Підібрати екскаватор", "Створити заявку", "Пояснити різницю між технікою"].map((s) => (
                   <button
                     key={s}
                     onClick={() => setInput(s)}
@@ -3750,7 +3894,7 @@ function AddListingForm({ onSubmit, user }) {
     spec1Val: "",
     spec2Key: "Об'єм / вантажопідйомність",
     spec2Val: "",
-    photo: "",
+    photos: [],
     owner: user ? user.org || user.name : "",
     busyUntil: "",
   });
@@ -3758,12 +3902,14 @@ function AddListingForm({ onSubmit, user }) {
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
   const handlePhoto = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => setForm((f) => ({ ...f, photo: reader.result }));
-    reader.readAsDataURL(file);
+    const files = Array.from(e.target.files || []).slice(0, 3 - form.photos.length);
+    files.forEach((file) => {
+      const reader = new FileReader();
+      reader.onload = () => setForm((f) => ({ ...f, photos: [...f.photos, reader.result].slice(0, 3) }));
+      reader.readAsDataURL(file);
+    });
   };
+  const removePhoto = (i) => setForm((f) => ({ ...f, photos: f.photos.filter((_, idx) => idx !== i) }));
 
   const submit = (e) => {
     e.preventDefault();
@@ -3771,10 +3917,10 @@ function AddListingForm({ onSubmit, user }) {
     onSubmit({
       type: form.type,
       brand: form.brand,
-      region: form.region,
+      region: form.region === "Інше" ? (form.customRegion || "Інше") : form.region,
       price: Number(form.price),
       unit: form.unit,
-      photo: form.photo || null,
+      photos: form.photos,
       owner: form.owner,
       busyUntil: form.busyUntil || null,
       available: !form.busyUntil,
@@ -3796,14 +3942,24 @@ function AddListingForm({ onSubmit, user }) {
           Ви не увійшли — вкажіть назву організації вручну, або спочатку зареєструйтесь.
         </div>
       )}
-      <Field label="Фото техніки (необов'язково)">
-        <input type="file" accept="image/*" onChange={handlePhoto} style={inputStyle} />
-        {form.photo && form.photo.startsWith("data:") && (
-          <img
-            src={form.photo}
-            alt="Прев'ю техніки"
-            style={{ width: 84, height: 84, objectFit: "cover", marginTop: 8, border: "1px solid #63696D" }}
-          />
+      <Field label={`Фото техніки — до 3 шт. (необов'язково)`}>
+        <input type="file" accept="image/*" multiple onChange={handlePhoto} disabled={form.photos.length >= 3} style={inputStyle} />
+        {form.photos.length > 0 && (
+          <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
+            {form.photos.map((p, i) => (
+              <div key={i} style={{ position: "relative" }}>
+                <img src={p} alt={`Прев'ю ${i + 1}`} style={{ width: 84, height: 84, objectFit: "cover", border: "1px solid #63696D" }} />
+                <button
+                  type="button"
+                  onClick={() => removePhoto(i)}
+                  aria-label="Прибрати фото"
+                  style={{ position: "absolute", top: -6, right: -6, width: 20, height: 20, borderRadius: "50%", background: "#08090A", border: "1px solid #63696D", color: "#F4F4F1", fontSize: 12, cursor: "pointer" }}
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
         )}
         <span style={{ fontSize: 11, color: "#A3A8AD", marginTop: 4, display: "block" }}>
           Без фото буде показана іконка типу техніки
@@ -3824,6 +3980,14 @@ function AddListingForm({ onSubmit, user }) {
         <select value={form.region} onChange={set("region")} style={inputStyle}>
           {REGIONS.map((r) => <option key={r}>{r}</option>)}
         </select>
+        {form.region === "Інше" && (
+          <input
+            value={form.customRegion || ""}
+            onChange={set("customRegion")}
+            placeholder="Вкажіть місто, селище чи область"
+            style={{ ...inputStyle, marginTop: 8 }}
+          />
+        )}
       </Field>
       <div style={{ display: "flex", gap: 10 }}>
         <Field label="Ціна" style={{ flex: 1 }}>
@@ -3889,7 +4053,7 @@ function RequestForm({ onSubmit, user, initial, t }) {
       return;
     }
     setSubmitting(true);
-    onSubmit(form);
+    onSubmit({ ...form, region: form.region === "Інше" ? (form.customRegion || "Інше") : form.region });
   };
 
   return (
@@ -3930,6 +4094,14 @@ function RequestForm({ onSubmit, user, initial, t }) {
         <select value={form.region} onChange={set("region")} style={inputStyle}>
           {REGIONS.map((r) => <option key={r}>{r}</option>)}
         </select>
+        {form.region === "Інше" && (
+          <input
+            value={form.customRegion || ""}
+            onChange={set("customRegion")}
+            placeholder="Вкажіть місто, селище чи область"
+            style={{ ...inputStyle, marginTop: 8 }}
+          />
+        )}
       </Field>
 
       <StepLabel n={3} of={4} text={t("request_step_3")} />
