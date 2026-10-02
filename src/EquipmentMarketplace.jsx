@@ -623,7 +623,7 @@ const EQUIPMENT_INFO = {
   },
 };
 
-function EquipmentGuide({ listings, onSelectCategory, t }) {
+function EquipmentGuide({ listings, onSelectCategory, t, lang }) {
   const [index, setIndex] = useState(0);
   const touchStartX = useRef(null);
   const type = TYPES[index];
@@ -647,8 +647,10 @@ function EquipmentGuide({ listings, onSelectCategory, t }) {
       <button onClick={() => go(1)} aria-label="Наступний тип" style={carouselArrowStyle("right")}>›</button>
 
       <div
+        key={index}
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
+        className="guide-card-motion"
         style={{
           background: "#15181A",
           border: "1px solid #63696D",
@@ -664,7 +666,7 @@ function EquipmentGuide({ listings, onSelectCategory, t }) {
           <EquipmentIcon type={type} size={56} />
         </div>
         <h3 style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif", fontSize: 22, margin: "12px 0 4px" }}>
-          {type}
+          {tType(type, lang)}
         </h3>
         <div style={{ fontSize: 12, color: "#70777D", marginBottom: 14 }}>
           {count} {count === 1 ? t("guide_listing_one") : t("guide_listing_many")}
@@ -1395,6 +1397,17 @@ export default function EquipmentMarketplace() {
         }
         @media (prefers-reduced-motion: reduce) {
           .hero-video-drip-zone:hover .drip { animation: none; opacity: 0; }
+        }
+
+        .guide-card-motion {
+          animation: guideCardIn 0.35s var(--motion-normal);
+        }
+        @keyframes guideCardIn {
+          from { opacity: 0; transform: scale(0.97) translateY(6px); }
+          to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .guide-card-motion { animation: none; }
         }
 
         @keyframes badgePulse {
@@ -2190,6 +2203,7 @@ export default function EquipmentMarketplace() {
           </div>
           <EquipmentGuide
             t={t}
+            lang={lang}
             listings={listings}
             onSelectCategory={(type) => {
               setRole("client");
@@ -2342,11 +2356,11 @@ export default function EquipmentMarketplace() {
           gap: 16,
         }}
       >
-        {filtered.map((l) => (
+        {filtered.map((l, i) => (
           <Plate
             key={l.id}
-            className="equipment-card"
-            style={{ padding: "14px 12px", cursor: "pointer" }}
+            className="equipment-card reveal"
+            style={{ padding: "14px 12px", cursor: "pointer", transitionDelay: `${Math.min(i % 6, 5) * 0.06}s` }}
             onClick={() => openDetail(l)}
           >
             <button
