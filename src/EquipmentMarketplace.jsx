@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from "react";
+import { supabase } from "./supabaseClient";
 
 // ---- Bot API config ----
 // TODO: після розгортання бота на Railway/Render замініть на реальну адресу,
@@ -793,6 +794,35 @@ export default function EquipmentMarketplace() {
   };
   const [aiOpen, setAiOpen] = useState(false);
   const [requests, setRequests] = useState([]);
+
+  useEffect(() => {
+    if (!supabase) return;
+    supabase
+      .from("requests")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .then(({ data, error }) => {
+        if (error) {
+          console.error("Supabase load (requests) failed:", error.message);
+          return;
+        }
+        setRequests(
+          data.map((r) => ({
+            id: r.id,
+            type: r.type,
+            region: r.region,
+            dateFrom: r.date_from,
+            budget: r.budget,
+            comment: r.comment,
+            contact: r.contact,
+            requesterName: r.requester_name,
+            status: r.status,
+            ownerStatuses: {},
+            log: [],
+          }))
+        );
+      });
+  }, []);
   const [toast, setToast] = useState(null);
   const [user, setUser] = useState(null);
   const [showAuthForm, setShowAuthForm] = useState(false);
@@ -940,7 +970,7 @@ export default function EquipmentMarketplace() {
     flashToast("Техніку додано в каталог");
   };
 
-  const handleSubmitRequest = (data) => {
+  const handleSubmitRequest = async (data) => {
     // Надсилаємо заявку в Telegram (працює на реальному сайті; у чат-превью тихо ігнорується)
     try {
       fetch("/api/notify", {
@@ -949,8 +979,33 @@ export default function EquipmentMarketplace() {
         body: JSON.stringify(data),
       }).catch(() => {});
     } catch (e) {}
+
+    // Зберігаємо заявку в базу даних — клієнт може лишати заявки без входу (client_id = null)
+    let savedId = null;
+    if (supabase) {
+      try {
+        const { data: row, error } = await supabase
+          .from("requests")
+          .insert({
+            type: data.type,
+            region: data.region,
+            date_from: data.dateFrom || null,
+            budget: data.budget ? Number(data.budget) : null,
+            comment: data.comment || null,
+            contact: data.contact,
+            requester_name: data.requesterName || null,
+          })
+          .select()
+          .single();
+        if (error) console.error("Supabase insert (requests) failed:", error.message);
+        else savedId = row.id;
+      } catch (e) {
+        console.error("Supabase unreachable:", e.message);
+      }
+    }
+
     setRequests((prev) => [
-      { ...data, id: prev.length + 1, status: "new", ownerStatuses: {}, log: [] },
+      { ...data, id: savedId || prev.length + 1, status: "new", ownerStatuses: {}, log: [] },
       ...prev,
     ]);
     setShowRequestForm(false);
@@ -2220,13 +2275,13 @@ export default function EquipmentMarketplace() {
       {role === "client" && (
         <div style={{ padding: "0 24px 8px", display: "flex", gap: 10, flexWrap: "wrap" }}>
           <select value={filterType} onChange={(e) => setFilterType(e.target.value)} style={selectStyle}>
-            <option>{t("filter_all")}</option>
+            <option value="Усі">{t("filter_all")}</option>
             {TYPES.map((ty) => (
               <option key={ty} value={ty}>{tType(ty, lang)}</option>
             ))}
           </select>
           <select value={filterRegion} onChange={(e) => setFilterRegion(e.target.value)} style={selectStyle}>
-            <option>{t("filter_all")}</option>
+            <option value="Усі">{t("filter_all")}</option>
             {REGIONS.filter((r) => r !== "Інше").map((r) => (
               <option key={r}>{r}</option>
             ))}
