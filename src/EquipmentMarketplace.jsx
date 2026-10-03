@@ -797,34 +797,8 @@ export default function EquipmentMarketplace() {
   const [aiOpen, setAiOpen] = useState(false);
   const [requests, setRequests] = useState([]);
 
-  useEffect(() => {
-    if (!supabase) return;
-    supabase
-      .from("requests")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .then(({ data, error }) => {
-        if (error) {
-          console.error("Supabase load (requests) failed:", error.message);
-          return;
-        }
-        setRequests(
-          data.map((r) => ({
-            id: r.id,
-            type: r.type,
-            region: r.region,
-            dateFrom: r.date_from,
-            budget: r.budget,
-            comment: r.comment,
-            contact: r.contact,
-            requesterName: r.requester_name,
-            status: r.status,
-            ownerStatuses: {},
-            log: [],
-          }))
-        );
-      });
-  }, []);
+  // Читання заявок з бази для панелі диспетчера потребує входу диспетчера (RLS) —
+  // це наступний крок. Поки що заявки видно в Supabase Table Editor і в Telegram.
   const [toast, setToast] = useState(null);
   const [user, setUser] = useState(null);
   const [showAuthForm, setShowAuthForm] = useState(false);
@@ -986,21 +960,18 @@ export default function EquipmentMarketplace() {
     let savedId = null;
     if (supabase) {
       try {
-        const { data: row, error } = await supabase
-          .from("requests")
-          .insert({
-            type: data.type,
-            region: data.region,
-            date_from: data.dateFrom || null,
-            budget: data.budget ? Number(data.budget) : null,
-            comment: data.comment || null,
-            contact: data.contact,
-            requester_name: data.requesterName || null,
-          })
-          .select()
-          .single();
+        // Без .select(): анонімний відвідувач може лише створювати заявку,
+        // читати чужі заявки (з телефонами) йому заборонено політиками RLS.
+        const { error } = await supabase.from("requests").insert({
+          type: data.type,
+          region: data.region,
+          date_from: data.dateFrom || null,
+          budget: data.budget ? Number(data.budget) : null,
+          comment: data.comment || null,
+          contact: data.contact,
+          requester_name: data.requesterName || null,
+        });
         if (error) console.error("Supabase insert (requests) failed:", error.message);
-        else savedId = row.id;
       } catch (e) {
         console.error("Supabase unreachable:", e.message);
       }
