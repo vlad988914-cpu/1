@@ -812,14 +812,8 @@ export default function EquipmentMarketplace() {
     flashToast("Email скопійовано: demolis@ukr.net");
   };
   const [reviews, setReviews] = useState([]);
-  const [dispatcherUnlocked, setDispatcherUnlocked] = useState(() => {
-    try {
-      return typeof window !== "undefined" && window.localStorage.getItem("techmaydanchik_dispatcher_unlocked") === "true";
-    } catch {
-      return false;
-    }
-  });
-  const [showDispatcherAuth, setShowDispatcherAuth] = useState(false);
+  // Доступ диспетчера дає лише справжній акаунт з роллю dispatcher (перевіряється базою через RLS)
+  const dispatcherUnlocked = user?.role === "dispatcher";
   const [filterMaxPrice, setFilterMaxPrice] = useState("");
   const [sortBy, setSortBy] = useState("default");
   const [favorites, setFavorites] = useState(new Set());
@@ -963,6 +957,7 @@ export default function EquipmentMarketplace() {
         // Без .select(): анонімний відвідувач може лише створювати заявку,
         // читати чужі заявки (з телефонами) йому заборонено політиками RLS.
         const { error } = await supabase.from("requests").insert({
+          client_id: user?.hasProfile ? user.id : null,
           type: data.type,
           region: data.region,
           date_from: data.dateFrom || null,
@@ -987,6 +982,8 @@ export default function EquipmentMarketplace() {
   };
 
   const applyDispatchLocally = (requestId, ownerIds, ownerNames) => {
+    const curReq = requests.find((r) => r.id === requestId);
+    if (curReq && curReq.status !== "taken") persistStatus(requestId, "dispatched");
     const now = new Date().toLocaleTimeString("uk-UA", { hour: "2-digit", minute: "2-digit" });
     setRequests((prev) =>
       prev.map((r) => {
@@ -1023,6 +1020,14 @@ export default function EquipmentMarketplace() {
   };
 
   const handleOwnerAction = (requestId, ownerId, ownerName, action) => {
+    const curReq = requests.find((r) => r.id === requestId);
+    if (curReq) {
+      if (action === "accepted") persistStatus(requestId, "taken");
+      else if (action === "rejected") {
+        const st = { ...curReq.ownerStatuses, [ownerId]: action };
+        if (!Object.values(st).some((x) => x === "sent")) persistStatus(requestId, "new");
+      }
+    }
     const now = new Date().toLocaleTimeString("uk-UA", { hour: "2-digit", minute: "2-digit" });
     setRequests((prev) =>
       prev.map((r) => {
@@ -1064,22 +1069,141 @@ export default function EquipmentMarketplace() {
     return found ? found.ownerName : `#${id}`;
   }
 
-  const handleRegister = (data) => {
-    setUser(data);
-    setShowAuthForm(false);
-    flashToast(`Ласкаво просимо, ${data.name}!`);
+  // ---- Справжній вхід через Supabase Auth ----
+  const handleAuth = async ({ mode, email, password, name, org, phone, role }) => {
+    if (!supabase) return { error: "З'єднання з базою недоступне" };
+    try {
+      if (mode === "signup") {
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: { data: { name: name.trim(), org: (org || "").trim(), phone: phone.trim(), role } },
+        });
+        if (error) return { error: translateAuthError(error.message) };
+        if (!data.session) {
+          return { info: "Майже готово! Ми надіслали лист на вашу пошту — підтвердіть email за посиланням, потім увійдіть." };
+        }
+        flashToast(`Ласкаво просимо, ${name.trim()}!`);
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) return { error: translateAuthError(error.message) };
+        flashToast("Ви увійшли");
+      }
+      setShowAuthForm(false);
+      return null;
+    } catch (e) {
+      return { error: "Немає зв'язку з сервером. Спробуйте ще раз" };
+    }
   };
 
-  const handleUpdateProfile = (data) => {
-    setUser(data);
+  const handleUpdateProfile = async (data) => {
+    if (supabase && user?.id && user.hasProfile) {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ name: data.name.trim(), org: (data.org || "").trim() || null, phone: data.phone.trim() })
+        .eq("id", user.id);
+      if (error) {
+        flashToast("Не вдалося зберегти: " + error.message);
+        return;
+      }
+    }
+    setUser({ ...user, name: data.name.trim(), org: (data.org || "").trim(), phone: data.phone.trim() });
     setShowProfile(false);
     flashToast("Дані кабінету оновлено");
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await supabase?.auth.signOut();
+    } catch (e) {}
+    if (user?.role === "dispatcher") setRequests([]); // не лишаємо чужі заявки в пам'яті
     setUser(null);
     setShowProfile(false);
+    setRole((r) => (r === "dispatcher" ? "client" : r));
     flashToast("Ви вийшли з кабінету");
+  };
+
+  // Відновлення сесії при відкритті сайту + реакція на вхід/вихід
+  useEffect(() => {
+    if (!supabase) return;
+    let active = true;
+    const loadProfile = async (session) => {
+      if (!session) {
+        if (active) setUser(null);
+        return;
+      }
+      const { data: p } = await supabase.from("profiles").select("*").eq("id", session.user.id).maybeSingle();
+      if (!active) return;
+      if (p) {
+        setUser({ id: p.id, name: p.name, org: p.org || "", phone: p.phone, email: p.email, role: p.role, hasProfile: true });
+      } else {
+        const m = session.user.user_metadata || {};
+        setUser({
+          id: session.user.id,
+          name: m.name || session.user.email,
+          org: m.org || "",
+          phone: m.phone || "",
+          email: session.user.email,
+          role: m.role === "owner" ? "owner" : "client",
+          hasProfile: false,
+        });
+      }
+    };
+    supabase.auth.getSession().then(({ data }) => loadProfile(data.session));
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      setTimeout(() => loadProfile(session), 0);
+    });
+    return () => {
+      active = false;
+      sub.subscription.unsubscribe();
+    };
+  }, []);
+
+  // Диспетчер бачить усі заявки з бази (RLS пропускає лише роль dispatcher)
+  useEffect(() => {
+    if (!supabase || user?.role !== "dispatcher") return;
+    supabase
+      .from("requests")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .then(({ data, error }) => {
+        if (error) {
+          console.error("Supabase load (requests) failed:", error.message);
+          return;
+        }
+        setRequests(
+          data.map((r) => ({
+            id: r.id,
+            type: r.type,
+            region: r.region,
+            dateFrom: r.date_from,
+            budget: r.budget,
+            comment: r.comment,
+            contact: r.contact,
+            requesterName: r.requester_name,
+            status: r.status,
+            ownerStatuses: {},
+            log: [],
+          }))
+        );
+      });
+  }, [user?.id, user?.role]);
+
+  // Страховка: якщо сесія закінчилась — виходимо з панелі диспетчера
+  useEffect(() => {
+    if (role === "dispatcher" && user?.role !== "dispatcher") setRole("client");
+  }, [role, user]);
+
+  // Зберігаємо статус заявки в базу (лише диспетчер; решті RLS не дозволить)
+  const persistStatus = (requestId, status) => {
+    if (!supabase || user?.role !== "dispatcher") return;
+    supabase
+      .from("requests")
+      .update({ status })
+      .eq("id", requestId)
+      .then(({ error }) => {
+        if (error) console.error("Supabase update (requests) failed:", error.message);
+      });
   };
 
   return (
@@ -2578,7 +2702,13 @@ export default function EquipmentMarketplace() {
             © {new Date().getFullYear()} ТехМайданчик
           </span>
           <button
-            onClick={() => (dispatcherUnlocked ? setRole("dispatcher") : setShowDispatcherAuth(true))}
+            onClick={() => {
+              if (dispatcherUnlocked) setRole("dispatcher");
+              else if (!user) {
+                setShowAuthForm(true);
+                flashToast("Панель диспетчера: спершу увійдіть у свій акаунт");
+              } else flashToast("Панель доступна лише диспетчеру");
+            }}
             style={{
               background: "none",
               border: "none",
@@ -2722,24 +2852,9 @@ export default function EquipmentMarketplace() {
         </Modal>
       )}
 
-      {showDispatcherAuth && (
-        <Modal onClose={() => setShowDispatcherAuth(false)} title={t("footer_dispatcher")}>
-          <DispatcherAuthForm
-            onSuccess={() => {
-              setDispatcherUnlocked(true);
-              try {
-                window.localStorage.setItem("techmaydanchik_dispatcher_unlocked", "true");
-              } catch {}
-              setShowDispatcherAuth(false);
-              setRole("dispatcher");
-            }}
-          />
-        </Modal>
-      )}
-
       {showAuthForm && (
         <Modal onClose={() => setShowAuthForm(false)} title={t("register_title")} splitLeft>
-          <AuthForm onSubmit={handleRegister} />
+          <AuthForm onSubmit={handleAuth} />
         </Modal>
       )}
       {showProfile && user && (
@@ -3266,182 +3381,135 @@ function OwnerChip({ owner, checked, onToggle, highlighted }) {
   );
 }
 
-// ---- Registration form ----
-const DISPATCHER_PASSWORD = "techmaydanchik2026";
-
-function DispatcherAuthForm({ onSuccess }) {
-  const [password, setPassword] = useState("");
-  const [remember, setRemember] = useState(false);
-  const [error, setError] = useState(false);
-
-  const submit = (e) => {
-    e.preventDefault();
-    if (password === DISPATCHER_PASSWORD) {
-      onSuccess();
-    } else {
-      setError(true);
-    }
-  };
-
-  const neuBase = "#1c1c1e";
-  const neuRaised = {
-    background: neuBase,
-    borderRadius: 14,
-    boxShadow: "6px 6px 12px rgba(0,0,0,0.55), -4px -4px 10px rgba(255,255,255,0.03)",
-    border: "none",
-  };
-  const neuInset = {
-    background: neuBase,
-    borderRadius: 12,
-    boxShadow: "inset 4px 4px 8px rgba(0,0,0,0.6), inset -3px -3px 6px rgba(255,255,255,0.025)",
-    border: "none",
-    color: "#F4F4F1",
-    padding: "12px 16px",
-    fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
-    fontSize: 14,
-    outline: "none",
-  };
-
-  return (
-    <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 16, padding: 6 }}>
-      <div style={{ fontSize: 12, color: "#A3A8AD", fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif" }}>
-        Цей розділ бачить телефони клієнтів — доступ лише для диспетчера.
-      </div>
-
-      <div>
-        <Label>Пароль</Label>
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => {
-            setPassword(e.target.value);
-            setError(false);
-          }}
-          style={{ ...neuInset, width: "100%", marginTop: 8 }}
-          autoFocus
-        />
-        {error && <ErrorText>Невірний пароль</ErrorText>}
-      </div>
-
-      <button
-        type="button"
-        onClick={() => setRemember((r) => !r)}
-        style={{
-          ...(remember ? neuInset : neuRaised),
-          display: "flex",
-          alignItems: "center",
-          gap: 10,
-          padding: "12px 16px",
-          cursor: "pointer",
-          fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
-          fontSize: 13,
-          color: "#F4F4F1",
-        }}
-      >
-        <span
-          style={{
-            width: 9,
-            height: 9,
-            borderRadius: "50%",
-            background: remember ? "#FF6A1A" : "#48484a",
-            boxShadow: remember ? "0 0 6px 2px rgba(255,106,26,0.6)" : "none",
-            flexShrink: 0,
-          }}
-        />
-        Запам'ятати мене
-      </button>
-
-      <button
-        type="submit"
-        className="btn-premium-hover"
-        style={{
-          ...neuRaised,
-          padding: "14px 20px",
-          color: "#F4F4F1",
-          fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
-          fontSize: 14,
-          fontWeight: 600,
-          cursor: "pointer",
-        }}
-      >
-        Увійти
-      </button>
-    </form>
-  );
-}
+// ---- Вхід і реєстрація (Supabase Auth) ----
+const translateAuthError = (msg = "") => {
+  const m = msg.toLowerCase();
+  if (m.includes("invalid login")) return "Невірний email або пароль";
+  if (m.includes("already registered") || m.includes("already been registered")) return "Цей email уже зареєстровано — перейдіть на вкладку «Вхід»";
+  if (m.includes("not confirmed")) return "Email ще не підтверджено — відкрийте лист із посиланням";
+  if (m.includes("rate limit") || m.includes("too many")) return "Забагато спроб. Спробуйте за кілька хвилин";
+  if (m.includes("password") && m.includes("least")) return "Пароль закороткий — мінімум 8 символів";
+  if (m.includes("valid email") || m.includes("invalid email")) return "Схоже, email невірний";
+  return "Не вдалося виконати: " + msg;
+};
 
 function AuthForm({ onSubmit }) {
-  const [form, setForm] = useState({ name: "", org: "", phone: "", email: "", role: "client" });
+  const [mode, setMode] = useState("signup"); // signup | login
+  const [form, setForm] = useState({ name: "", org: "", phone: "", email: "", password: "", role: "client" });
   const [errors, setErrors] = useState({});
+  const [serverError, setServerError] = useState("");
+  const [info, setInfo] = useState("");
+  const [loading, setLoading] = useState(false);
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
+  const font = "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif";
 
   const validate = () => {
     const e = {};
-    if (!form.name.trim()) e.name = "Вкажіть ім'я";
-    if (!form.phone.trim()) e.phone = "Вкажіть телефон";
-    else if (!/^\+?[0-9\s()-]{9,}$/.test(form.phone.trim())) e.phone = "Схоже, номер невірний";
+    if (mode === "signup") {
+      if (!form.name.trim()) e.name = "Вкажіть ім'я";
+      if (!form.phone.trim()) e.phone = "Вкажіть телефон";
+      else if (!/^\+?[0-9\s()-]{9,}$/.test(form.phone.trim())) e.phone = "Схоже, номер невірний";
+    }
     if (!form.email.trim()) e.email = "Вкажіть email";
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) e.email = "Схоже, email невірний";
+    if (!form.password) e.password = "Вкажіть пароль";
+    else if (mode === "signup" && form.password.length < 8) e.password = "Пароль — не менше 8 символів";
     setErrors(e);
     return Object.keys(e).length === 0;
   };
 
-  const submit = (ev) => {
+  const submit = async (ev) => {
     ev.preventDefault();
+    setServerError("");
+    setInfo("");
     if (!validate()) return;
-    onSubmit(form);
+    setLoading(true);
+    const result = await onSubmit({ mode, ...form, email: form.email.trim() });
+    setLoading(false);
+    if (result?.error) setServerError(result.error);
+    else if (result?.info) setInfo(result.info);
   };
+
+  const segBtn = (active) => ({
+    flex: 1,
+    padding: "9px 10px",
+    border: `1px solid ${active ? "#FF6A1A" : "#63696D"}`,
+    background: active ? "rgba(255,90,31,0.1)" : "transparent",
+    color: "#ffffff",
+    fontFamily: font,
+    fontSize: 12,
+    cursor: "pointer",
+  });
 
   return (
     <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-      <Field label="Я реєструюсь як">
-        <div style={{ display: "flex", gap: 8 }}>
-          {[
-            { key: "client", label: "Клієнт" },
-            { key: "owner", label: "Власник техніки" },
-          ].map((r) => (
-            <button
-              type="button"
-              key={r.key}
-              onClick={() => setForm((f) => ({ ...f, role: r.key }))}
-              style={{
-                flex: 1,
-                padding: "9px 10px",
-                border: `1px solid ${form.role === r.key ? "#FF6A1A" : "#63696D"}`,
-                background: form.role === r.key ? "rgba(255,90,31,0.1)" : "transparent",
-                color: "#ffffff",
-                fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
-                fontSize: 12,
-                cursor: "pointer",
-              }}
-            >
-              {r.label}
-            </button>
-          ))}
-        </div>
-      </Field>
+      <div style={{ display: "flex", gap: 8 }}>
+        <button type="button" onClick={() => { setMode("signup"); setErrors({}); setServerError(""); setInfo(""); }} style={segBtn(mode === "signup")}>
+          Реєстрація
+        </button>
+        <button type="button" onClick={() => { setMode("login"); setErrors({}); setServerError(""); setInfo(""); }} style={segBtn(mode === "login")}>
+          Вхід
+        </button>
+      </div>
 
-      <Field label="Ім'я та прізвище">
-        <input value={form.name} onChange={set("name")} placeholder="Володимир Іваненко" style={inputStyle} />
-        {errors.name && <ErrorText>{errors.name}</ErrorText>}
-      </Field>
+      {mode === "signup" && (
+        <>
+          <Field label="Я реєструюсь як">
+            <div style={{ display: "flex", gap: 8 }}>
+              {[
+                { key: "client", label: "Клієнт" },
+                { key: "owner", label: "Власник техніки" },
+              ].map((r) => (
+                <button type="button" key={r.key} onClick={() => setForm((f) => ({ ...f, role: r.key }))} style={segBtn(form.role === r.key)}>
+                  {r.label}
+                </button>
+              ))}
+            </div>
+          </Field>
 
-      <Field label="Назва організації (якщо є)">
-        <input value={form.org} onChange={set("org")} placeholder="РЕМСЕРВІС-Н" style={inputStyle} />
-      </Field>
+          <Field label="Ім'я та прізвище">
+            <input value={form.name} onChange={set("name")} placeholder="Володимир Іваненко" autoComplete="name" style={inputStyle} />
+            {errors.name && <ErrorText>{errors.name}</ErrorText>}
+          </Field>
 
-      <Field label="Телефон">
-        <input value={form.phone} onChange={set("phone")} placeholder="+380 XX XXX XX XX" style={inputStyle} />
-        {errors.phone && <ErrorText>{errors.phone}</ErrorText>}
-      </Field>
+          <Field label="Назва організації (якщо є)">
+            <input value={form.org} onChange={set("org")} placeholder="РЕМСЕРВІС-Н" autoComplete="organization" style={inputStyle} />
+          </Field>
+
+          <Field label="Телефон">
+            <input value={form.phone} onChange={set("phone")} placeholder="+380 XX XXX XX XX" autoComplete="tel" style={inputStyle} />
+            {errors.phone && <ErrorText>{errors.phone}</ErrorText>}
+          </Field>
+        </>
+      )}
 
       <Field label="Email">
-        <input type="email" value={form.email} onChange={set("email")} placeholder="name@company.com" style={inputStyle} />
+        <input type="email" value={form.email} onChange={set("email")} placeholder="name@company.com" autoComplete="email" style={inputStyle} />
         {errors.email && <ErrorText>{errors.email}</ErrorText>}
       </Field>
 
-      <button className="btn-premium-hover" type="submit" style={{ ...primaryBtn, marginTop: 8, width: "100%" }}>
-        Зареєструватись
+      <Field label="Пароль">
+        <input
+          type="password"
+          value={form.password}
+          onChange={set("password")}
+          placeholder={mode === "signup" ? "Мінімум 8 символів" : "Ваш пароль"}
+          autoComplete={mode === "login" ? "current-password" : "new-password"}
+          style={inputStyle}
+        />
+        {errors.password && <ErrorText>{errors.password}</ErrorText>}
+      </Field>
+
+      {serverError && <ErrorText>{serverError}</ErrorText>}
+      {info && <span style={{ color: "#5FA876", fontSize: 12, fontFamily: font }}>{info}</span>}
+
+      <button
+        className="btn-premium-hover"
+        type="submit"
+        disabled={loading}
+        style={{ ...primaryBtn, marginTop: 8, width: "100%", opacity: loading ? 0.6 : 1, cursor: loading ? "default" : "pointer" }}
+      >
+        {loading ? "Зачекайте..." : mode === "signup" ? "Зареєструватись" : "Увійти"}
       </button>
     </form>
   );
@@ -3471,7 +3539,7 @@ function ProfileForm({ user, onSave, onLogout }) {
         </span>
         <div>
           <div style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif", fontSize: 17, fontWeight: 600 }}>{form.name}</div>
-          <Label>{form.role === "owner" ? "Власник техніки" : "Клієнт"}{form.org ? ` · ${form.org}` : ""}</Label>
+          <Label>{form.role === "owner" ? "Власник техніки" : form.role === "dispatcher" ? "Диспетчер" : "Клієнт"}{form.org ? ` · ${form.org}` : ""}</Label>
         </div>
       </div>
 
@@ -3486,7 +3554,7 @@ function ProfileForm({ user, onSave, onLogout }) {
           <input value={form.phone} onChange={set("phone")} style={inputStyle} />
         </Field>
         <Field label="Email">
-          <input type="email" value={form.email} onChange={set("email")} style={inputStyle} />
+          <input type="email" value={form.email} readOnly title="Email — це ваш логін, змінити його тут не можна" style={{ ...inputStyle, opacity: 0.6 }} />
         </Field>
 
         <div style={{ display: "flex", gap: 10, marginTop: 8 }}>
