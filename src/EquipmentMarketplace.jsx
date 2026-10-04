@@ -6,8 +6,6 @@ import { answerFromKnowledge, FALLBACK_ANSWER, JOB_PILLS, HELPER_PILLS } from ".
 // TODO: після розгортання бота на Railway/Render замініть на реальну адресу,
 // напр. "https://techmaydanchik-bot.up.railway.app". Той самий ключ має бути
 // прописаний як DISPATCH_API_KEY у bot/.env.
-const BOT_API_URL = "http://localhost:3001";
-const BOT_API_KEY = "change-me";
 
 // ---- i18n ----
 const TRANSLATIONS = {
@@ -769,15 +767,6 @@ const Label = ({ children }) => (
   </div>
 );
 
-const seedOwners = [
-  { id: 1, name: "РЕМСЕРВІС-Н", region: "Ужгород", types: ["Екскаватор", "Гідромолот"], verified: true, phone: "+380 67 111 22 33" },
-  { id: 2, name: "БудТехСервіс", region: "Мукачево", types: ["Гідромолот", "Екскаватор"], verified: true, phone: "+380 66 222 33 44" },
-  { id: 3, name: "Карпати-Буд", region: "Ужгород", types: ["Екскаватор", "Навантажувач"], verified: false, phone: "+380 63 333 44 55" },
-  { id: 4, name: "ЛьвівБуд", region: "Львів", types: ["Самоскид", "Бульдозер"], verified: true, phone: "+380 97 444 55 66" },
-  { id: 5, name: "КиївКранСервіс", region: "Київ", types: ["Кран"], verified: true, phone: "+380 50 555 66 77" },
-  { id: 6, name: "МиколаївТех", region: "Миколаїв", types: ["Екскаватор", "Самоскид"], verified: false, phone: "+380 68 666 77 88" },
-  { id: 7, name: "МиколаївБудуй", region: "Миколаїв", types: ["Екскаватор"], verified: true, phone: "+380 95 777 88 99" },
-];
 
 // ---- Main App ----
 export default function EquipmentMarketplace() {
@@ -798,6 +787,9 @@ export default function EquipmentMarketplace() {
   };
   const [aiOpen, setAiOpen] = useState(false);
   const [requests, setRequests] = useState([]);
+  const [dispatchOwners, setDispatchOwners] = useState([]); // справжні власники з бази (для диспетчера)
+  const [ownerInbox, setOwnerInbox] = useState([]); // запити, надіслані цьому власнику
+  const [showInbox, setShowInbox] = useState(false);
 
   // Читання заявок з бази для панелі диспетчера потребує входу диспетчера (RLS) —
   // це наступний крок. Поки що заявки видно в Supabase Table Editor і в Telegram.
@@ -839,6 +831,7 @@ export default function EquipmentMarketplace() {
     flashToast("Дякуємо за відгук!");
   };
   const myRequestsCount = user ? requests.filter((r) => r.contact === user.phone).length : 0;
+  const inboxPending = ownerInbox.filter((x) => x.dispatch_status === "sent" && x.req_status !== "taken").length;
   const [scrolled, setScrolled] = useState(false);
   const appSectionRef = useRef(null);
   const heroRef = useRef(null);
@@ -1089,80 +1082,96 @@ export default function EquipmentMarketplace() {
     flashToast("Заявку прийнято. Вона в черзі на диспетчеризацію");
   };
 
-  const applyDispatchLocally = (requestId, ownerIds, ownerNames) => {
-    const curReq = requests.find((r) => r.id === requestId);
-    if (curReq && curReq.status !== "taken") persistStatus(requestId, "dispatched");
-    const now = new Date().toLocaleTimeString("uk-UA", { hour: "2-digit", minute: "2-digit" });
+  const nowTime = () => new Date().toLocaleTimeString("uk-UA", { hour: "2-digit", minute: "2-digit" });
+
+  // Надсилання заявки обраним власникам: рядки в request_dispatch + статус заявки «у роботі».
+  // Власник побачить її в кабінеті («Запити для мене») і прийме або відмовиться.
+  const handleDispatch = async (requestId, ownerIds, ownerNames) => {
+    if (!supabase || user?.role !== "dispatcher") return;
+    const rows = ownerIds.map((id) => ({ request_id: requestId, owner_id: id, dispatched_by: user.id, status: "sent" }));
+    const { error } = await supabase.from("request_dispatch").upsert(rows, { onConflict: "request_id,owner_id", ignoreDuplicates: true });
+    if (error) {
+      flashToast("Не вдалося надіслати: " + error.message);
+      return;
+    }
+    const cur = requests.find((r) => r.id === requestId);
+    if (cur && cur.status !== "taken") {
+      await supabase.from("requests").update({ status: "dispatched" }).eq("id", requestId);
+    }
+    const time = nowTime();
     setRequests((prev) =>
       prev.map((r) => {
         if (r.id !== requestId) return r;
         const ownerStatuses = { ...r.ownerStatuses };
-        const newLog = [...r.log];
+        const log = [...r.log];
         ownerIds.forEach((id, i) => {
           ownerStatuses[id] = "sent";
-          newLog.push({ ownerId: id, ownerName: ownerNames[i], action: "sent", time: now });
+          log.push({ ownerId: id, ownerName: ownerNames[i], action: "sent", time });
         });
-        return { ...r, status: r.status === "taken" ? r.status : "dispatched", ownerStatuses, log: newLog };
+        return { ...r, status: r.status === "taken" ? r.status : "dispatched", ownerStatuses, log };
       })
     );
+    flashToast(`Надіслано власникам: ${ownerNames.join(", ")}`);
   };
 
-  const handleDispatch = async (requestId, ownerIds, ownerNames) => {
+  // Ручне рішення диспетчера (наприклад, власник відповів по телефону) і «Взяти собі».
+  // Сам власник відповідає зі свого кабінету через функцію respond_to_request.
+  const handleOwnerAction = async (requestId, ownerId, ownerName, action) => {
+    if (!supabase || user?.role !== "dispatcher") return;
+    const self = ownerId === "self";
+    const nowIso = new Date().toISOString();
     try {
-      const res = await fetch(`${BOT_API_URL}/dispatch`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "X-API-Key": BOT_API_KEY },
-        body: JSON.stringify({ requestId, ownerIds, dispatchedBy: user?.name || "dispatcher" }),
-      });
-      if (!res.ok) throw new Error(`Бот відповів помилкою: ${res.status}`);
-      await res.json();
-      applyDispatchLocally(requestId, ownerIds, ownerNames);
-      flashToast(`Надіслано в Telegram: ${ownerNames.join(", ")}`);
-    } catch (err) {
-      // Бот ще не розгорнутий/недоступний — показуємо це чесно і працюємо локально,
-      // щоб макет не ламався, поки реальний бот не піднятий.
-      console.error("Dispatch API unreachable:", err);
-      applyDispatchLocally(requestId, ownerIds, ownerNames);
-      flashToast(`Бот недоступний (демо-режим) — заявку позначено локально: ${ownerNames.join(", ")}`);
-    }
-  };
-
-  const handleOwnerAction = (requestId, ownerId, ownerName, action) => {
-    const curReq = requests.find((r) => r.id === requestId);
-    if (curReq) {
-      if (action === "accepted") persistStatus(requestId, "taken");
-      else if (action === "rejected") {
-        const st = { ...curReq.ownerStatuses, [ownerId]: action };
-        if (!Object.values(st).some((x) => x === "sent")) persistStatus(requestId, "new");
+      if (action === "accepted") {
+        if (self) {
+          const { error } = await supabase
+            .from("request_dispatch")
+            .insert({ request_id: requestId, owner_id: null, dispatched_by: user.id, status: "accepted", responded_at: nowIso });
+          if (error) throw error;
+        } else {
+          const { error } = await supabase
+            .from("request_dispatch")
+            .update({ status: "accepted", responded_at: nowIso })
+            .eq("request_id", requestId)
+            .eq("owner_id", ownerId);
+          if (error) throw error;
+        }
+        let expire = supabase.from("request_dispatch").update({ status: "expired", responded_at: nowIso }).eq("request_id", requestId).eq("status", "sent");
+        if (!self) expire = expire.neq("owner_id", ownerId);
+        await expire;
+        await supabase.from("requests").update({ status: "taken" }).eq("id", requestId);
+      } else if (action === "rejected") {
+        const { error } = await supabase
+          .from("request_dispatch")
+          .update({ status: "rejected", responded_at: nowIso })
+          .eq("request_id", requestId)
+          .eq("owner_id", ownerId);
+        if (error) throw error;
       }
+    } catch (e) {
+      flashToast("Не вдалося зберегти: " + (e.message || e));
+      return;
     }
-    const now = new Date().toLocaleTimeString("uk-UA", { hour: "2-digit", minute: "2-digit" });
+
+    const time = nowTime();
     setRequests((prev) =>
       prev.map((r) => {
         if (r.id !== requestId) return r;
         const ownerStatuses = { ...r.ownerStatuses, [ownerId]: action };
-        let newLog = [...r.log, { ownerId, ownerName, action, time: now }];
+        const log = [...r.log, { ownerId, ownerName, action, time }];
         let status = r.status;
-
         if (action === "accepted") {
           status = "taken";
           Object.keys(ownerStatuses).forEach((id) => {
-            if (Number(id) !== ownerId && ownerStatuses[id] === "sent") {
+            if (id !== String(ownerId) && ownerStatuses[id] === "sent") {
               ownerStatuses[id] = "expired";
-              newLog.push({
-                ownerId: Number(id),
-                ownerName: owners_lookup(r, Number(id)),
-                action: "auto-expired",
-                time: now,
-              });
+              log.push({ ownerId: id, ownerName: (r.log.find((l) => String(l.ownerId) === id) || {}).ownerName || id, action: "auto-expired", time });
             }
           });
-        } else if (action === "rejected") {
-          const stillPending = Object.values(ownerStatuses).some((s) => s === "sent");
-          if (!stillPending) status = "new"; // everyone contacted refused -> back to dispatcher queue
+        } else if (action === "rejected" && !Object.values(ownerStatuses).some((x) => x === "sent")) {
+          status = "new"; // усі відмовились — заявка знову в черзі диспетчера
+          supabase.from("requests").update({ status: "new" }).eq("id", requestId);
         }
-
-        return { ...r, status, ownerStatuses, log: newLog };
+        return { ...r, status, ownerStatuses, log };
       })
     );
     flashToast(
@@ -1172,10 +1181,6 @@ export default function EquipmentMarketplace() {
     );
   };
 
-  function owners_lookup(req, id) {
-    const found = req.log.find((l) => l.ownerId === id);
-    return found ? found.ownerName : `#${id}`;
-  }
 
   // ---- Справжній вхід через Supabase Auth ----
   const handleAuth = async ({ mode, email, password, name, org, phone, role }) => {
@@ -1267,52 +1272,126 @@ export default function EquipmentMarketplace() {
     };
   }, []);
 
-  // Диспетчер бачить усі заявки з бази (RLS пропускає лише роль dispatcher)
+  // Диспетчер бачить усі заявки, власників і історію розсилок (RLS пропускає лише роль dispatcher)
+  const loadDispatcherData = async () => {
+    if (!supabase || user?.role !== "dispatcher") return;
+    const [profRes, listRes, reqRes, dispRes] = await Promise.all([
+      supabase.from("profiles").select("id,name,org,phone,role").eq("role", "owner"),
+      supabase.from("listings").select("owner_id,type,region,available"),
+      supabase.from("requests").select("*").order("created_at", { ascending: false }),
+      supabase.from("request_dispatch").select("*").order("sent_at", { ascending: true }),
+    ]);
+    const err = profRes.error || listRes.error || reqRes.error || dispRes.error;
+    if (err) {
+      console.error("Supabase load (dispatcher) failed:", err.message);
+      return;
+    }
+    const uniq = (arr) => [...new Set(arr)];
+    const owners = (profRes.data || []).map((p) => {
+      const mine = (listRes.data || []).filter((l) => l.owner_id === p.id);
+      return { id: p.id, name: p.org || p.name, phone: p.phone, types: uniq(mine.map((l) => l.type)), regions: uniq(mine.map((l) => l.region)), verified: false };
+    });
+    setDispatchOwners(owners);
+    const nameOf = (id) => (id ? (owners.find((o) => o.id === id) || {}).name || "Власник" : user.org || user.name || "Диспетчер");
+    const fmt = (iso) => new Date(iso).toLocaleTimeString("uk-UA", { hour: "2-digit", minute: "2-digit" });
+    setRequests(
+      (reqRes.data || []).map((r) => {
+        const rows = (dispRes.data || []).filter((d) => d.request_id === r.id);
+        const ownerStatuses = {};
+        const log = [];
+        rows.forEach((d) => {
+          const key = d.owner_id || "self";
+          ownerStatuses[key] = d.status;
+          log.push({ ownerId: key, ownerName: nameOf(d.owner_id), action: "sent", time: fmt(d.sent_at) });
+          if (d.status !== "sent") log.push({ ownerId: key, ownerName: nameOf(d.owner_id), action: d.status === "expired" ? "auto-expired" : d.status, time: fmt(d.responded_at || d.sent_at) });
+        });
+        return {
+          id: r.id,
+          type: r.type,
+          region: r.region,
+          dateFrom: r.date_from,
+          budget: r.budget,
+          comment: r.comment,
+          contact: r.contact,
+          requesterName: r.requester_name,
+          status: r.status,
+          ownerStatuses,
+          log,
+        };
+      })
+    );
+  };
+
   useEffect(() => {
     if (!supabase || user?.role !== "dispatcher") return;
-    supabase
-      .from("requests")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .then(({ data, error }) => {
-        if (error) {
-          console.error("Supabase load (requests) failed:", error.message);
-          return;
-        }
-        setRequests(
-          data.map((r) => ({
-            id: r.id,
-            type: r.type,
-            region: r.region,
-            dateFrom: r.date_from,
-            budget: r.budget,
-            comment: r.comment,
-            contact: r.contact,
-            requesterName: r.requester_name,
-            status: r.status,
-            ownerStatuses: {},
-            log: [],
-          }))
-        );
-      });
+    loadDispatcherData();
+    // автооновлення, поки відкрита панель диспетчера: бачимо відповіді власників
+    const timer = setInterval(() => {
+      if (role === "dispatcher" && !document.hidden) loadDispatcherData();
+    }, 30000);
+    return () => clearInterval(timer);
+  }, [user?.id, user?.role, role]);
+
+  // ---- Кабінет власника: запити, надіслані диспетчером («Запити для мене») ----
+  const inboxCountRef = useRef(0);
+  const inboxLoadedRef = useRef(false);
+  const loadInbox = async (notify) => {
+    if (!supabase || user?.role !== "owner") return;
+    const { data, error } = await supabase.rpc("owner_inbox");
+    if (error) {
+      console.error("Supabase rpc (owner_inbox) failed:", error.message);
+      return;
+    }
+    const rows = data || [];
+    const pending = rows.filter((x) => x.dispatch_status === "sent" && x.req_status !== "taken").length;
+    if (notify) {
+      if (!inboxLoadedRef.current && pending > 0) flashToast(`У вас нових запитів: ${pending}`);
+      else if (inboxLoadedRef.current && pending > inboxCountRef.current) flashToast(pending - inboxCountRef.current === 1 ? "Новий запит на вашу техніку" : `Нових запитів: ${pending - inboxCountRef.current}`);
+    }
+    inboxCountRef.current = pending;
+    inboxLoadedRef.current = true;
+    setOwnerInbox(rows);
+  };
+
+  useEffect(() => {
+    inboxCountRef.current = 0;
+    inboxLoadedRef.current = false;
+    if (!supabase || user?.role !== "owner") {
+      setOwnerInbox([]);
+      return;
+    }
+    loadInbox(true);
+    const timer = setInterval(() => {
+      if (!document.hidden) loadInbox(true);
+    }, 60000);
+    return () => clearInterval(timer);
   }, [user?.id, user?.role]);
+
+  const respondToRequest = async (dispatchId, action) => {
+    const { data, error } = await supabase.rpc("respond_to_request", { p_dispatch_id: dispatchId, p_action: action });
+    if (error) {
+      flashToast("Не вдалося: " + error.message);
+      return;
+    }
+    if (data && data.ok === false) {
+      flashToast(
+        data.reason === "taken"
+          ? "Цю заявку вже взяв інший власник"
+          : data.reason === "already_answered"
+          ? "Ви вже відповіли на цю заявку"
+          : "Заявку не знайдено"
+      );
+    } else {
+      flashToast(action === "accepted" ? "Заявку прийнято — контакт клієнта нижче" : "Ви відмовились від заявки");
+    }
+    await loadInbox(false);
+  };
 
   // Страховка: якщо сесія закінчилась — виходимо з панелі диспетчера
   useEffect(() => {
     if (role === "dispatcher" && user?.role !== "dispatcher") setRole("client");
   }, [role, user]);
 
-  // Зберігаємо статус заявки в базу (лише диспетчер; решті RLS не дозволить)
-  const persistStatus = (requestId, status) => {
-    if (!supabase || user?.role !== "dispatcher") return;
-    supabase
-      .from("requests")
-      .update({ status })
-      .eq("id", requestId)
-      .then(({ error }) => {
-        if (error) console.error("Supabase update (requests) failed:", error.message);
-      });
-  };
 
   return (
     <div
@@ -2511,15 +2590,28 @@ export default function EquipmentMarketplace() {
               )}
             </>
           ) : (
-            <button onClick={() => openAddListing()} style={primaryBtn}>
-              {t("add_listing_btn")}
-            </button>
+            <>
+              <button onClick={() => openAddListing()} style={primaryBtn}>
+                {t("add_listing_btn")}
+              </button>
+              {user?.role === "owner" && (
+                <button
+                  onClick={() => {
+                    setShowInbox(true);
+                    loadInbox(false);
+                  }}
+                  style={inboxPending > 0 ? { ...smallBtn, borderColor: "#FF6A1A", color: "#FF6A1A" } : smallBtn}
+                >
+                  Запити для мене{inboxPending > 0 ? ` (${inboxPending})` : ""}
+                </button>
+              )}
+            </>
           )}
         </div>
       )}
 
       {role === "dispatcher" && (
-        <DispatcherPanel requests={requests} owners={seedOwners} onDispatch={handleDispatch} onOwnerAction={handleOwnerAction} user={user} t={t} />
+        <DispatcherPanel requests={requests} owners={dispatchOwners} onDispatch={handleDispatch} onOwnerAction={handleOwnerAction} onRefresh={loadDispatcherData} user={user} t={t} />
       )}
 
       {/* Filters (client view) */}
@@ -3005,6 +3097,12 @@ export default function EquipmentMarketplace() {
         </Modal>
       )}
 
+      {showInbox && (
+        <Modal onClose={() => setShowInbox(false)} title="Запити для мене">
+          <OwnerInbox items={ownerInbox} onRespond={respondToRequest} onRefresh={() => loadInbox(false)} />
+        </Modal>
+      )}
+
       {showAuthForm && (
         <Modal onClose={() => setShowAuthForm(false)} title={t("register_title")} splitLeft>
           <AuthForm onSubmit={handleAuth} />
@@ -3067,7 +3165,7 @@ export default function EquipmentMarketplace() {
 }
 
 // ---- Dispatcher panel ----
-function DispatcherPanel({ requests, owners, onDispatch, onOwnerAction, user, t }) {
+function DispatcherPanel({ requests, owners, onDispatch, onOwnerAction, onRefresh, user, t }) {
   const [filter, setFilter] = useState("all");
 
   const categories = [
@@ -3086,6 +3184,7 @@ function DispatcherPanel({ requests, owners, onDispatch, onOwnerAction, user, t 
           <div style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 13, color: "#A3A8AD" }}>
             Заявок поки немає. Щойно клієнт залишить заявку через форму — вона з'явиться тут для диспетчеризації.
           </div>
+          <button onClick={onRefresh} style={{ ...smallBtn, marginTop: 12 }}>Оновити</button>
         </Plate>
       </div>
     );
@@ -3094,6 +3193,10 @@ function DispatcherPanel({ requests, owners, onDispatch, onOwnerAction, user, t 
   return (
     <div className="dispatcher-layout" style={{ padding: "8px 24px 48px", display: "flex", gap: 20 }}>
       <div className="dispatcher-sidebar" style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 160, flexShrink: 0 }}>
+        <button onClick={onRefresh} style={{ ...smallBtn, marginBottom: 8 }}>Оновити</button>
+        <div style={{ fontSize: 11, color: "#70777D", padding: "0 12px 8px", fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif" }}>
+          Власників у базі: {owners.length}
+        </div>
         {categories.map((c) => {
           const count = requests.filter(c.test).length;
           const active = filter === c.key;
@@ -3321,12 +3424,12 @@ function MyRequestsPanel({ requests, reviews, onAddReview }) {
 }
 
 function RequestDispatchCard({ req, owners, onDispatch, onOwnerAction, user }) {
-  const contactedIds = new Set(Object.keys(req.ownerStatuses).map(Number));
-  const uncontacted = owners.filter((o) => !contactedIds.has(o.id));
-  const suggestedUncontacted = uncontacted.filter((o) => o.types.includes(req.type) && o.region === req.region);
+  const contactedIds = new Set(Object.keys(req.ownerStatuses));
+  const uncontacted = owners.filter((o) => !contactedIds.has(String(o.id)));
+  const suggestedUncontacted = uncontacted.filter((o) => o.types.includes(req.type) && (o.regions || []).includes(req.region));
   const otherUncontacted = uncontacted.filter((o) => !suggestedUncontacted.includes(o));
 
-  const [selected, setSelected] = useState(() => new Set(suggestedUncontacted.map((o) => o.id)));
+  const [selected, setSelected] = useState(() => new Set(suggestedUncontacted.map((o) => String(o.id))));
   const [showHistory, setShowHistory] = useState(false);
 
   const toggle = (id) => {
@@ -3338,33 +3441,18 @@ function RequestDispatchCard({ req, owners, onDispatch, onOwnerAction, user }) {
   };
 
   const send = () => {
-    const chosen = owners.filter((o) => selected.has(o.id));
+    const chosen = owners.filter((o) => selected.has(String(o.id)));
     if (chosen.length === 0) return;
-    onDispatch(req.id, [...selected], chosen.map((o) => o.name));
+    onDispatch(req.id, chosen.map((o) => o.id), chosen.map((o) => o.name));
     setSelected(new Set());
   };
 
-  const takeForMyself = async () => {
+  const takeForMyself = () => {
     const selfName = user?.org || user?.name || "Моя компанія";
-    try {
-      const res = await fetch(`${BOT_API_URL}/take`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "X-API-Key": BOT_API_KEY },
-        body: JSON.stringify({ requestId: req.id, ownerName: selfName }),
-      });
-      if (!res.ok) throw new Error(`Бот відповів помилкою: ${res.status}`);
-      await res.json();
-    } catch (err) {
-      console.error("Take API unreachable:", err);
-      // Бот недоступний — все одно застосовуємо локально, щоб не блокувати роботу з макетом.
-    }
-    // Той самий виклик, яким власник приймає заявку у боті — жодних окремих
-    // полів чи позначок "адмін" немає, тому в даних це нічим не відрізняється
-    // від того, що заявку взяв звичайний власник.
     onOwnerAction(req.id, "self", selfName, "accepted");
   };
 
-  const contactedOwners = owners.filter((o) => contactedIds.has(o.id));
+  const contactedOwners = owners.filter((o) => contactedIds.has(String(o.id)));
   const needsAttention = req.status === "new" && req.log.length > 0; // everyone contacted so far refused
 
   return (
@@ -3404,7 +3492,7 @@ function RequestDispatchCard({ req, owners, onDispatch, onOwnerAction, user }) {
           <Label>Кому надіслано</Label>
           <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 8 }}>
             {contactedOwners.map((o) => {
-              const st = req.ownerStatuses[o.id];
+              const st = req.ownerStatuses[String(o.id)];
               return (
                 <div key={o.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 12.5, fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif" }}>
                   <span>{o.name} <span style={{ color: "#70777D" }}>· {o.phone}</span></span>
@@ -3413,10 +3501,10 @@ function RequestDispatchCard({ req, owners, onDispatch, onOwnerAction, user }) {
                     {st === "sent" && (
                       <>
                         <button onClick={() => onOwnerAction(req.id, o.id, o.name, "accepted")} style={miniBtn("#6fae6f")}>
-                          Взяв
+                          Взяв (за телефоном)
                         </button>
                         <button onClick={() => onOwnerAction(req.id, o.id, o.name, "rejected")} style={miniBtn("#c96b5a")}>
-                          Відмова
+                          Відмова (за телефоном)
                         </button>
                       </>
                     )}
@@ -3437,10 +3525,10 @@ function RequestDispatchCard({ req, owners, onDispatch, onOwnerAction, user }) {
               <span style={{ fontSize: 12.5, color: "#A3A8AD" }}>Усіх власників уже задіяно.</span>
             )}
             {suggestedUncontacted.map((o) => (
-              <OwnerChip key={o.id} owner={o} checked={selected.has(o.id)} onToggle={() => toggle(o.id)} highlighted />
+              <OwnerChip key={o.id} owner={o} checked={selected.has(String(o.id))} onToggle={() => toggle(String(o.id))} highlighted />
             ))}
             {otherUncontacted.map((o) => (
-              <OwnerChip key={o.id} owner={o} checked={selected.has(o.id)} onToggle={() => toggle(o.id)} />
+              <OwnerChip key={o.id} owner={o} checked={selected.has(String(o.id))} onToggle={() => toggle(String(o.id))} />
             ))}
           </div>
           {(suggestedUncontacted.length > 0 || otherUncontacted.length > 0) && (
@@ -3509,6 +3597,103 @@ const miniBtn = (color) => ({
   cursor: "pointer",
 });
 
+const INBOX_STATUS = {
+  sent: { text: "Очікує вашої відповіді", color: "#FFB52E" },
+  accepted: { text: "Ви прийняли", color: "#6fae6f" },
+  rejected: { text: "Ви відмовились", color: "#70777D" },
+  expired: { text: "Заявку взяв інший власник", color: "#70777D" },
+};
+
+// Кабінет власника: запити від диспетчера з кнопками «Прийняти» / «Відмовитись».
+// Телефон клієнта приходить із бази лише після того, як власник прийняв заявку.
+function OwnerInbox({ items, onRespond, onRefresh }) {
+  const [busyId, setBusyId] = useState(null);
+  const font = "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif";
+
+  const act = async (id, action) => {
+    setBusyId(id);
+    try {
+      await onRespond(id, action);
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const contactLink = (c) => {
+    const v = String(c || "").trim();
+    if (/^[+\d\s()-]{7,}$/.test(v)) return `tel:${v.replace(/[^\d+]/g, "")}`;
+    if (v.startsWith("@")) return `https://t.me/${v.slice(1)}`;
+    return null;
+  };
+
+  if (!items.length) {
+    return (
+      <div style={{ display: "flex", flexDirection: "column", gap: 12, fontFamily: font, fontSize: 13, color: "#A3A8AD" }}>
+        <div>Поки запитів немає. Коли диспетчер надішле вам заявку на вашу техніку, вона з'явиться тут.</div>
+        <button onClick={onRefresh} style={smallBtn}>Оновити</button>
+      </div>
+    );
+  }
+
+  const isPending = (x) => x.dispatch_status === "sent" && x.req_status !== "taken";
+  const ordered = [...items.filter(isPending), ...items.filter((x) => !isPending(x))];
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      <button onClick={onRefresh} style={{ ...smallBtn, alignSelf: "flex-start" }}>Оновити</button>
+      {ordered.map((x) => {
+        const st = INBOX_STATUS[x.dispatch_status] || INBOX_STATUS.sent;
+        const link = contactLink(x.req_contact);
+        return (
+          <div key={x.dispatch_id} style={{ border: "1px solid #63696D", padding: "14px 14px", display: "flex", flexDirection: "column", gap: 8 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
+              <Label>Заявка #{x.request_id}</Label>
+              <span style={{ fontFamily: font, fontSize: 11.5, color: st.color }}>{st.text}</span>
+            </div>
+            <div style={{ fontFamily: font, fontSize: 16, fontWeight: 600 }}>
+              {x.req_type} — {x.req_region}
+            </div>
+            <div style={{ fontFamily: font, fontSize: 12.5, color: "#A3A8AD" }}>
+              Бюджет: {x.req_budget ? `${x.req_budget} ₴` : "—"} · Дата: {x.req_date_from || "не вказано"}
+            </div>
+            {x.req_comment && <div style={{ fontFamily: font, fontSize: 12.5, color: "#F4F4F1" }}>{x.req_comment}</div>}
+
+            {isPending(x) && (
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 4 }}>
+                <button disabled={busyId === x.dispatch_id} onClick={() => act(x.dispatch_id, "accepted")} style={{ ...primaryBtn, opacity: busyId === x.dispatch_id ? 0.6 : 1 }}>
+                  Прийняти
+                </button>
+                <button disabled={busyId === x.dispatch_id} onClick={() => act(x.dispatch_id, "rejected")} style={smallBtn}>
+                  Відмовитись
+                </button>
+              </div>
+            )}
+
+            {x.dispatch_status === "accepted" && (
+              <div style={{ marginTop: 4, padding: "10px 12px", background: "rgba(111,174,111,0.1)", border: "1px solid #6fae6f", fontFamily: font, fontSize: 13 }}>
+                <div style={{ color: "#6fae6f", fontSize: 11, marginBottom: 4 }}>Контакт клієнта</div>
+                <div style={{ fontWeight: 600 }}>{x.req_requester_name || "Клієнт"}</div>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginTop: 2 }}>
+                  {link ? (
+                    <a href={link} style={{ color: "#F4F4F1" }} target={link.startsWith("http") ? "_blank" : undefined} rel="noreferrer">
+                      {x.req_contact}
+                    </a>
+                  ) : (
+                    <span>{x.req_contact}</span>
+                  )}
+                  <button type="button" onClick={() => navigator.clipboard?.writeText(x.req_contact || "")} style={{ ...smallBtn, padding: "3px 10px", fontSize: 11 }}>
+                    Скопіювати
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function OwnerChip({ owner, checked, onToggle, highlighted }) {
   return (
     <label
@@ -3529,7 +3714,7 @@ function OwnerChip({ owner, checked, onToggle, highlighted }) {
       <input type="checkbox" checked={checked} onChange={onToggle} style={{ accentColor: "#FF6A1A" }} />
       <span>{owner.name}</span>
       {owner.verified && <span style={{ color: "#6fae6f", fontSize: 10, textShadow: "0 0 6px rgba(111,174,111,0.6)" }}>✓</span>}
-      {highlighted && <span style={{ color: "#A3A8AD", fontSize: 10 }}>({owner.region})</span>}
+      {highlighted && <span style={{ color: "#A3A8AD", fontSize: 10 }}>({(owner.regions || []).join(", ")})</span>}
     </label>
   );
 }
@@ -3952,7 +4137,11 @@ function AiAssistant({ user, onPrefillRequest, onViewListing, listings, t, open,
       const typesFromReply = Array.isArray(parsed.types) ? parsed.types.filter((x) => TYPES.includes(x)) : [];
       const mainType = TYPES.includes(parsed.type) ? parsed.type : typesFromReply[0] || null;
       const allTypes = typesFromReply.length ? typesFromReply : mainType ? [mainType] : [];
-      if (allTypes.length) setCtx({ types: allTypes, jobTitle: parsed.jobTitle || "", text, region: parsed.region || null });
+      // Контекст задачі оновлюємо лише відповіддю про конкретну роботу. Відповіді про ціну чи
+      // порівняння техніки не затирають уже підібраний комплект.
+      const isJobAnswer = !!parsed.jobId || typesFromReply.length > 0;
+      if (isJobAnswer) setCtx({ types: allTypes, jobTitle: parsed.jobTitle || "", text, region: parsed.region || null });
+      else if (allTypes.length && !ctx.types.length) setCtx({ types: allTypes, jobTitle: "", text, region: parsed.region || null });
 
       // Ground the recommendation in real inventory: show listings that fit,
       // same-region matches first.
