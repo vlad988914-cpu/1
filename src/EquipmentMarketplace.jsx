@@ -784,6 +784,7 @@ export default function EquipmentMarketplace() {
   const [lang, setLang] = useState("uk"); // uk | ru | en
   const t = useTranslate(lang);
   const [listings, setListings] = useState(seedListings);
+  const [listingsFromDb, setListingsFromDb] = useState(false);
   const [filterType, setFilterType] = useState("Усі");
   const [filterRegion, setFilterRegion] = useState("Усі");
   const [showAddForm, setShowAddForm] = useState(false);
@@ -931,13 +932,119 @@ export default function EquipmentMarketplace() {
     setTimeout(() => setToast(null), 2600);
   };
 
-  const handleAddListing = (data) => {
-    setListings((prev) => [
-      { ...data, id: prev.length + 1, available: data.available !== undefined ? data.available : true },
-      ...prev,
-    ]);
+  // Каталог з бази: бачать усі відвідувачі. Поки в базі порожньо — показуємо демо-приклади.
+  useEffect(() => {
+    if (!supabase) return;
+    supabase
+      .from("listings")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .then(({ data, error }) => {
+        if (error) {
+          console.error("Supabase load (listings) failed:", error.message);
+          return;
+        }
+        if (data && data.length) {
+          setListings(data.map(mapListingRow));
+          setListingsFromDb(true);
+        }
+      });
+  }, []);
+
+  // Додавати техніку можуть лише власники (і диспетчер) — перевіряє також база (RLS)
+  const openAddListing = () => {
+    if (!user) {
+      setShowAuthForm(true);
+      flashToast("Щоб додати техніку, увійдіть або зареєструйтесь як власник");
+      return;
+    }
+    if (user.role !== "owner" && user.role !== "dispatcher") {
+      flashToast("Додавати техніку можуть лише власники. Зареєструйте акаунт «Власник техніки»");
+      return;
+    }
+    setShowAddForm(true);
+  };
+
+  const handleAddListing = async (data) => {
+    if (!supabase || !user?.id || !user.hasProfile) {
+      flashToast("Не вдалося зберегти: увійдіть у акаунт");
+      return false;
+    }
+    // 1. фото -> сховище (кожне вже стиснуте до ~1000 px)
+    const urls = [];
+    let photoFailed = false;
+    for (let i = 0; i < (data.photos || []).length; i++) {
+      try {
+        const blob = await (await fetch(data.photos[i])).blob();
+        const path = `${user.id}/${Date.now()}-${i}.jpg`;
+        const { error: upErr } = await supabase.storage.from("listing-photos").upload(path, blob, { contentType: "image/jpeg" });
+        if (upErr) throw upErr;
+        urls.push(supabase.storage.from("listing-photos").getPublicUrl(path).data.publicUrl);
+      } catch (e) {
+        console.error("Photo upload failed:", e.message || e);
+        photoFailed = true;
+      }
+    }
+    // 2. рядок оголошення в базу
+    const { data: row, error } = await supabase
+      .from("listings")
+      .insert({
+        owner_id: user.id,
+        type: data.type,
+        brand: data.brand,
+        region: data.region,
+        price: data.price,
+        unit: data.unit,
+        specs: data.specs,
+        owner_name: data.owner,
+        busy_until: data.busyUntil || null,
+        available: data.available !== false,
+        photos: urls,
+      })
+      .select()
+      .single();
+    if (error) {
+      console.error("Supabase insert (listings) failed:", error.message);
+      flashToast("Не вдалося додати техніку: " + error.message);
+      return false;
+    }
+    setListings((prev) => [mapListingRow(row), ...(listingsFromDb ? prev : [])]);
+    setListingsFromDb(true);
     setShowAddForm(false);
-    flashToast("Техніку додано в каталог");
+    flashToast(photoFailed ? "Техніку додано, але частину фото завантажити не вдалося" : "Техніку додано в каталог");
+    return true;
+  };
+
+  const toggleAvailability = async (l) => {
+    const next = !l.available;
+    const { data, error } = await supabase
+      .from("listings")
+      .update({ available: next, busy_until: null })
+      .eq("id", l.id)
+      .select();
+    if (error || !data || data.length === 0) {
+      flashToast(error ? "Не вдалося змінити: " + error.message : "Немає прав змінювати це оголошення");
+      return;
+    }
+    setListings((prev) => prev.map((x) => (x.id === l.id ? { ...x, available: next, busyUntil: null } : x)));
+    setDetailListing((d) => (d && d.id === l.id ? { ...d, available: next, busyUntil: null } : d));
+    flashToast(next ? "Техніку позначено як вільну" : "Техніку позначено як зайняту");
+  };
+
+  const deleteListing = async (l) => {
+    if (!window.confirm(`Видалити «${l.brand}» з каталогу?`)) return;
+    const { data, error } = await supabase.from("listings").delete().eq("id", l.id).select();
+    if (error || !data || data.length === 0) {
+      flashToast(error ? "Не вдалося видалити: " + error.message : "Немає прав видаляти це оголошення");
+      return;
+    }
+    try {
+      const paths = (l.photos || []).map((u) => u.split("/listing-photos/")[1]).filter(Boolean);
+      if (paths.length) await supabase.storage.from("listing-photos").remove(paths);
+    } catch (e) {}
+    setListings((prev) => prev.filter((x) => x.id !== l.id));
+    setDetailListing(null);
+    flashToast("Оголошення видалено");
   };
 
   const handleSubmitRequest = async (data) => {
@@ -1982,7 +2089,7 @@ export default function EquipmentMarketplace() {
                 key={r.key}
                 onClick={() => {
                   setRole(r.key);
-                  if (r.key === "owner") setShowAddForm(true);
+                  if (r.key === "owner") openAddListing();
                   else setAiOpen(true);
                 }}
                 style={{
@@ -2236,7 +2343,7 @@ export default function EquipmentMarketplace() {
             <button
               onClick={() => {
                 setRole("owner");
-                setShowAddForm(true);
+                openAddListing();
               }}
               style={smallBtn}
             >
@@ -2250,7 +2357,7 @@ export default function EquipmentMarketplace() {
             <button className="hero-pill" onClick={() => { setShowRequestForm(true); }}>
               {t("pill_request")}
             </button>
-            <button className="hero-pill" onClick={() => { setRole("owner"); setShowAddForm(true); }}>
+            <button className="hero-pill" onClick={() => { setRole("owner"); openAddListing(); }}>
               {t("pill_add")}
             </button>
             <button className="hero-pill hero-pill-outline" onClick={copyContactEmail}>
@@ -2346,7 +2453,7 @@ export default function EquipmentMarketplace() {
           <div style={{ marginTop: 14, display: "flex", gap: 20 }}>
             <div>
               <div style={{ fontSize: 20, fontWeight: 600 }}>
-                {listings.filter((l) => l.owner === (user.org || user.name)).length}
+                {listings.filter((l) => (l.ownerId ? l.ownerId === user.id : l.owner === (user.org || user.name))).length}
               </div>
               <Label>Моя техніка</Label>
             </div>
@@ -2369,7 +2476,7 @@ export default function EquipmentMarketplace() {
               )}
             </>
           ) : (
-            <button onClick={() => setShowAddForm(true)} style={primaryBtn}>
+            <button onClick={() => openAddListing()} style={primaryBtn}>
               {t("add_listing_btn")}
             </button>
           )}
@@ -2826,6 +2933,17 @@ export default function EquipmentMarketplace() {
             >
               ЗАПИТАТИ ПРО ОРЕНДУ
             </button>
+
+            {detailListing.ownerId && user && (user.id === detailListing.ownerId || user.role === "dispatcher") && (
+              <div style={{ display: "flex", gap: 8, paddingTop: 4, borderTop: "1px dashed #63696D" }}>
+                <button type="button" onClick={() => toggleAvailability(detailListing)} style={{ ...smallBtn, flex: 1 }}>
+                  {detailListing.available ? "Позначити зайнятою" : "Позначити вільною"}
+                </button>
+                <button type="button" onClick={() => deleteListing(detailListing)} style={{ ...smallBtn, borderColor: "#c96b5a", color: "#c96b5a" }}>
+                  Видалити
+                </button>
+              </div>
+            )}
           </div>
         </Modal>
       )}
@@ -2882,7 +3000,7 @@ export default function EquipmentMarketplace() {
           {role === "owner" ? "Готові здати техніку?" : "Потрібна техніка зараз?"}
         </span>
         <button
-          onClick={() => (role === "owner" ? setShowAddForm(true) : setShowRequestForm(true))}
+          onClick={() => (role === "owner" ? openAddListing() : setShowRequestForm(true))}
           style={{ ...primaryBtn, padding: "9px 16px" }}
         >
           {role === "owner" ? "Додати" : "Залишити заявку"}
@@ -4118,6 +4236,46 @@ function Modal({ children, onClose, title, splitLeft }) {
   );
 }
 
+// Стиснення фото в браузері: довга сторона до 1000 px, JPEG — щоб не вантажити мегабайти
+function resizeImageToDataUrl(file, maxSide = 1000, quality = 0.78) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(1, maxSide / Math.max(img.width, img.height));
+      const w = Math.round(img.width * scale);
+      const h = Math.round(img.height * scale);
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+      URL.revokeObjectURL(url);
+      resolve(canvas.toDataURL("image/jpeg", quality));
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("Не вдалося прочитати зображення"));
+    };
+    img.src = url;
+  });
+}
+
+// Рядок з бази -> об'єкт оголошення, який розуміє сайт
+const mapListingRow = (r) => ({
+  id: r.id,
+  ownerId: r.owner_id,
+  type: r.type,
+  brand: r.brand,
+  region: r.region,
+  price: Number(r.price),
+  unit: r.unit,
+  specs: r.specs || {},
+  owner: r.owner_name || "Власник",
+  photos: r.photos || [],
+  available: r.available,
+  busyUntil: r.busy_until || null,
+});
+
 // ---- Add listing form (owner side) ----
 function AddListingForm({ onSubmit, user, lang }) {
   const [form, setForm] = useState({
@@ -4137,20 +4295,29 @@ function AddListingForm({ onSubmit, user, lang }) {
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
-  const handlePhoto = (e) => {
-    const files = Array.from(e.target.files || []).slice(0, 3 - form.photos.length);
-    files.forEach((file) => {
-      const reader = new FileReader();
-      reader.onload = () => setForm((f) => ({ ...f, photos: [...f.photos, reader.result].slice(0, 3) }));
-      reader.readAsDataURL(file);
-    });
+  const [submitting, setSubmitting] = useState(false);
+
+  const handlePhoto = async (e) => {
+    const input = e.target;
+    const files = Array.from(input.files || []).slice(0, 3 - form.photos.length);
+    for (const file of files) {
+      try {
+        const dataUrl = await resizeImageToDataUrl(file);
+        setForm((f) => ({ ...f, photos: [...f.photos, dataUrl].slice(0, 3) }));
+      } catch (err) {
+        console.error("Photo resize failed:", err.message);
+      }
+    }
+    input.value = "";
   };
   const removePhoto = (i) => setForm((f) => ({ ...f, photos: f.photos.filter((_, idx) => idx !== i) }));
 
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault();
-    if (!form.brand || !form.price || !form.owner) return;
-    onSubmit({
+    if (!form.brand || !form.price || !form.owner || submitting) return;
+    setSubmitting(true);
+    try {
+      await onSubmit({
       type: form.type,
       brand: form.brand,
       region: form.region === "Інше" ? (form.customRegion || "Інше") : form.region,
@@ -4164,7 +4331,10 @@ function AddListingForm({ onSubmit, user, lang }) {
         [form.spec1Key]: form.spec1Val || "—",
         [form.spec2Key]: form.spec2Val || "—",
       },
-    });
+      });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -4255,8 +4425,13 @@ function AddListingForm({ onSubmit, user, lang }) {
       <Field label="Параметр 2 (значення)">
         <input value={form.spec2Val} onChange={set("spec2Val")} placeholder="1.2 м³" style={inputStyle} />
       </Field>
-      <button className="btn-premium-hover" type="submit" style={{ ...primaryBtn, marginTop: 8, width: "100%" }}>
-        Додати в каталог
+      <button
+        className="btn-premium-hover"
+        type="submit"
+        disabled={submitting}
+        style={{ ...primaryBtn, marginTop: 8, width: "100%", opacity: submitting ? 0.6 : 1, cursor: submitting ? "default" : "pointer" }}
+      >
+        {submitting ? "Зберігаємо..." : "Додати в каталог"}
       </button>
     </form>
   );
