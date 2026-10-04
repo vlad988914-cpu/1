@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import { supabase } from "./supabaseClient";
+import { answerFromKnowledge, FALLBACK_ANSWER, JOB_PILLS, HELPER_PILLS } from "../shared/workKnowledge.js";
 
 // ---- Bot API config ----
 // TODO: після розгортання бота на Railway/Render замініть на реальну адресу,
@@ -87,7 +88,7 @@ const TRANSLATIONS = {
     add_listing_title: "Додати техніку",
     ai_widget_title: "Помічник ТехМайданчика",
     ai_placeholder: "Опишіть задачу...",
-    ai_greeting: "Привіт! Опишіть, яку роботу потрібно виконати — підберу техніку і заповню заявку.",
+    ai_greeting: "Привіт! Опишіть, яку роботу потрібно виконати — підберу техніку, поясню варіанти й різницю між ними. Або оберіть вид робіт нижче.",
     faq_items: [
       { q: "Скільки коштує розміщення техніки в каталозі?", a: "Реєстрація та додавання оголошень безкоштовні. Ми не беремо комісію з угод — власник і клієнт домовляються напряму." },
       { q: "Як швидко власники відповідають на заявку?", a: "Диспетчер обирає, кому надіслати заявку, вручну — зазвичай перше підтвердження приходить протягом години в робочий час." },
@@ -172,7 +173,7 @@ const TRANSLATIONS = {
     add_listing_title: "Добавить технику",
     ai_widget_title: "Помощник ТехМайданчика",
     ai_placeholder: "Опишите задачу...",
-    ai_greeting: "Привет! Опишите, какую работу нужно выполнить — подберу технику и заполню заявку.",
+    ai_greeting: "Привет! Опишите, какую работу нужно выполнить — подберу технику, объясню варианты и разницу между ними. Или выберите вид работ ниже.",
     faq_items: [
       { q: "Сколько стоит размещение техники в каталоге?", a: "Регистрация и добавление объявлений бесплатны. Мы не берём комиссию со сделок — владелец и клиент договариваются напрямую." },
       { q: "Как быстро владельцы отвечают на заявку?", a: "Диспетчер выбирает, кому отправить заявку, вручную — обычно первое подтверждение приходит в течение часа в рабочее время." },
@@ -257,7 +258,7 @@ const TRANSLATIONS = {
     add_listing_title: "Add equipment",
     ai_widget_title: "TechMaydanchik Assistant",
     ai_placeholder: "Describe your task...",
-    ai_greeting: "Hi! Describe what work needs to be done — I'll pick the equipment and fill out the request.",
+    ai_greeting: "Hi! Describe the work you need done — I'll pick the equipment and explain the options and differences. Or choose a job type below.",
     faq_items: [
       { q: "How much does listing equipment in the catalog cost?", a: "Registration and adding listings are free. We don't take a commission from deals — the owner and client arrange things directly." },
       { q: "How fast do owners respond to a request?", a: "The dispatcher manually chooses who to send the request to — the first confirmation usually arrives within an hour during business hours." },
@@ -1872,10 +1873,10 @@ export default function EquipmentMarketplace() {
           right: 20px;
           bottom: 150px;
           z-index: 70;
-          width: 320px;
+          width: 390px;
           max-width: calc(100vw - 40px);
-          height: 420px;
-          max-height: 60vh;
+          height: 600px;
+          max-height: 78vh;
           background: #15181A;
           border: 1px solid #63696D;
           display: flex;
@@ -1947,11 +1948,45 @@ export default function EquipmentMarketplace() {
           color: #08090A;
         }
         .ai-bubble.assistant {
+          max-width: 96%;
           align-self: flex-start;
           background: #191C1F;
           color: #ffffff;
           border: 1px solid #63696D;
         }
+        .ai-blocks {
+          margin-top: 8px;
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+        }
+        .ai-block {
+          border-top: 1px solid #2a2e32;
+          padding: 2px 0;
+        }
+        .ai-block summary {
+          cursor: pointer;
+          font-size: 12.5px;
+          font-weight: 600;
+          color: #FFB52E;
+          padding: 6px 0;
+          list-style: none;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+        .ai-block summary::-webkit-details-marker { display: none; }
+        .ai-block summary::after { content: "+"; color: #70777D; font-size: 15px; }
+        .ai-block[open] summary::after { content: "–"; }
+        .ai-block ul, .ai-block ol {
+          margin: 2px 0 8px;
+          padding-left: 18px;
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+        }
+        .ai-block li { font-size: 12.5px; line-height: 1.5; color: #D9DCDF; }
+        .ai-block li b { color: #ffffff; font-weight: 600; }
         .ai-suggestion-btn {
           display: block;
           margin-top: 8px;
@@ -3688,78 +3723,39 @@ function ProfileForm({ user, onSave, onLogout }) {
   );
 }
 
-const AI_ASSISTANT_SYSTEM_PROMPT = `Ти — помічник сайту ТехМайданчик, біржі оренди будівельної техніки в Україні.
+// ---- ІІ-помічник: серверний ШІ (/api/chat) або локальна база знань, коли ключа немає ----
+let aiServerDown = false; // після першої відмови (немає ключа) не ходимо на сервер до кінця сесії
 
-Клієнт може написати ДВА типи повідомлень:
-1. Опис завдання (наприклад: "потрібно викопати траншею під фундамент гаража в Ужгороді") — визнач, яка техніка потрібна, і чому саме вона.
-2. Загальне питання про техніку (наприклад: "чим екскаватор відрізняється від навантажувача") — дай коротку, конкретну відповідь по суті, без зайвого.
-
-Визнач з повідомлення:
-- type: одне значення зі списку [${TYPES.join(", ")}], або null якщо це не запит на техніку
-- region: одне значення зі списку [${REGIONS.join(", ")}], або null якщо не згадано
-- budget: число (гривні), або null якщо не згадано
-- comment: короткий переказ задачі клієнта, 1 речення, українською (для заявки)
-- reply: твоя відповідь клієнту, 2-3 речення українською.
-  Якщо це завдання — ОБОВ'ЯЗКОВО поясни, чому саме цей тип техніки підходить (яка функція вирішує задачу), а не просто назви тип.
-  Якщо це питання — дай пряму, конкретну відповідь по суті питання.
-
-Відповідай ЛИШЕ у форматі JSON, без жодного тексту навколо, без markdown-обгортки:
-{"type": ..., "region": ..., "budget": ..., "comment": "...", "reply": "..."}`;
-
-// ---- AI assistant transport: server proxy -> direct (Claude sandbox) -> local on-topic fallback ----
 async function callAssistantApi(messages) {
+  if (aiServerDown) throw new Error("ai server unavailable");
+
   // Anthropic вимагає, щоб перше повідомлення було від user (без привітання асистента)
   const apiMessages = messages.map((m) => ({ role: m.role, content: m.text }));
   while (apiMessages.length && apiMessages[0].role !== "user") apiMessages.shift();
 
-  const parseResponse = (data) => {
-    const raw = (data.content || []).map((b) => b.text || "").join("");
-    const clean = raw.replace(/```json|```/g, "").trim();
-    const start = clean.indexOf("{");
-    const end = clean.lastIndexOf("}");
-    return JSON.parse(start >= 0 && end > start ? clean.slice(start, end + 1) : clean);
-  };
-
-  // 1) Серверний проксі на Vercel (/api/chat) — працює на реальному сайті
+  let r;
   try {
-    const r = await fetch("/api/chat", {
+    r = await fetch("/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ messages: apiMessages }),
     });
-    if (r.ok) return parseResponse(await r.json());
-  } catch (e) {}
-
-  // 2) Прямий виклик — працює всередині чату Claude (артефакт)
-  const r2 = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: "claude-sonnet-4-6",
-      max_tokens: 500,
-      system: AI_ASSISTANT_SYSTEM_PROMPT,
-      messages: apiMessages,
-    }),
-  });
-  if (!r2.ok) throw new Error("direct api failed");
-  return parseResponse(await r2.json());
+  } catch (e) {
+    aiServerDown = true;
+    throw e;
+  }
+  if (!r.ok) {
+    if (r.status === 500 || r.status === 404) aiServerDown = true; // немає ключа чи функції — не повторюємо
+    throw new Error("chat api " + r.status);
+  }
+  const data = await r.json();
+  const raw = (data.content || []).map((b) => b.text || "").join("");
+  const clean = raw.replace(/```json|```/g, "").trim();
+  const start = clean.indexOf("{");
+  const end = clean.lastIndexOf("}");
+  return JSON.parse(start >= 0 && end > start ? clean.slice(start, end + 1) : clean);
 }
 
-// Локальний режим: працює без AI-сервера, відповідає по темі сайту за ключовими словами.
-const LOCAL_RULES = [
-  { type: "Екскаватор", keys: ["викопа", "котлован", "траншеј", "траншея", "траншею", "траншеї", "копа", "ров ", "екскават", "экскават", "выкоп", "котлован", "фундамент", "яму", "яма"],
-    why: "Екскаватор — основна машина для земляних робіт: копає котловани, траншеї та ями і вантажить ґрунт." },
-  { type: "Навантажувач", keys: ["навантаж", "погруз", "сніг", "снег", "пісок", "песок", "щебін", "щебен", "перемістити ґрунт", "сипуч"],
-    why: "Навантажувач швидко переміщує та вантажить сипучі матеріали (пісок, щебінь, сніг) на невеликих майданчиках." },
-  { type: "Самоскид", keys: ["вивез", "вывоз", "самоскид", "самосвал", "перевез", "доставк", "сміття", "мусор"],
-    why: "Самоскид вивозить ґрунт, щебінь і сміття з об'єкта та доставляє матеріали." },
-  { type: "Гідромолот", keys: ["зруйн", "знести", "знос", "снести", "снос", "демонтаж", "розбит", "разбить", "бетон", "асфальт", "молот"],
-    why: "Гідромолот руйнує бетон, асфальт і фундаменти ударною силою — його встановлюють на екскаватор." },
-  { type: "Кран", keys: ["кран", "підйом", "подъем", "підняти", "поднять", "монтаж", "плит", "перекритт", "перекрыти", "висот", "высот"],
-    why: "Кран піднімає і встановлює важкі вантажі та конструкції на висоту — плити, балки, блоки." },
-  { type: "Бульдозер", keys: ["бульдозер", "розрівн", "выровн", "планув", "планиров", "розчист", "расчист", "зрізат", "срезат", "відвал"],
-    why: "Бульдозер розрівнює ділянку, зрізає ґрунт і розчищає територію відвалом." },
-];
 const REGION_ALIASES = {
   "Київ": ["київ", "києв", "киев"],
   "Харків": ["харків", "харьков"],
@@ -3785,73 +3781,46 @@ const REGION_ALIASES = {
   "Мукачево": ["мукачев"],
 };
 
-// Комплексні задачі — коли потрібна не одна машина, а набір техніки
-const TASK_SCENARIOS = [
-  {
-    name: "Будівництво дороги",
-    keys: ["побудувати дорог", "построить дорог", "будівництво дороги", "строительство дороги", "прокласти дорог", "проложить дорог", "асфальтуван", "асфальтирован"],
-    types: ["Бульдозер", "Самоскид", "Каток", "Навантажувач"],
-    why: "Для будівництва дороги зазвичай потрібен комплекс техніки: бульдозер розрівнює основу, самоскид підвозить щебінь і матеріали, каток ущільнює покриття, а навантажувач переміщує сипучі матеріали.",
-  },
-  {
-    name: "Знесення будівлі",
-    keys: ["знести буд", "снести зда", "демонтаж буд", "демонтаж здани", "розібрати буд", "разобрать зда", "знесення будівл"],
-    types: ["Гідромолот", "Екскаватор", "Самоскид"],
-    why: "Знесення будівлі — це зазвичай гідромолот (руйнує стіни і фундамент), екскаватор (розбирає та вантажить уламки) і самоскид (вивозить будівельне сміття з об'єкта).",
-  },
-  {
-    name: "Розчищення території",
-    keys: ["розчистити терит", "расчистить террит", "корчуван", "корчеван", "вирубк", "вырубк", "пнів", "пней", "очищення ділянки", "очистка участка"],
-    types: ["Бульдозер", "Екскаватор", "Самоскид"],
-    why: "Для розчищення території та корчування пнів найчастіше беруть бульдозер (зрізає та зсуває), екскаватор (виривання коріння і пнів) та самоскид (вивезення гілок і залишків).",
-  },
-];
-
-function localAssistantReply(text) {
-  const q = text.toLowerCase();
-  const scenario = TASK_SCENARIOS.find((s) => s.keys.some((k) => q.includes(k)));
-  if (scenario) {
-    let region = null;
-    for (const [name, aliases] of Object.entries(REGION_ALIASES)) {
-      if (aliases.some((a) => q.includes(a))) { region = name; break; }
-    }
-    return {
-      type: scenario.types[0],
-      types: scenario.types,
-      region, budget: null,
-      comment: text.slice(0, 140),
-      reply: `${scenario.why} Нижче — підходяща техніка з кожної категорії з вашого каталогу.`,
-    };
-  }
-  const rule = LOCAL_RULES.find((r) => r.keys.some((k) => q.includes(k)));
-  let region = null;
+function detectRegion(q) {
   for (const [name, aliases] of Object.entries(REGION_ALIASES)) {
-    if (aliases.some((a) => q.includes(a))) { region = name; break; }
+    if (aliases.some((a) => q.includes(a))) return name;
   }
-  const budgetMatch = q.match(/(\d[\d\s]{2,})\s*(грн|₴|гривень|гривні|uah)/);
-  const budget = budgetMatch ? Number(budgetMatch[1].replace(/\s/g, "")) : null;
+  return null;
+}
 
-  // Питання-порівняння ("чим відрізняється…") — відповідаємо по суті, без підбору техніки
-  if (/відрізня|різниц|разниц|отлича|различ|difference|vs\b/.test(q)) {
-    const found = LOCAL_RULES.filter((r) => r.keys.some((k) => q.includes(k)));
-    if (found.length >= 2) {
-      return { type: null, region: null, budget: null, comment: "",
-        reply: found.map((r) => `${r.type}: ${r.why}`).join(" ") + " Опишіть вашу задачу — підкажу, що саме підійде." };
-    }
+function detectBudget(q) {
+  const m = q.match(/(\d[\d\s]{2,})\s*(грн|₴|гривень|гривні|uah)/);
+  return m ? Number(m[1].replace(/\s/g, "")) : null;
+}
+
+// Локальний режим: працює без ШІ-сервера — відповідає з бази знань (shared/workKnowledge.js)
+function localAssistantReply(text, ctx) {
+  const q = text.toLowerCase();
+  const kb = answerFromKnowledge(text, ctx) || FALLBACK_ANSWER;
+  return { ...kb, region: detectRegion(q), budget: detectBudget(q), comment: text.slice(0, 140) };
+}
+
+// Розділи відповіді (від ШІ чи з бази): залишаємо лише коректні
+const normSections = (x) =>
+  Array.isArray(x)
+    ? x
+        .filter((s) => s && typeof s.title === "string" && Array.isArray(s.items) && s.items.length)
+        .slice(0, 8)
+        .map((s) => ({ title: s.title, items: s.items.slice(0, 8).map(String), ordered: !!s.ordered }))
+    : [];
+
+// "Екскаватор — обов'язково: ..." -> виділяємо початок жирним
+function SectionItem({ item }) {
+  const i = item.indexOf(" — ");
+  if (i > 0 && i <= 40) {
+    return (
+      <>
+        <b>{item.slice(0, i)}</b>
+        {item.slice(i)}
+      </>
+    );
   }
-  if (rule) {
-    return {
-      type: rule.type, region, budget,
-      comment: text.slice(0, 140),
-      reply: `${rule.why} Для вашої задачі раджу тип техніки: ${rule.type}${region ? ` (${region})` : ""}. Нижче — підходяща техніка з каталогу, або залиште заявку — диспетчер підбере власника.`,
-    };
-  }
-  if (/як (це )?працю|как (это )?работает|як здати|как сдать|здат[иь] техніку|сдат[ьи] технику/.test(q)) {
-    return { type: null, region: null, budget: null, comment: "",
-      reply: "Клієнт залишає заявку → диспетчер підбирає та розсилає її власникам техніки → один із них підтверджує → ви отримуєте контакт. Щоб здати свою техніку, натисніть «Здаю техніку» і додайте оголошення." };
-  }
-  return { type: null, region: null, budget: null, comment: "",
-    reply: "Я допомагаю підібрати будівельну техніку. Опишіть задачу — наприклад: «потрібно викопати котлован у Миколаєві» — і я порадю тип техніки та знайду її в каталозі." };
+  return <>{item}</>;
 }
 
 // ---- AI assistant: free-text task -> equipment/region/budget suggestion -> prefilled request form ----
@@ -3861,7 +3830,8 @@ function AiAssistant({ user, onPrefillRequest, onViewListing, listings, t, open,
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [lastType, setLastType] = useState(null);
+  const [ctx, setCtx] = useState({ types: [], jobTitle: "", text: "", region: null });
+  const [showAllJobs, setShowAllJobs] = useState(false);
   const [listening, setListening] = useState(false);
   const [voiceOn, setVoiceOn] = useState(false);
   const listRef = useRef(null);
@@ -3925,44 +3895,67 @@ function AiAssistant({ user, onPrefillRequest, onViewListing, listings, t, open,
     window.speechSynthesis.speak(utter);
   };
 
-  const send = async () => {
-    const text = input.trim();
+  const addAssistant = (msg) => setMessages((prev) => [...prev, { role: "assistant", ...msg }]);
+
+  const send = async (override) => {
+    const text = (typeof override === "string" ? override : input).trim();
     if (!text || loading) return;
     const nextMessages = [...messages, { role: "user", text }];
     setMessages(nextMessages);
     setInput("");
     setLoading(true);
 
-    // "Показати ще варіанти" — одразу показуємо більше техніки того ж типу, без нового звернення до AI
-    if (/показати ще|show more|ещё вариант/i.test(text) && lastType) {
-      const more = (listings || []).filter((l) => l.available && l.type === lastType);
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", text: `Уся доступна техніка типу «${lastType}» з каталогу:`, matchedListings: more, showFollowUp: true },
-      ]);
-      setLoading(false);
-      return;
-    }
-    if (/інша задача|другая задача|new task/i.test(text)) {
-      setLastType(null);
-      setMessages((prev) => [...prev, { role: "assistant", text: "Добре, опишіть нову задачу — підберу техніку під неї.", showFollowUp: false }]);
-      setLoading(false);
-      return;
-    }
-
     try {
+      // --- команди інтерфейсу (без звернення до ШІ) ---
+      if (/^(створити|залишити|оформити|создать|оставить)\s+заявк|^create request/i.test(text)) {
+        if (ctx.types.length) {
+          const bundle = ctx.types.length > 1 ? ` Потрібен комплект техніки: ${ctx.types.join(", ")}.` : "";
+          onPrefillRequest({
+            type: ctx.types[0],
+            region: ctx.region,
+            budget: null,
+            comment: ((ctx.jobTitle ? ctx.jobTitle + ". " : "") + ctx.text).slice(0, 300) + bundle,
+          });
+          addAssistant({ text: "Відкриваю форму заявки — перевірте дані й додайте контакт. Диспетчер підбере власників техніки.", showFollowUp: false });
+        } else {
+          onPrefillRequest(null);
+          addAssistant({ text: "Відкриваю форму заявки. Опишіть у ній задачу — диспетчер підбере техніку.", showFollowUp: false });
+        }
+        return;
+      }
+      if (/показати ще|show more|ещё вариант/i.test(text) && ctx.types.length) {
+        const more = (listings || []).filter((l) => l.available && ctx.types.includes(l.type)).slice(0, 8);
+        addAssistant({
+          text: more.length
+            ? "Уся доступна техніка з каталогу для цієї роботи:"
+            : "Зараз у каталозі немає вільної техніки цього типу — залиште заявку, і диспетчер підбере власників.",
+          matchedListings: more,
+          showFollowUp: true,
+        });
+        return;
+      }
+      if (/^(інша задача|друга задача|другая задача|new task|опишу свою задачу)/i.test(text)) {
+        setCtx({ types: [], jobTitle: "", text: "", region: null });
+        addAssistant({ text: "Добре, опишіть задачу своїми словами або оберіть вид робіт.", options: JOB_PILLS.slice(0, 8), showFollowUp: false });
+        return;
+      }
+
+      // --- відповідь: ШІ-сервер, а якщо його немає — локальна база знань ---
       let parsed;
       try {
         parsed = await callAssistantApi(nextMessages);
       } catch (apiErr) {
-        // AI-сервер недоступний — працюємо локально, по темі сайту
-        parsed = localAssistantReply(text);
+        parsed = localAssistantReply(text, ctx);
       }
       const replyText = parsed.reply || "Готово.";
-      if (parsed.type) setLastType(parsed.type);
 
-      // Ground the recommendation in real inventory: show every available listing
-      // that fits (not just one), sorted so same-region matches come first.
+      const typesFromReply = Array.isArray(parsed.types) ? parsed.types.filter((x) => TYPES.includes(x)) : [];
+      const mainType = TYPES.includes(parsed.type) ? parsed.type : typesFromReply[0] || null;
+      const allTypes = typesFromReply.length ? typesFromReply : mainType ? [mainType] : [];
+      if (allTypes.length) setCtx({ types: allTypes, jobTitle: parsed.jobTitle || "", text, region: parsed.region || null });
+
+      // Ground the recommendation in real inventory: show listings that fit,
+      // same-region matches first.
       const findMatches = (ty) => {
         if (!ty || !listings) return [];
         return listings
@@ -3974,18 +3967,32 @@ function AiAssistant({ user, onPrefillRequest, onViewListing, listings, t, open,
           })
           .slice(0, 4);
       };
-      const matchedListings = Array.isArray(parsed.types)
-        ? parsed.types.map((ty) => findMatches(ty)[0]).filter(Boolean)
-        : findMatches(parsed.type);
+      const matchedListings =
+        allTypes.length > 1 ? allTypes.map((ty) => findMatches(ty)[0]).filter(Boolean) : findMatches(allTypes[0]);
 
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", text: replyText, suggestion: parsed.type ? parsed : null, matchedListing: null, matchedListings, showFollowUp: true },
-      ]);
+      const bundleNote = allTypes.length > 1 ? ` Потрібен комплект техніки: ${allTypes.join(", ")}.` : "";
+      const suggestion = mainType
+        ? {
+            type: mainType,
+            types: allTypes,
+            region: parsed.region,
+            budget: parsed.budget,
+            comment: ((parsed.jobTitle ? parsed.jobTitle + ". " : "") + (parsed.comment || text)).slice(0, 300) + bundleNote,
+          }
+        : null;
+
+      addAssistant({
+        text: replyText,
+        sections: normSections(parsed.sections),
+        options: Array.isArray(parsed.options) ? parsed.options.filter((o) => typeof o === "string").slice(0, 5) : null,
+        suggestion,
+        matchedListings,
+        showFollowUp: true,
+      });
       speak(replyText);
     } catch (err) {
       const errText = "Вибачте, не вдалося обробити запит. Спробуйте ще раз або скористайтесь звичайною формою заявки.";
-      setMessages((prev) => [...prev, { role: "assistant", text: errText }]);
+      addAssistant({ text: errText });
       speak(errText);
     } finally {
       setLoading(false);
@@ -4027,6 +4034,32 @@ function AiAssistant({ user, onPrefillRequest, onViewListing, listings, t, open,
             {messages.map((m, i) => (
               <div key={i} className={`ai-bubble ${m.role}`}>
                 {m.text}
+                {m.sections && m.sections.length > 0 && (
+                  <div className="ai-blocks">
+                    {m.sections.map((sec, si) => (
+                      <details key={si} open={si === 0} className="ai-block">
+                        <summary>{sec.title}</summary>
+                        {sec.ordered ? (
+                          <ol>
+                            {sec.items.map((it, ii) => (
+                              <li key={ii}>
+                                <SectionItem item={it} />
+                              </li>
+                            ))}
+                          </ol>
+                        ) : (
+                          <ul>
+                            {sec.items.map((it, ii) => (
+                              <li key={ii}>
+                                <SectionItem item={it} />
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </details>
+                    ))}
+                  </div>
+                )}
                 {m.matchedListing && (
                   <div
                     onClick={() => onViewListing && onViewListing(m.matchedListing)}
@@ -4093,38 +4126,49 @@ function AiAssistant({ user, onPrefillRequest, onViewListing, listings, t, open,
                       })
                     }
                   >
-                    Заповнити заявку: {m.suggestion.type}
+                    Заповнити заявку: {(m.suggestion.types && m.suggestion.types.length ? m.suggestion.types : [m.suggestion.type]).join(" + ")}
                     {m.suggestion.region ? `, ${m.suggestion.region}` : ""}
                   </button>
                 )}
               </div>
             ))}
             {loading && <div className="ai-bubble assistant">Друкує…</div>}
-            {!loading && (messages.length === 1 || messages[messages.length - 1]?.role === "assistant") && (
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 6 }}>
-                {(messages.length === 1
-                  ? ["Побудувати дорогу", "Знести будівлю", "Розчистити територію", "Підібрати екскаватор", "Створити заявку", "Пояснити різницю між технікою"]
-                  : ["Показати ще варіанти", "Порівняти ціни", "Інша задача", "Залишити заявку"]
-                ).map((s) => (
-                  <button
-                    key={s}
-                    onClick={() => setInput(s)}
-                    style={{
-                      fontSize: 11.5,
-                      padding: "6px 11px",
-                      borderRadius: 980,
-                      border: "1px solid #63696D",
-                      background: "transparent",
-                      color: "#A3A8AD",
-                      cursor: "pointer",
-                      fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
-                    }}
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
-            )}
+            {!loading && (messages.length === 1 || messages[messages.length - 1]?.role === "assistant") && (() => {
+              const last = messages[messages.length - 1];
+              const isFirst = messages.length === 1;
+              const followUps = ctx.types.length
+                ? ["Показати ще варіанти", "Скільки це коштує?", "Створити заявку", "Інша задача"]
+                : ["Скільки це коштує?", "Створити заявку", "Інша задача"];
+              const pills = isFirst
+                ? [...(showAllJobs ? JOB_PILLS : JOB_PILLS.slice(0, 8)), ...HELPER_PILLS]
+                : last.options && last.options.length
+                ? last.options
+                : followUps;
+              const chip = {
+                fontSize: 11.5,
+                padding: "6px 11px",
+                borderRadius: 980,
+                border: "1px solid #63696D",
+                background: "transparent",
+                color: "#A3A8AD",
+                cursor: "pointer",
+                fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
+              };
+              return (
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 6 }}>
+                  {pills.map((p) => (
+                    <button key={p} onClick={() => send(p)} style={p === "Створити заявку" ? { ...chip, borderColor: "#FF6A1A", color: "#FF6A1A" } : chip}>
+                      {p}
+                    </button>
+                  ))}
+                  {isFirst && !showAllJobs && (
+                    <button onClick={() => setShowAllJobs(true)} style={{ ...chip, borderStyle: "dashed" }}>
+                      Ще види робіт ▾
+                    </button>
+                  )}
+                </div>
+              );
+            })()}
           </div>
 
           <div className="ai-panel-input">
@@ -4260,6 +4304,110 @@ function resizeImageToDataUrl(file, maxSide = 1000, quality = 0.78) {
   });
 }
 
+// Автозбереження чернетки форми у браузері: переживає закриття вікна, оновлення
+// сторінки і вихід з акаунта. Після успішної відправки чернетка стирається.
+function useDraft(key, initial, { skipRestore = false } = {}) {
+  const initialRef = useRef(initial);
+  const initialJson = useRef(JSON.stringify(initial)).current;
+  const clearedRef = useRef(false);
+
+  const savedRef = useRef(undefined);
+  if (savedRef.current === undefined) {
+    let saved = null;
+    if (!skipRestore) {
+      try {
+        const raw = window.localStorage.getItem(key);
+        if (raw) saved = JSON.parse(raw);
+      } catch (e) {}
+    }
+    savedRef.current = saved;
+  }
+
+  const [value, setValueRaw] = useState(() => (savedRef.current ? { ...initial, ...savedRef.current } : initial));
+  const [restored, setRestored] = useState(!!savedRef.current);
+
+  const latest = useRef(value);
+  latest.current = value;
+
+  const persist = (v) => {
+    if (clearedRef.current) return;
+    try {
+      if (JSON.stringify(v) === initialJson) {
+        window.localStorage.removeItem(key); // нічого не змінено — чернетка не потрібна
+        return;
+      }
+      try {
+        window.localStorage.setItem(key, JSON.stringify(v));
+      } catch (e) {
+        const { photos, ...rest } = v; // не вмістилось (великі фото) — зберігаємо без фото
+        window.localStorage.setItem(key, JSON.stringify(rest));
+      }
+    } catch (e) {}
+  };
+  const persistRef = useRef(persist);
+  persistRef.current = persist;
+
+  // збереження через 0.4 с після останньої зміни
+  useEffect(() => {
+    const id = setTimeout(() => persistRef.current(latest.current), 400);
+    return () => clearTimeout(id);
+  }, [value]);
+
+  // і одразу при закритті вкладки або розмонтуванні форми
+  useEffect(() => {
+    const flush = () => persistRef.current(latest.current);
+    window.addEventListener("pagehide", flush);
+    return () => {
+      window.removeEventListener("pagehide", flush);
+      flush();
+    };
+  }, []);
+
+  const setValue = (v) => {
+    clearedRef.current = false;
+    setValueRaw(v);
+  };
+  const clear = () => {
+    clearedRef.current = true;
+    try {
+      window.localStorage.removeItem(key);
+    } catch (e) {}
+  };
+  const reset = () => {
+    clear();
+    setRestored(false);
+    setValueRaw(initialRef.current);
+  };
+
+  return [value, setValue, { clear, reset, restored }];
+}
+
+function DraftBanner({ draft }) {
+  if (!draft.restored) return null;
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 8,
+        fontSize: 12,
+        color: "#FFB52E",
+        fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
+      }}
+    >
+      <span>Відновлено вашу незавершену чернетку</span>
+      <button
+        type="button"
+        onClick={draft.reset}
+        style={{ background: "none", border: "none", color: "#A3A8AD", textDecoration: "underline", cursor: "pointer", fontSize: 12, padding: 0 }}
+      >
+        Почати заново
+      </button>
+    </div>
+  );
+}
+
 // Рядок з бази -> об'єкт оголошення, який розуміє сайт
 const mapListingRow = (r) => ({
   id: r.id,
@@ -4278,7 +4426,7 @@ const mapListingRow = (r) => ({
 
 // ---- Add listing form (owner side) ----
 function AddListingForm({ onSubmit, user, lang }) {
-  const [form, setForm] = useState({
+  const [form, setForm, draft] = useDraft(`techmaydanchik_draft_listing_${user?.id || "guest"}`, {
     type: TYPES[0],
     brand: "",
     region: user?.region || REGIONS[0],
@@ -4317,7 +4465,7 @@ function AddListingForm({ onSubmit, user, lang }) {
     if (!form.brand || !form.price || !form.owner || submitting) return;
     setSubmitting(true);
     try {
-      await onSubmit({
+      const ok = await onSubmit({
       type: form.type,
       brand: form.brand,
       region: form.region === "Інше" ? (form.customRegion || "Інше") : form.region,
@@ -4332,6 +4480,7 @@ function AddListingForm({ onSubmit, user, lang }) {
         [form.spec2Key]: form.spec2Val || "—",
       },
       });
+      if (ok) draft.clear();
     } finally {
       setSubmitting(false);
     }
@@ -4339,6 +4488,7 @@ function AddListingForm({ onSubmit, user, lang }) {
 
   return (
     <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      <DraftBanner draft={draft} />
       {user ? (
         <div style={{ fontSize: 12, color: "#6fae6f", fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif" }}>
           ✓ Дані підтягнуто з кабінету — {user.org || user.name}
@@ -4439,7 +4589,7 @@ function AddListingForm({ onSubmit, user, lang }) {
 
 // ---- Client request form ----
 function RequestForm({ onSubmit, user, initial, t, lang }) {
-  const [form, setForm] = useState({
+  const [form, setForm, draft] = useDraft(`techmaydanchik_draft_request_${user?.id || "guest"}`, {
     type: initial?.type || TYPES[0],
     region: initial?.region || user?.region || REGIONS[0],
     dateFrom: "",
@@ -4447,7 +4597,7 @@ function RequestForm({ onSubmit, user, initial, t, lang }) {
     comment: initial?.comment || "",
     contact: user?.phone || "",
     requesterName: user?.name || "",
-  });
+  }, { skipRestore: !!initial });
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
   const [contactError, setContactError] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -4465,10 +4615,12 @@ function RequestForm({ onSubmit, user, initial, t, lang }) {
     }
     setSubmitting(true);
     onSubmit({ ...form, region: form.region === "Інше" ? (form.customRegion || "Інше") : form.region });
+    draft.clear();
   };
 
   return (
     <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      <DraftBanner draft={draft} />
       {initial && (
         <div style={{ fontSize: 12, color: "#FF6A1A", fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif" }}>
           ✨ Заповнено помічником — перевірте і додайте контакт
