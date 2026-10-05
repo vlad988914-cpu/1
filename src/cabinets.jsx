@@ -1,8 +1,8 @@
 // Кабінети клієнта й власника та панель сповіщень.
 // Принцип екрана: «що мені тут зробити далі?» — активна дія завжди найпомітніша.
 import React, { useState } from "react";
-import { Plate, Label, primaryBtn, smallBtn, selectStyle, inputStyle } from "./ui.jsx";
-import { bookingPhase, fmtDate, fmtPeriod, fmtDateTime } from "./services/deals.js";
+import { Plate, Label, Field, ErrorText, primaryBtn, smallBtn, selectStyle, inputStyle } from "./ui.jsx";
+import { bookingPhase, fmtDate, fmtPeriod, fmtDateTime, daysInclusive, rangesOverlap, todayLocal } from "./services/deals.js";
 
 const FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif";
 const GREEN = "#6fae6f";
@@ -192,8 +192,16 @@ const REQUEST_INFO = {
   cancelled: { step: 0, text: "Заявку скасовано", color: RED },
 };
 
-function RequestCard({ req }) {
-  const info = REQUEST_INFO[req.status] || REQUEST_INFO.new;
+const CANCELABLE = ["new", "dispatched", "offered"];
+
+function RequestCard({ req, onCancel }) {
+  const base = REQUEST_INFO[req.status] || REQUEST_INFO.new;
+  const info =
+    req.status === "new" && req.listing_id
+      ? { ...base, text: "Диспетчер перевіряє вашу бронь і підтвердить — ви отримаєте сповіщення" }
+      : base;
+  const [asking, setAsking] = useState(false);
+  const [busy, setBusy] = useState(false);
   return (
     <Plate style={{ padding: 14, display: "flex", flexDirection: "column", gap: 8 }}>
       <div style={{ display: "flex", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
@@ -201,8 +209,13 @@ function RequestCard({ req }) {
         <StatusBadge color={info.color}>{info.text.split(" — ")[0].split(",")[0]}</StatusBadge>
       </div>
       <div style={{ fontFamily: FONT, fontSize: 17, fontWeight: 600 }}>
-        {req.type} — {req.region}
+        {req.listing_brand ? req.listing_brand : `${req.type} — ${req.region}`}
       </div>
+      {req.listing_brand && (
+        <div style={{ fontFamily: FONT, fontSize: 12.5, color: "#A3A8AD" }}>
+          {req.type} · {req.region}
+        </div>
+      )}
       <div style={{ fontFamily: FONT, fontSize: 12.5, color: "#A3A8AD" }}>
         {fmtPeriod(req.date_from, req.date_to)}
         {req.with_operator ? " · з оператором" : ""}
@@ -220,6 +233,34 @@ function RequestCard({ req }) {
         </div>
       )}
       <div style={{ fontFamily: FONT, fontSize: 12.5, color: info.color }}>{info.text}</div>
+      {onCancel && CANCELABLE.includes(req.status) &&
+        (asking ? (
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+            <span style={{ fontFamily: FONT, fontSize: 12, color: "#A3A8AD" }}>Скасувати заявку?</span>
+            <button
+              disabled={busy}
+              onClick={async () => {
+                setBusy(true);
+                try {
+                  await onCancel(req.id);
+                } finally {
+                  setBusy(false);
+                  setAsking(false);
+                }
+              }}
+              style={{ ...smallBtn, borderColor: RED, color: RED, padding: "6px 14px", fontSize: 12 }}
+            >
+              Так, скасувати
+            </button>
+            <button onClick={() => setAsking(false)} style={{ ...smallBtn, padding: "6px 14px", fontSize: 12 }}>
+              Ні
+            </button>
+          </div>
+        ) : (
+          <button onClick={() => setAsking(true)} style={{ background: "none", border: "none", color: "#70777D", cursor: "pointer", fontFamily: FONT, fontSize: 12, textDecoration: "underline", padding: 0, alignSelf: "flex-start" }}>
+            Скасувати заявку
+          </button>
+        ))}
     </Plate>
   );
 }
@@ -284,10 +325,12 @@ function ClientBookingCard({ booking }) {
 }
 
 // ---- Кабінет клієнта ----
-export function ClientCabinet({ data, onRespond, onRefresh, initialTab }) {
+export function ClientCabinet({ data, onRespond, onRefresh, onCancelRequest, initialTab }) {
   const pending = data.offers.filter((o) => o.status === "proposed");
   const history = data.offers.filter((o) => o.status !== "proposed");
-  const [tab, setTab] = useState(initialTab || (pending.length ? "offers" : "requests"));
+  const hasRental = data.bookings.some((b) => ["reserved", "confirmed"].includes(b.status));
+  // Спершу те, що вимагає дії або вже підтверджено: пропозиція → оренда з контактом → заявки
+  const [tab, setTab] = useState(initialTab || (pending.length ? "offers" : hasRental ? "rentals" : "requests"));
   const [showHistory, setShowHistory] = useState(false);
 
   const tabs = [
@@ -342,7 +385,7 @@ export function ClientCabinet({ data, onRespond, onRefresh, initialTab }) {
           <>
             {data.requests.length === 0 && <Empty>Заявок поки немає. Натисніть «Залишити заявку» на головній сторінці.</Empty>}
             {data.requests.map((r) => (
-              <RequestCard key={r.id} req={r} />
+              <RequestCard key={r.id} req={r} onCancel={onCancelRequest} />
             ))}
           </>
         )}
@@ -439,6 +482,9 @@ const KIND_COLOR = {
   booking_reserved: AMBER,
   booking_confirmed: GREEN,
   booking_cancelled: RED,
+  request_declined: AMBER,
+  request_cancelled: "#70777D",
+  role_changed: GREEN,
 };
 
 export function NotificationsPanel({ items, onOpenItem, onMarkAll }) {
@@ -573,5 +619,95 @@ export function OwnerInbox({ items, onRespond, onRefresh }) {
         );
       })}
     </div>
+  );
+}
+
+
+// ---- Бронювання техніки клієнтом: техніка + дати → заявка диспетчеру ----
+export function BookingForm({ listing, busyRanges, onSubmit }) {
+  const today = todayLocal();
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
+  const [operator, setOperator] = useState(false);
+  const [comment, setComment] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  // Календар зайнятості видно ДО відправки — як у світових сервісах бронювання
+  const taken = (busyRanges || [])
+    .filter((r) => r.listing_id === listing.id && r.date_to >= today)
+    .sort((a, b) => (a.date_from < b.date_from ? -1 : 1));
+  const reversed = !!(from && to && to < from);
+  const clash = from && to && !reversed ? taken.find((r) => rangesOverlap(r.date_from, r.date_to, from, to)) : null;
+  const days = daysInclusive(from, to);
+  const estimate = days > 0 && (listing.unit === "добу" || listing.unit === "зміну") ? days * Number(listing.price) : null;
+  const canSend = !!from && !!to && !reversed && !clash && !busy;
+
+  const submit = async (e) => {
+    e.preventDefault();
+    if (!canSend) return;
+    setBusy(true);
+    try {
+      await onSubmit({ dateFrom: from, dateTo: to, withOperator: operator, comment });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      <div>
+        <div style={{ fontFamily: FONT, fontSize: 18, fontWeight: 600 }}>{listing.brand}</div>
+        <div style={{ fontFamily: FONT, fontSize: 12.5, color: "#A3A8AD" }}>
+          {listing.type} · {listing.region} · {listing.price} ₴/{listing.unit}
+        </div>
+      </div>
+
+      {taken.length > 0 ? (
+        <div style={{ padding: "10px 12px", border: "1px solid #c96b5a", background: "rgba(201,107,90,0.08)", fontFamily: FONT, fontSize: 12.5 }}>
+          <div style={{ color: "#e0a89c", fontWeight: 600, marginBottom: 4 }}>Ці дати вже зайняті</div>
+          {taken.map((r, i) => (
+            <div key={i} style={{ color: "#e0a89c" }}>
+              {fmtDate(r.date_from)} — {fmtDate(r.date_to)}
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div style={{ fontFamily: FONT, fontSize: 12.5, color: GREEN }}>Найближчим часом техніка вільна</div>
+      )}
+
+      <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+        <Field label="З якого дня" style={{ flex: "1 1 140px" }}>
+          <input type="date" aria-label="З якого дня" min={today} value={from} onChange={(e) => setFrom(e.target.value)} style={inputStyle} required />
+        </Field>
+        <Field label="По який день" style={{ flex: "1 1 140px" }}>
+          <input type="date" aria-label="По який день" min={from || today} value={to} onChange={(e) => setTo(e.target.value)} style={inputStyle} required />
+        </Field>
+      </div>
+      {reversed && <ErrorText>Кінець періоду не може бути раніше за початок</ErrorText>}
+      {clash && <ErrorText>Ці дати зайняті ({fmtDate(clash.date_from)} — {fmtDate(clash.date_to)}). Оберіть інші.</ErrorText>}
+
+      {estimate !== null && !clash && (
+        <div style={{ fontFamily: FONT, fontSize: 13 }}>
+          Орієнтовно: {listing.price} ₴ × {days} = <b>{estimate.toLocaleString("uk-UA")} ₴</b>
+          <span style={{ color: "#70777D" }}> (без доставки; остаточну ціну підтвердить диспетчер)</span>
+        </div>
+      )}
+
+      <label style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: FONT, fontSize: 13, color: "#A3A8AD", cursor: "pointer" }}>
+        <input type="checkbox" checked={operator} onChange={(e) => setOperator(e.target.checked)} style={{ accentColor: "#FF6A1A", width: 18, height: 18 }} />
+        Потрібна техніка з оператором
+      </label>
+
+      <Field label="Коментар (необов'язково): що робитимете, адреса об'єкта">
+        <textarea value={comment} onChange={(e) => setComment(e.target.value)} rows={2} style={{ ...inputStyle, resize: "vertical" }} />
+      </Field>
+
+      <button className="btn-premium-hover" type="submit" disabled={!canSend} style={{ ...primaryBtn, width: "100%", minHeight: 48, opacity: canSend ? 1 : 0.5, cursor: canSend ? "pointer" : "not-allowed" }}>
+        {busy ? "Надсилаємо..." : "Надіслати заявку на бронь"}
+      </button>
+      <div style={{ fontFamily: FONT, fontSize: 11.5, color: "#70777D" }}>
+        Диспетчер перевірить дати й підтвердить — зазвичай протягом години в робочий час. Контакт власника відкриється у вашому кабінеті після підтвердження.
+      </div>
+    </form>
   );
 }

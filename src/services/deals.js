@@ -19,6 +19,15 @@ export const REASON_TEXT = {
   not_reserved: "Бронь уже підтверджено або скасовано",
   not_active: "Бронь уже не активна",
   offline: "Немає з'єднання з базою",
+  past: "Дата початку вже минула — оберіть сьогодні або пізніше",
+  duplicate: "Ви вже надсилали таку саму заявку на ці дати",
+  own_listing: "Це ваша власна техніка",
+  no_profile: "Профіль не знайдено — вийдіть і увійдіть знову",
+  has_booking: "Оренду вже підтверджено — для скасування зверніться до диспетчера",
+  already_cancelled: "Заявку вже скасовано",
+  no_listing: "У заявці не вибрано техніку",
+  is_dispatcher: "Роль диспетчера змінюється лише через SQL",
+  bad_role: "Недопустима роль",
 };
 export const reasonText = (res) => REASON_TEXT[res?.reason] || res?.message || "Не вдалося виконати дію";
 
@@ -42,7 +51,18 @@ export const cancelBooking = (bookingId, reason) => call("cancel_booking", { p_b
 export const createManualBooking = (requestId, listingId, dateFrom, dateTo) =>
   call("create_manual_booking", { p_request_id: requestId, p_listing_id: listingId, p_date_from: dateFrom, p_date_to: dateTo });
 
+export const declineListingRequest = (requestId, reason) =>
+  call("decline_listing_request", { p_request_id: requestId, p_reason: reason || null });
+export const setUserRole = (userId, role) => call("set_user_role", { p_user_id: userId, p_role: role });
+
 // ---- Клієнт ----
+// Забронювати конкретну техніку на дати: заявка одразу йде диспетчеру
+export const requestListing = (listingId, dateFrom, dateTo, comment, withOperator) =>
+  call("request_listing", {
+    p_listing_id: listingId, p_date_from: dateFrom, p_date_to: dateTo,
+    p_comment: comment || null, p_with_operator: !!withOperator,
+  });
+export const cancelMyRequest = (requestId) => call("cancel_my_request", { p_request_id: requestId });
 export const respondToOffer = (offerId, action, reason) =>
   call("respond_to_offer", { p_offer_id: offerId, p_action: action, p_reason: reason || null });
 
@@ -124,3 +144,11 @@ export const fmtDateTime = (iso) => {
   const d = new Date(iso);
   return d.toLocaleString("uk-UA", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
 };
+
+// Кількість днів у періоді (включно з обома кінцями) — для орієнтовної вартості
+export const daysInclusive = (from, to) => {
+  if (!from || !to || to < from) return 0;
+  return Math.round((new Date(to) - new Date(from)) / 86400000) + 1;
+};
+export const rangesOverlap = (aFrom, aTo, bFrom, bTo) => aFrom <= bTo && bFrom <= aTo;
+export const todayLocal = () => todayStr();

@@ -2,8 +2,8 @@ import React, { useState, useMemo, useEffect, useRef } from "react";
 import { supabase } from "./supabaseClient";
 import { Plate, Label, badgeStyle, miniBtn, ErrorText, Field, primaryBtn, smallBtn, selectStyle, inputStyle, Modal } from "./ui.jsx";
 import { answerFromKnowledge, FALLBACK_ANSWER, JOB_PILLS, HELPER_PILLS } from "../shared/workKnowledge.js";
-import { ClientCabinet, OwnerCabinet, NotificationsPanel } from "./cabinets.jsx";
-import { DealsSection, EventLog } from "./dispatcherDeals.jsx";
+import { ClientCabinet, OwnerCabinet, NotificationsPanel, BookingForm } from "./cabinets.jsx";
+import { DealsSection, EventLog, EquipmentBoard, UsersBoard } from "./dispatcherDeals.jsx";
 import * as deals from "./services/deals.js";
 
 // ---- Bot API config ----
@@ -29,11 +29,11 @@ const TRANSLATIONS = {
     pill_contact: "Зв'язок: demolis@ukr.net",
     how_it_works_label: "ПРОЦЕС",
     how_it_works_title: "Як це працює",
-    step_1: "Розкажіть, що потрібно",
-    step_2: "Диспетчер знаходить техніку",
-    step_3: "Ви отримуєте пропозицію в кабінеті",
-    step_4: "Підтверджуєте або відхиляєте",
-    step_5: "Отримуєте контакт власника",
+    step_1: "Оберіть техніку й дати або опишіть задачу",
+    step_2: "Диспетчер перевіряє й підтверджує",
+    step_3: "Підтвердження приходить у ваш кабінет",
+    step_4: "Контакти відкриваються обом сторонам",
+    step_5: "Техніка закріплена за вами на ваші дати",
     status_available: "ДОСТУПНА",
     status_busy: "ЗАЙНЯТА",
     sort_default: "За замовчуванням",
@@ -71,7 +71,7 @@ const TRANSLATIONS = {
     recently_viewed: "Ви нещодавно переглядали:",
     filter_price_placeholder: "Ціна до, ₴/год",
     filter_all: "Усі",
-    respond_btn: "Відгукнутись",
+    respond_btn: "Забронювати",
     busy_btn: "Зайнято",
     busy_until: "Зайнято до",
     catalog_empty: "Нічого не знайдено за цими фільтрами.",
@@ -93,7 +93,7 @@ const TRANSLATIONS = {
     ai_greeting: "Привіт! Опишіть, яку роботу потрібно виконати — підберу техніку, поясню варіанти й різницю між ними. Або оберіть вид робіт нижче.",
     faq_items: [
       { q: "Скільки коштує розміщення техніки в каталозі?", a: "Реєстрація та додавання оголошень безкоштовні. Ми не беремо комісію з угод — власник і клієнт домовляються напряму." },
-      { q: "Як швидко я отримаю пропозицію?", a: "Диспетчер вручну підбирає техніку під вашу заявку й надсилає пропозицію в особистий кабінет — зазвичай протягом години в робочий час. Ви отримаєте сповіщення. Щоб бачити відповіді онлайн, увійдіть в акаунт перед тим, як залишати заявку." },
+      { q: "Як швидко підтвердять бронь?", a: "Диспетчер перевіряє техніку й дати та підтверджує вручну — зазвичай протягом години в робочий час. Підтвердження й контакт власника з'являться в «Моєму кабінеті», ви отримаєте сповіщення. Для цього потрібен акаунт — реєстрація займає хвилину." },
       { q: "Що якщо підходящої техніки не знайдеться?", a: "Диспетчер бачить це одразу, розширює пошук на інші регіони й запитує власників напряму. Заявка лишається активною, поки ви її не скасуєте." },
       { q: "Чи можна перевірити власника техніки перед угодою?", a: "У профілі власника відображається позначка верифікації — ми перевіряємо контакти та документи перед її наданням." },
     ],
@@ -114,11 +114,11 @@ const TRANSLATIONS = {
     pill_contact: "Связь: demolis@ukr.net",
     how_it_works_label: "ПРОЦЕСС",
     how_it_works_title: "Как это работает",
-    step_1: "Расскажите, что нужно",
-    step_2: "Диспетчер находит технику",
-    step_3: "Вы получаете предложение в кабинете",
-    step_4: "Подтверждаете или отклоняете",
-    step_5: "Получаете контакт владельца",
+    step_1: "Выберите технику и даты или опишите задачу",
+    step_2: "Диспетчер проверяет и подтверждает",
+    step_3: "Подтверждение приходит в ваш кабинет",
+    step_4: "Контакты открываются обеим сторонам",
+    step_5: "Техника закреплена за вами на ваши даты",
     status_available: "ДОСТУПНА",
     status_busy: "ЗАНЯТА",
     sort_default: "По умолчанию",
@@ -156,7 +156,7 @@ const TRANSLATIONS = {
     recently_viewed: "Вы недавно просматривали:",
     filter_price_placeholder: "Цена до, ₴/час",
     filter_all: "Все",
-    respond_btn: "Откликнуться",
+    respond_btn: "Забронировать",
     busy_btn: "Занято",
     busy_until: "Занято до",
     catalog_empty: "Ничего не найдено по этим фильтрам.",
@@ -178,7 +178,7 @@ const TRANSLATIONS = {
     ai_greeting: "Привет! Опишите, какую работу нужно выполнить — подберу технику, объясню варианты и разницу между ними. Или выберите вид работ ниже.",
     faq_items: [
       { q: "Сколько стоит размещение техники в каталоге?", a: "Регистрация и добавление объявлений бесплатны. Мы не берём комиссию со сделок — владелец и клиент договариваются напрямую." },
-      { q: "Как быстро я получу предложение?", a: "Диспетчер вручную подбирает технику под вашу заявку и отправляет предложение в личный кабинет — обычно в течение часа в рабочее время. Вы получите уведомление. Чтобы видеть ответы онлайн, войдите в аккаунт перед тем, как оставлять заявку." },
+      { q: "Как быстро подтвердят бронь?", a: "Диспетчер проверяет технику и даты и подтверждает вручную — обычно в течение часа в рабочее время. Подтверждение и контакт владельца появятся в «Моём кабинете», вы получите уведомление. Для этого нужен аккаунт — регистрация занимает минуту." },
       { q: "Что если подходящей техники не найдётся?", a: "Диспетчер видит это сразу, расширяет поиск на другие регионы и запрашивает владельцев напрямую. Заявка остаётся активной, пока вы её не отмените." },
       { q: "Можно ли проверить владельца техники перед сделкой?", a: "В профиле владельца отображается отметка верификации — мы проверяем контакты и документы перед её выдачей." },
     ],
@@ -199,11 +199,11 @@ const TRANSLATIONS = {
     pill_contact: "Contact: demolis@ukr.net",
     how_it_works_label: "PROCESS",
     how_it_works_title: "How it works",
-    step_1: "Tell us what you need",
-    step_2: "Dispatcher finds equipment",
-    step_3: "You get an offer in your cabinet",
-    step_4: "You confirm or decline",
-    step_5: "You get the owner's contact",
+    step_1: "Pick equipment and dates, or describe the job",
+    step_2: "The dispatcher checks and confirms",
+    step_3: "Confirmation arrives in your cabinet",
+    step_4: "Contacts open for both sides",
+    step_5: "The equipment is reserved for your dates",
     status_available: "AVAILABLE",
     status_busy: "BUSY",
     sort_default: "Default",
@@ -241,7 +241,7 @@ const TRANSLATIONS = {
     recently_viewed: "You recently viewed:",
     filter_price_placeholder: "Price up to, ₴/hr",
     filter_all: "All",
-    respond_btn: "Respond",
+    respond_btn: "Book",
     busy_btn: "Busy",
     busy_until: "Busy until",
     catalog_empty: "Nothing found for these filters.",
@@ -263,7 +263,7 @@ const TRANSLATIONS = {
     ai_greeting: "Hi! Describe the work you need done — I'll pick the equipment and explain the options and differences. Or choose a job type below.",
     faq_items: [
       { q: "How much does listing equipment in the catalog cost?", a: "Registration and adding listings are free. We don't take a commission from deals — the owner and client arrange things directly." },
-      { q: "How fast will I get an offer?", a: "The dispatcher manually picks equipment for your request and sends an offer to your personal cabinet — usually within an hour during business hours. You will get a notification. Sign in before submitting to see replies online." },
+      { q: "How fast is a booking confirmed?", a: "The dispatcher checks the equipment and dates and confirms manually — usually within an hour during business hours. The confirmation and the owner's contact appear in your cabinet and you get a notification. An account is needed — signing up takes a minute." },
       { q: "What if no suitable equipment is found?", a: "The dispatcher sees this immediately, widens the search to other regions and asks owners directly. Your request stays active until you cancel it." },
       { q: "Can I verify the equipment owner before a deal?", a: "A verification badge is shown on the owner's profile — we check contacts and documents before granting it." },
     ],
@@ -778,6 +778,8 @@ export default function EquipmentMarketplace() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [busyRanges, setBusyRanges] = useState([]); // зайнятість техніки для каталогу
   const [dealsData, setDealsData] = useState({ offers: [], bookings: [], events: [] }); // для диспетчера
+  const [dispatchUsers, setDispatchUsers] = useState([]); // усі зареєстровані користувачі (для диспетчера)
+  const [bookingListing, setBookingListing] = useState(null); // техніка, яку клієнт зараз бронює
 
   // Читання заявок з бази для панелі диспетчера потребує входу диспетчера (RLS) —
   // це наступний крок. Поки що заявки видно в Supabase Table Editor і в Telegram.
@@ -1226,6 +1228,7 @@ export default function EquipmentMarketplace() {
     if (user?.role === "dispatcher") {
       setRequests([]); // не лишаємо чужі заявки в пам'яті
       setDealsData({ offers: [], bookings: [], events: [] });
+      setDispatchUsers([]);
     }
     setUser(null);
     setShowProfile(false);
@@ -1275,7 +1278,7 @@ export default function EquipmentMarketplace() {
     const dealsRes = await deals.fetchDispatcherDeals();
     setDealsData(dealsRes);
     const [profRes, listRes, reqRes, dispRes] = await Promise.all([
-      supabase.from("profiles").select("id,name,org,phone,role").eq("role", "owner"),
+      supabase.from("profiles").select("id,name,org,phone,email,role,created_at"),
       supabase.from("listings").select("owner_id,type,region,available"),
       supabase.from("requests").select("*").order("created_at", { ascending: false }),
       supabase.from("request_dispatch").select("*").order("sent_at", { ascending: true }),
@@ -1286,7 +1289,8 @@ export default function EquipmentMarketplace() {
       return;
     }
     const uniq = (arr) => [...new Set(arr)];
-    const owners = (profRes.data || []).map((p) => {
+    setDispatchUsers(profRes.data || []);
+    const owners = (profRes.data || []).filter((p) => p.role === "owner").map((p) => {
       const mine = (listRes.data || []).filter((l) => l.owner_id === p.id);
       return { id: p.id, name: p.org || p.name, phone: p.phone, types: uniq(mine.map((l) => l.type)), regions: uniq(mine.map((l) => l.region)), verified: false };
     });
@@ -1318,6 +1322,7 @@ export default function EquipmentMarketplace() {
           log,
           // угода: клієнт із акаунтом, період, пропозиції, броні й журнал дій
           hasAccount: !!r.client_id,
+          clientId: r.client_id,
           dateTo: r.date_to,
           withOperator: !!r.with_operator,
           listingId: r.listing_id,
@@ -1353,7 +1358,17 @@ export default function EquipmentMarketplace() {
   const handlePropose = async (reqId, listingId, from, to) =>
     dealResult(await deals.proposeOffer(reqId, listingId, from, to), "Пропозицію надіслано клієнту");
   const handleManualBooking = async (reqId, listingId, from, to) =>
-    dealResult(await deals.createManualBooking(reqId, listingId, from, to), "Оренду оформлено за телефоном");
+    dealResult(await deals.createManualBooking(reqId, listingId, from, to), "Оренду підтверджено: клієнт і власник бачать контакти одне одного");
+  const handleDeclineRequest = async (reqId, reason) =>
+    dealResult(await deals.declineListingRequest(reqId, reason), "Відхилено. Клієнта сповіщено, заявка чекає на альтернативу");
+  const handleSetRole = async (userId, role) => {
+    const res = await deals.setUserRole(userId, role);
+    if (!res.ok) flashToast(deals.reasonText(res));
+    else {
+      flashToast("Роль змінено, користувача сповіщено");
+      await loadDispatcherData();
+    }
+  };
   const handleConfirmBooking = async (bookingId) => dealResult(await deals.confirmBooking(bookingId), "Оренду підтверджено, клієнта й власника сповіщено");
   const handleCancelBooking = async (bookingId, reason) => dealResult(await deals.cancelBooking(bookingId, reason), "Бронь скасовано");
 
@@ -1373,6 +1388,54 @@ export default function EquipmentMarketplace() {
     }, 60000);
     return () => clearInterval(timer);
   }, [user?.id, user?.role]);
+
+  const handleCancelRequest = async (requestId) => {
+    const res = await deals.cancelMyRequest(requestId);
+    flashToast(res.ok ? "Заявку скасовано" : deals.reasonText(res));
+    await loadClientData();
+  };
+
+  // Клієнт обирає техніку й дати -> заявка диспетчеру (він підтвердить одним кліком)
+  const openBooking = (l) => {
+    if (!l.ownerId) {
+      respondToListing(l); // демо-оголошення без власника з бази
+      return;
+    }
+    if (!user) {
+      setShowAuthForm(true);
+      flashToast("Щоб забронювати техніку, увійдіть або зареєструйтесь — це 1 хвилина");
+      return;
+    }
+    if (user.role === "dispatcher") {
+      flashToast("Диспетчер оформлює бронь у «Панелі диспетчера» (кнопка «Підтвердити оренду»)");
+      return;
+    }
+    if (l.ownerId === user.id) {
+      flashToast("Це ваша власна техніка");
+      return;
+    }
+    setBookingListing(l);
+  };
+  const handleBook = async ({ dateFrom, dateTo, withOperator, comment }) => {
+    const l = bookingListing;
+    const res = await deals.requestListing(l.id, dateFrom, dateTo, comment, withOperator);
+    if (!res.ok) {
+      flashToast(res.reason === "busy" && res.busy_until ? `Ці дати зайняті до ${deals.fmtDate(res.busy_until)}` : deals.reasonText(res));
+      if (res.reason === "busy") refreshBusy();
+      return false;
+    }
+    try {
+      fetch("/api/notify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: l.type, region: l.region, comment: `Бронь ${l.brand}, ${deals.fmtDate(dateFrom)} — ${deals.fmtDate(dateTo)}`, contact: user.phone, requesterName: user.name }),
+      }).catch(() => {});
+    } catch (e) {}
+    setBookingListing(null);
+    flashToast("Заявку надіслано. Відповідь і контакт власника з'являться в «Моєму кабінеті»");
+    loadClientData();
+    return true;
+  };
 
   const handleRespondOffer = async (offerId, action, reason) => {
     const res = await deals.respondToOffer(offerId, action, reason);
@@ -1425,6 +1488,11 @@ export default function EquipmentMarketplace() {
       setNotifications((prev) => prev.map((x) => (x.id === n.id ? { ...x, read_at: new Date().toISOString() } : x)));
     }
     setShowNotifications(false);
+    if (n.kind === "role_changed") {
+      flashToast("Оновлюємо сторінку…");
+      setTimeout(() => window.location.reload(), 600);
+      return;
+    }
     if (user?.role === "dispatcher") {
       setRole("dispatcher");
       loadDispatcherData();
@@ -2823,7 +2891,7 @@ export default function EquipmentMarketplace() {
       )}
 
       {role === "dispatcher" && (
-        <DispatcherPanel requests={requests} owners={dispatchOwners} listings={listings} allBookings={dealsData.bookings} onDispatch={handleDispatch} onOwnerAction={handleOwnerAction} onRefresh={loadDispatcherData} onPropose={handlePropose} onManual={handleManualBooking} onConfirm={handleConfirmBooking} onCancel={handleCancelBooking} user={user} t={t} />
+        <DispatcherPanel requests={requests} owners={dispatchOwners} listings={listings} allBookings={dealsData.bookings} onDispatch={handleDispatch} onOwnerAction={handleOwnerAction} onRefresh={loadDispatcherData} onPropose={handlePropose} onManual={handleManualBooking} onConfirm={handleConfirmBooking} onCancel={handleCancelBooking} onDecline={handleDeclineRequest} users={dispatchUsers} onSetRole={handleSetRole} user={user} t={t} />
       )}
 
       {/* Filters (client view) */}
@@ -3052,18 +3120,18 @@ export default function EquipmentMarketplace() {
                 )}
               </div>
               <button
-                disabled={!l.available || !!busyNowUntil(l.id)}
+                disabled={!l.available}
                 onClick={(e) => {
                   e.stopPropagation();
-                  respondToListing(l);
+                  openBooking(l);
                 }}
                 style={{
                   ...smallBtn,
-                  opacity: l.available && !busyNowUntil(l.id) ? 1 : 0.4,
-                  cursor: l.available && !busyNowUntil(l.id) ? "pointer" : "not-allowed",
+                  opacity: l.available ? 1 : 0.4,
+                  cursor: l.available ? "pointer" : "not-allowed",
                 }}
               >
-                {l.available && !busyNowUntil(l.id) ? t("respond_btn") : t("busy_btn")}
+                {l.available ? t("respond_btn") : t("busy_btn")}
               </button>
             </div>
           </Plate>
@@ -3249,18 +3317,19 @@ export default function EquipmentMarketplace() {
             )}
             {!busyNowUntil(detailListing.id) && busyNextRange(detailListing.id) && (
               <div style={{ padding: "10px 14px", border: "1px solid #FFB52E", background: "rgba(255,181,46,0.08)", color: "#FFB52E", fontSize: 13 }}>
-                Найближча оренда: {deals.fmtDate(busyNextRange(detailListing.id).date_from)} — {deals.fmtDate(busyNextRange(detailListing.id).date_to)}. Обирайте інші дати в заявці.
+                Найближча оренда: {deals.fmtDate(busyNextRange(detailListing.id).date_from)} — {deals.fmtDate(busyNextRange(detailListing.id).date_to)}. Обирайте вільні дати.
               </div>
             )}
             <button
-              disabled={!detailListing.available || !!busyNowUntil(detailListing.id)}
+              disabled={!detailListing.available}
               onClick={() => {
-                respondToListing(detailListing);
+                const dl = detailListing;
                 setDetailListing(null);
+                openBooking(dl);
               }}
-              style={{ ...primaryBtn, width: "100%", opacity: detailListing.available && !busyNowUntil(detailListing.id) ? 1 : 0.4, cursor: detailListing.available && !busyNowUntil(detailListing.id) ? "pointer" : "not-allowed" }}
+              style={{ ...primaryBtn, width: "100%", opacity: detailListing.available ? 1 : 0.4, cursor: detailListing.available ? "pointer" : "not-allowed" }}
             >
-              ЗАПИТАТИ ПРО ОРЕНДУ
+              ЗАБРОНЮВАТИ НА ДАТИ
             </button>
 
             {detailListing.ownerId && user && (user.id === detailListing.ownerId || user.role === "dispatcher") && (
@@ -3295,7 +3364,13 @@ export default function EquipmentMarketplace() {
       )}
       {showMyRequests && user && (
         <Modal onClose={() => { setShowMyRequests(false); setClientTab(null); }} title="Мій кабінет" wide>
-          <ClientCabinet key={clientTab || "auto"} data={clientData} initialTab={clientTab} onRespond={handleRespondOffer} onRefresh={loadClientData} />
+          <ClientCabinet key={clientTab || "auto"} data={clientData} initialTab={clientTab} onRespond={handleRespondOffer} onRefresh={loadClientData} onCancelRequest={handleCancelRequest} />
+        </Modal>
+      )}
+
+      {bookingListing && (
+        <Modal onClose={() => setBookingListing(null)} title="Бронювання техніки" wide>
+          <BookingForm listing={bookingListing} busyRanges={busyRanges} onSubmit={handleBook} />
         </Modal>
       )}
 
@@ -3381,7 +3456,57 @@ export default function EquipmentMarketplace() {
 }
 
 // ---- Dispatcher panel ----
-function DispatcherPanel({ requests, owners, listings, allBookings, onDispatch, onOwnerAction, onRefresh, onPropose, onManual, onConfirm, onCancel, user, t }) {
+// Диспетчерська: три вкладки. «Заявки» — основна робота; «Техніка» — хто хоче кожну одиницю;
+// «Користувачі» — усі зареєстровані.
+function DispatcherPanel(props) {
+  const { requests, listings, allBookings, users, onSetRole, onManual, onDecline } = props;
+  const [view, setView] = useState("requests");
+  const attention = requests.filter((r) => r.status === "new" || r.status === "booked").length;
+  const wanted = requests.filter((r) => r.listingId && ["new", "dispatched", "offered"].includes(r.status)).length;
+  const tabs = [
+    ["requests", "Заявки", attention],
+    ["equipment", "Техніка", wanted],
+    ["users", "Користувачі", users.length],
+  ];
+  return (
+    <div>
+      <div role="tablist" style={{ display: "flex", gap: 4, padding: "0 24px", borderBottom: "1px solid #202428", margin: "0 0 14px", overflowX: "auto" }}>
+        {tabs.map(([key, label, count]) => {
+          const active = view === key;
+          return (
+            <button
+              key={key}
+              role="tab"
+              aria-selected={active}
+              onClick={() => setView(key)}
+              style={{ background: "none", border: "none", borderBottom: `2px solid ${active ? "#FF6A1A" : "transparent"}`, color: active ? "#F4F4F1" : "#A3A8AD", fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 14, padding: "10px 14px", cursor: "pointer", whiteSpace: "nowrap", minHeight: 44 }}
+            >
+              {label}
+              {count > 0 && (
+                <span style={{ marginLeft: 6, background: key === "users" ? "#2a2e32" : "#FF6A1A", color: key === "users" ? "#F4F4F1" : "#08090A", borderRadius: 980, padding: "1px 7px", fontSize: 11, fontWeight: 600 }}>
+                  {count}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+      {view === "requests" && <DispatcherRequests {...props} />}
+      {view === "equipment" && (
+        <div style={{ padding: "0 24px 48px" }}>
+          <EquipmentBoard listings={listings} requests={requests} allBookings={allBookings} onConfirm={(r) => onManual(r.id, r.listingId, r.dateFrom, r.dateTo)} onDecline={onDecline} />
+        </div>
+      )}
+      {view === "users" && (
+        <div style={{ padding: "0 24px 48px" }}>
+          <UsersBoard users={users} requests={requests} bookings={allBookings} onSetRole={onSetRole} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function DispatcherRequests({ requests, owners, listings, allBookings, onDispatch, onOwnerAction, onRefresh, onPropose, onManual, onConfirm, onCancel, onDecline, user, t }) {
   const [filter, setFilter] = useState("all");
 
   const categories = [
@@ -3458,7 +3583,7 @@ function DispatcherPanel({ requests, owners, listings, allBookings, onDispatch, 
           <div style={{ fontSize: 13, color: "#70777D" }}>Немає заявок у цій категорії.</div>
         ) : (
           filtered.map((req) => (
-            <RequestDispatchCard key={req.id} req={req} owners={owners} listings={listings} allBookings={allBookings} onDispatch={onDispatch} onOwnerAction={onOwnerAction} onPropose={onPropose} onManual={onManual} onConfirm={onConfirm} onCancel={onCancel} user={user} />
+            <RequestDispatchCard key={req.id} req={req} owners={owners} listings={listings} allBookings={allBookings} onDispatch={onDispatch} onOwnerAction={onOwnerAction} onPropose={onPropose} onManual={onManual} onConfirm={onConfirm} onCancel={onCancel} onDecline={onDecline} user={user} />
           ))
         )}
       </div>
@@ -3578,7 +3703,7 @@ function ReviewBox({ req, onSubmit }) {
   );
 }
 
-function RequestDispatchCard({ req, owners, listings, allBookings, onDispatch, onOwnerAction, onPropose, onManual, onConfirm, onCancel, user }) {
+function RequestDispatchCard({ req, owners, listings, allBookings, onDispatch, onOwnerAction, onPropose, onManual, onConfirm, onCancel, onDecline, user }) {
   const contactedIds = new Set(Object.keys(req.ownerStatuses));
   const uncontacted = owners.filter((o) => !contactedIds.has(String(o.id)));
   const suggestedUncontacted = uncontacted.filter((o) => o.types.includes(req.type) && (o.regions || []).includes(req.region));
@@ -3687,7 +3812,7 @@ function RequestDispatchCard({ req, owners, listings, allBookings, onDispatch, o
         </div>
       )}
 
-      <DealsSection req={req} listings={listings} allBookings={allBookings} onPropose={onPropose} onManual={onManual} onConfirm={onConfirm} onCancel={onCancel} />
+      <DealsSection req={req} listings={listings} allBookings={allBookings} onPropose={onPropose} onManual={onManual} onConfirm={onConfirm} onCancel={onCancel} onDecline={onDecline} />
 
       {/* Запит власникам: запасний шлях, коли в каталозі немає підходящої техніки */}
       {!["taken", "booked"].includes(req.status) && (
@@ -3802,6 +3927,7 @@ function AuthForm({ onSubmit }) {
   const [serverError, setServerError] = useState("");
   const [info, setInfo] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPw, setShowPw] = useState(false);
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
   const font = "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif";
 
@@ -3891,14 +4017,37 @@ function AuthForm({ onSubmit }) {
       </Field>
 
       <Field label="Пароль">
-        <input
-          type="password"
-          value={form.password}
-          onChange={set("password")}
-          placeholder={mode === "signup" ? "Мінімум 8 символів" : "Ваш пароль"}
-          autoComplete={mode === "login" ? "current-password" : "new-password"}
-          style={inputStyle}
-        />
+        <div style={{ position: "relative" }}>
+          <input
+            type={showPw ? "text" : "password"}
+            value={form.password}
+            onChange={set("password")}
+            placeholder={mode === "signup" ? "Мінімум 8 символів" : "Ваш пароль"}
+            autoComplete={mode === "login" ? "current-password" : "new-password"}
+            style={{ ...inputStyle, width: "100%", boxSizing: "border-box", paddingRight: 46 }}
+          />
+          <button
+            type="button"
+            onClick={() => setShowPw((v) => !v)}
+            aria-label={showPw ? "Сховати пароль" : "Показати пароль"}
+            aria-pressed={showPw}
+            title={showPw ? "Сховати пароль" : "Показати пароль"}
+            style={{ position: "absolute", right: 2, top: "50%", transform: "translateY(-50%)", width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center", background: "none", border: "none", color: showPw ? "#FF6A1A" : "#A3A8AD", cursor: "pointer" }}
+          >
+            {showPw ? (
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-7 0-11-7-11-7a19.77 19.77 0 0 1 5.06-5.94M9.9 4.24A10.9 10.9 0 0 1 12 5c7 0 11 7 11 7a19.86 19.86 0 0 1-3.17 4.19" />
+                <path d="M14.12 14.12a3 3 0 1 1-4.24-4.24" />
+                <path d="M1 1l22 22" />
+              </svg>
+            ) : (
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+            )}
+          </button>
+        </div>
         {errors.password && <ErrorText>{errors.password}</ErrorText>}
       </Field>
 
