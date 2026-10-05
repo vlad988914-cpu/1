@@ -1,6 +1,10 @@
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import { supabase } from "./supabaseClient";
+import { Plate, Label, badgeStyle, miniBtn, ErrorText, Field, primaryBtn, smallBtn, selectStyle, inputStyle, Modal } from "./ui.jsx";
 import { answerFromKnowledge, FALLBACK_ANSWER, JOB_PILLS, HELPER_PILLS } from "../shared/workKnowledge.js";
+import { ClientCabinet, OwnerCabinet, NotificationsPanel } from "./cabinets.jsx";
+import { DealsSection, EventLog } from "./dispatcherDeals.jsx";
+import * as deals from "./services/deals.js";
 
 // ---- Bot API config ----
 // TODO: після розгортання бота на Railway/Render замініть на реальну адресу,
@@ -743,31 +747,6 @@ const carouselArrowStyle = (side) => ({
 });
 
 // ---- Small UI atoms ----
-const Plate = ({ children, style, className, onClick }) => (
-  <div
-    className={className}
-    onClick={onClick}
-    style={{
-      position: "relative",
-      border: "1px solid rgba(255,255,255,0.08)",
-      borderRadius: 16,
-      background: "#15181A",
-      boxShadow: "0 1px 2px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.25)",
-      ...style,
-    }}
-  >
-    {children}
-  </div>
-);
-
-const Label = ({ children }) => (
-  <div style={{ display: "flex", alignItems: "center", gap: 7, fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 11, letterSpacing: "0.01em", color: "#A3A8AD" }}>
-    <span style={{ width: 11, height: 1.4, background: "#FF6A1A", flexShrink: 0 }} />
-    {children}
-  </div>
-);
-
-
 // ---- Main App ----
 export default function EquipmentMarketplace() {
   const [role, setRole] = useState("client"); // client | owner
@@ -790,6 +769,14 @@ export default function EquipmentMarketplace() {
   const [dispatchOwners, setDispatchOwners] = useState([]); // справжні власники з бази (для диспетчера)
   const [ownerInbox, setOwnerInbox] = useState([]); // запити, надіслані цьому власнику
   const [showInbox, setShowInbox] = useState(false);
+  const [ownerBookings, setOwnerBookings] = useState([]); // оренди техніки цього власника
+  const [ownerTab, setOwnerTab] = useState("rentals");
+  const [clientData, setClientData] = useState({ requests: [], offers: [], bookings: [] }); // кабінет клієнта
+  const [clientTab, setClientTab] = useState(null);
+  const [notifications, setNotifications] = useState([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [busyRanges, setBusyRanges] = useState([]); // зайнятість техніки для каталогу
+  const [dealsData, setDealsData] = useState({ offers: [], bookings: [], events: [] }); // для диспетчера
 
   // Читання заявок з бази для панелі диспетчера потребує входу диспетчера (RLS) —
   // це наступний крок. Поки що заявки видно в Supabase Table Editor і в Telegram.
@@ -830,7 +817,7 @@ export default function EquipmentMarketplace() {
     setReviews((prev) => [...prev, { id: prev.length + 1, requestId, ownerName, rating, comment }]);
     flashToast("Дякуємо за відгук!");
   };
-  const myRequestsCount = user ? requests.filter((r) => r.contact === user.phone).length : 0;
+  const clientPending = clientData.offers.filter((o) => o.status === "proposed").length;
   const inboxPending = ownerInbox.filter((x) => x.dispatch_status === "sent" && x.req_status !== "taken").length;
   const [scrolled, setScrolled] = useState(false);
   const appSectionRef = useRef(null);
@@ -1062,6 +1049,8 @@ export default function EquipmentMarketplace() {
           type: data.type,
           region: data.region,
           date_from: data.dateFrom || null,
+          date_to: data.dateTo || null,
+          with_operator: !!data.withOperator,
           budget: data.budget ? Number(data.budget) : null,
           comment: data.comment || null,
           contact: data.contact,
@@ -1079,7 +1068,8 @@ export default function EquipmentMarketplace() {
     ]);
     setShowRequestForm(false);
     setAiPrefill(null);
-    flashToast("Заявку прийнято. Вона в черзі на диспетчеризацію");
+    flashToast(user ? "Заявку прийнято. Хід і відповіді — у «Моєму кабінеті»" : "Заявку прийнято. Щоб бачити відповіді онлайн, увійдіть або зареєструйтесь");
+    if (user) setTimeout(() => loadClientData(), 600);
   };
 
   const nowTime = () => new Date().toLocaleTimeString("uk-UA", { hour: "2-digit", minute: "2-digit" });
@@ -1229,7 +1219,10 @@ export default function EquipmentMarketplace() {
     try {
       await supabase?.auth.signOut();
     } catch (e) {}
-    if (user?.role === "dispatcher") setRequests([]); // не лишаємо чужі заявки в пам'яті
+    if (user?.role === "dispatcher") {
+      setRequests([]); // не лишаємо чужі заявки в пам'яті
+      setDealsData({ offers: [], bookings: [], events: [] });
+    }
     setUser(null);
     setShowProfile(false);
     setRole((r) => (r === "dispatcher" ? "client" : r));
@@ -1275,6 +1268,8 @@ export default function EquipmentMarketplace() {
   // Диспетчер бачить усі заявки, власників і історію розсилок (RLS пропускає лише роль dispatcher)
   const loadDispatcherData = async () => {
     if (!supabase || user?.role !== "dispatcher") return;
+    const dealsRes = await deals.fetchDispatcherDeals();
+    setDealsData(dealsRes);
     const [profRes, listRes, reqRes, dispRes] = await Promise.all([
       supabase.from("profiles").select("id,name,org,phone,role").eq("role", "owner"),
       supabase.from("listings").select("owner_id,type,region,available"),
@@ -1317,6 +1312,14 @@ export default function EquipmentMarketplace() {
           status: r.status,
           ownerStatuses,
           log,
+          // угода: клієнт із акаунтом, період, пропозиції, броні й журнал дій
+          hasAccount: !!r.client_id,
+          dateTo: r.date_to,
+          withOperator: !!r.with_operator,
+          listingId: r.listing_id,
+          offers: dealsRes.offers.filter((o) => o.request_id === r.id),
+          bookings: dealsRes.bookings.filter((b) => b.request_id === r.id),
+          events: dealsRes.events.filter((e) => e.request_id === r.id),
         };
       })
     );
@@ -1331,6 +1334,159 @@ export default function EquipmentMarketplace() {
     }, 30000);
     return () => clearInterval(timer);
   }, [user?.id, user?.role, role]);
+
+  // ---- Дії диспетчера по угоді: пропозиція, підтвердження, скасування ----
+  const dealResult = async (res, okMsg) => {
+    if (!res.ok) {
+      flashToast(res.reason === "busy" && res.busy_until ? `Техніка зайнята до ${deals.fmtDate(res.busy_until)}` : deals.reasonText(res));
+      return false;
+    }
+    flashToast(okMsg);
+    await loadDispatcherData();
+    refreshBusy();
+    return true;
+  };
+  const handlePropose = async (reqId, listingId, from, to) =>
+    dealResult(await deals.proposeOffer(reqId, listingId, from, to), "Пропозицію надіслано клієнту");
+  const handleManualBooking = async (reqId, listingId, from, to) =>
+    dealResult(await deals.createManualBooking(reqId, listingId, from, to), "Оренду оформлено за телефоном");
+  const handleConfirmBooking = async (bookingId) => dealResult(await deals.confirmBooking(bookingId), "Оренду підтверджено, клієнта й власника сповіщено");
+  const handleCancelBooking = async (bookingId, reason) => dealResult(await deals.cancelBooking(bookingId, reason), "Бронь скасовано");
+
+  // ---- Кабінет клієнта: пропозиції, заявки, оренди ----
+  const loadClientData = async () => {
+    if (!supabase || !user || user.role === "dispatcher") return;
+    setClientData(await deals.fetchClientCabinet());
+  };
+  useEffect(() => {
+    if (!supabase || !user || user.role === "dispatcher") {
+      setClientData({ requests: [], offers: [], bookings: [] });
+      return;
+    }
+    loadClientData();
+    const timer = setInterval(() => {
+      if (!document.hidden) loadClientData();
+    }, 60000);
+    return () => clearInterval(timer);
+  }, [user?.id, user?.role]);
+
+  const handleRespondOffer = async (offerId, action, reason) => {
+    const res = await deals.respondToOffer(offerId, action, reason);
+    if (!res.ok) flashToast(deals.reasonText(res));
+    else flashToast(action === "accepted" ? "Підтверджено! Диспетчер підтвердить оренду — ви отримаєте сповіщення" : "Пропозицію відхилено");
+    await loadClientData();
+    loadNotifications(false);
+    refreshBusy();
+  };
+
+  // ---- Оренди техніки власника ----
+  const loadOwnerBookings = async () => {
+    if (!supabase || user?.role !== "owner") return;
+    setOwnerBookings(await deals.fetchOwnerCabinet());
+  };
+
+  // ---- Сповіщення (дзвіночок) ----
+  const notifMaxRef = useRef(0);
+  const notifLoadedRef = useRef(false);
+  const loadNotifications = async (notify) => {
+    if (!supabase || !user) return;
+    const items = await deals.fetchNotifications(40);
+    const maxId = items.reduce((m, n) => Math.max(m, n.id), 0);
+    if (notify && notifLoadedRef.current) {
+      const fresh = items.filter((n) => n.id > notifMaxRef.current && !n.read_at);
+      if (fresh.length) flashToast(fresh.length === 1 ? fresh[0].title : `Нових сповіщень: ${fresh.length}`);
+    }
+    notifMaxRef.current = Math.max(notifMaxRef.current, maxId);
+    notifLoadedRef.current = true;
+    setNotifications(items);
+  };
+  useEffect(() => {
+    notifMaxRef.current = 0;
+    notifLoadedRef.current = false;
+    if (!supabase || !user) {
+      setNotifications([]);
+      return;
+    }
+    loadNotifications(true);
+    const timer = setInterval(() => {
+      if (!document.hidden) loadNotifications(true);
+    }, 30000);
+    return () => clearInterval(timer);
+  }, [user?.id]);
+  const unreadCount = notifications.filter((n) => !n.read_at).length;
+
+  const openNotification = async (n) => {
+    if (!n.read_at) {
+      await deals.markNotificationsRead([n.id]);
+      setNotifications((prev) => prev.map((x) => (x.id === n.id ? { ...x, read_at: new Date().toISOString() } : x)));
+    }
+    setShowNotifications(false);
+    if (user?.role === "dispatcher") {
+      setRole("dispatcher");
+      loadDispatcherData();
+      return;
+    }
+    if (user?.role === "owner" && ["booking_reserved", "booking_confirmed", "booking_cancelled"].includes(n.kind)) {
+      setOwnerTab("rentals");
+      loadOwnerBookings();
+      setShowInbox(true);
+      return;
+    }
+    setClientTab(n.kind === "offer_proposed" ? "offers" : String(n.kind).startsWith("booking_") ? "rentals" : "requests");
+    loadClientData();
+    setShowMyRequests(true);
+  };
+  const markAllNotifications = async () => {
+    await deals.markNotificationsRead(null);
+    setNotifications((prev) => prev.map((x) => ({ ...x, read_at: x.read_at || new Date().toISOString() })));
+  };
+
+  // ---- Зайнятість техніки в каталозі ----
+  const refreshBusy = async () => setBusyRanges(await deals.fetchListingBusy());
+  useEffect(() => {
+    refreshBusy();
+    const timer = setInterval(refreshBusy, 120000);
+    return () => clearInterval(timer);
+  }, []);
+  const busyNowUntil = (listingId) => {
+    const today = new Date().toLocaleDateString("sv-SE");
+    const hit = busyRanges.filter((r) => r.listing_id === listingId && r.date_from <= today && r.date_to >= today);
+    return hit.length ? hit.map((r) => r.date_to).sort().slice(-1)[0] : null;
+  };
+
+  // «Відгукнутись» на оголошення = заявка на цю техніку: іде диспетчеру, не власнику напряму
+  const respondToListing = async (l) => {
+    const contact = user?.phone || window.prompt("Вкажіть телефон або Telegram, щоб диспетчер міг з вами зв'язатися:");
+    if (!contact || !contact.trim()) return false;
+    trackViewed(l.id);
+    const comment = `Клієнт відгукнувся на оголошення: ${l.brand} (${l.owner})`;
+    try {
+      fetch("/api/notify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: l.type, region: l.region, comment, contact, requesterName: user?.name || "Гість сайту" }),
+      }).catch(() => {});
+    } catch (e) {}
+    if (supabase) {
+      try {
+        const { error } = await supabase.from("requests").insert({
+          client_id: user?.hasProfile ? user.id : null,
+          type: l.type,
+          region: l.region,
+          contact: contact.trim(),
+          requester_name: user?.name || null,
+          comment,
+          listing_id: l.ownerId ? l.id : null,
+        });
+        if (error) console.error("Supabase insert (respond) failed:", error.message);
+      } catch (e) {
+        console.error("Supabase unreachable:", e.message);
+      }
+    }
+    flashToast(user ? "Запит надіслано диспетчеру. Відповідь побачите в «Моєму кабінеті»" : "Запит надіслано. Диспетчер зв'яжеться з вами");
+    if (user) setTimeout(() => loadClientData(), 600);
+    return true;
+  };
 
   // ---- Кабінет власника: запити, надіслані диспетчером («Запити для мене») ----
   const inboxCountRef = useRef(0);
@@ -1358,11 +1514,16 @@ export default function EquipmentMarketplace() {
     inboxLoadedRef.current = false;
     if (!supabase || user?.role !== "owner") {
       setOwnerInbox([]);
+      setOwnerBookings([]);
       return;
     }
     loadInbox(true);
+    loadOwnerBookings();
     const timer = setInterval(() => {
-      if (!document.hidden) loadInbox(true);
+      if (!document.hidden) {
+        loadInbox(true);
+        loadOwnerBookings();
+      }
     }, 60000);
     return () => clearInterval(timer);
   }, [user?.id, user?.role]);
@@ -2283,6 +2444,27 @@ export default function EquipmentMarketplace() {
             ))}
           </div>
 
+          {user && (
+            <button
+              onClick={() => {
+                setShowNotifications(true);
+                loadNotifications(false);
+              }}
+              aria-label={`Сповіщення${unreadCount ? ` (${unreadCount})` : ""}`}
+              style={{ position: "relative", background: "#191C1F", border: "1px solid #63696D", width: 38, height: 38, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#ffffff" }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+                <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+              </svg>
+              {unreadCount > 0 && (
+                <span style={{ position: "absolute", top: -7, right: -7, background: "#FF6A1A", color: "#08090A", borderRadius: 980, fontSize: 10.5, fontWeight: 700, minWidth: 18, height: 18, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 4px" }}>
+                  {unreadCount > 99 ? "99+" : unreadCount}
+                </span>
+              )}
+            </button>
+          )}
+
           {user ? (
             <button
               onClick={() => setShowProfile(true)}
@@ -2584,8 +2766,15 @@ export default function EquipmentMarketplace() {
                 {t("add_request_btn")}
               </button>
               {user && (
-                <button onClick={() => setShowMyRequests(true)} style={smallBtn}>
-                  {t("nav_my_requests")}{myRequestsCount > 0 ? ` (${myRequestsCount})` : ""}
+                <button
+                  onClick={() => {
+                    setClientTab(clientPending > 0 ? "offers" : null);
+                    loadClientData();
+                    setShowMyRequests(true);
+                  }}
+                  style={clientPending > 0 ? { ...smallBtn, borderColor: "#FF6A1A", color: "#FF6A1A" } : smallBtn}
+                >
+                  Мій кабінет{clientPending > 0 ? ` (${clientPending})` : ""}
                 </button>
               )}
             </>
@@ -2597,12 +2786,15 @@ export default function EquipmentMarketplace() {
               {user?.role === "owner" && (
                 <button
                   onClick={() => {
+                    setOwnerTab(ownerBookings.some((b) => b.status === "reserved") || inboxPending === 0 ? "rentals" : "requests");
                     setShowInbox(true);
                     loadInbox(false);
+                    loadOwnerBookings();
                   }}
-                  style={inboxPending > 0 ? { ...smallBtn, borderColor: "#FF6A1A", color: "#FF6A1A" } : smallBtn}
+                  style={inboxPending + ownerBookings.filter((b) => b.status === "reserved").length > 0 ? { ...smallBtn, borderColor: "#FF6A1A", color: "#FF6A1A" } : smallBtn}
                 >
-                  Запити для мене{inboxPending > 0 ? ` (${inboxPending})` : ""}
+                  Кабінет власника
+                  {inboxPending + ownerBookings.filter((b) => b.status === "reserved").length > 0 ? ` (${inboxPending + ownerBookings.filter((b) => b.status === "reserved").length})` : ""}
                 </button>
               )}
             </>
@@ -2611,7 +2803,7 @@ export default function EquipmentMarketplace() {
       )}
 
       {role === "dispatcher" && (
-        <DispatcherPanel requests={requests} owners={dispatchOwners} onDispatch={handleDispatch} onOwnerAction={handleOwnerAction} onRefresh={loadDispatcherData} user={user} t={t} />
+        <DispatcherPanel requests={requests} owners={dispatchOwners} listings={listings} allBookings={dealsData.bookings} onDispatch={handleDispatch} onOwnerAction={handleOwnerAction} onRefresh={loadDispatcherData} onPropose={handlePropose} onManual={handleManualBooking} onConfirm={handleConfirmBooking} onCancel={handleCancelBooking} user={user} t={t} />
       )}
 
       {/* Filters (client view) */}
@@ -2827,36 +3019,25 @@ export default function EquipmentMarketplace() {
                 {!l.available && l.busyUntil && (
                   <div style={{ fontSize: 11, color: "#c9a83f", marginTop: 2 }}>{t("busy_until")} {l.busyUntil}</div>
                 )}
+                {busyNowUntil(l.id) && (
+                  <div style={{ fontSize: 12, fontWeight: 700, color: "#c96b5a", marginTop: 4, letterSpacing: "0.02em" }}>
+                    ● ЗАЙНЯТА до {deals.fmtDate(busyNowUntil(l.id))}
+                  </div>
+                )}
               </div>
               <button
-                disabled={!l.available}
+                disabled={!l.available || !!busyNowUntil(l.id)}
                 onClick={(e) => {
                   e.stopPropagation();
-                  const contact = user?.phone || window.prompt("Вкажіть телефон або Telegram, щоб власник міг з вами зв'язатися:");
-                  if (!contact || !contact.trim()) return;
-                  trackViewed(l.id);
-                  try {
-                    fetch("/api/notify", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({
-                        type: l.type,
-                        region: l.region,
-                        comment: `Клієнт відгукнувся на оголошення: ${l.brand} (${l.owner})`,
-                        contact,
-                        requesterName: user?.name || "Гість сайту",
-                      }),
-                    }).catch(() => {});
-                  } catch (e) {}
-                  flashToast(`Запит надіслано власнику "${l.owner}"`);
+                  respondToListing(l);
                 }}
                 style={{
                   ...smallBtn,
-                  opacity: l.available ? 1 : 0.4,
-                  cursor: l.available ? "pointer" : "not-allowed",
+                  opacity: l.available && !busyNowUntil(l.id) ? 1 : 0.4,
+                  cursor: l.available && !busyNowUntil(l.id) ? "pointer" : "not-allowed",
                 }}
               >
-                {l.available ? t("respond_btn") : t("busy_btn")}
+                {l.available && !busyNowUntil(l.id) ? t("respond_btn") : t("busy_btn")}
               </button>
             </div>
           </Plate>
@@ -3034,29 +3215,18 @@ export default function EquipmentMarketplace() {
               {detailListing.photos && detailListing.photos.length > 0 && <span style={{ color: "#FFB52E" }}>✓</span>}
             </div>
 
+            {busyNowUntil(detailListing.id) && (
+              <div style={{ padding: "12px 14px", border: "1px solid #c96b5a", background: "rgba(201,107,90,0.1)", color: "#e0a89c", fontSize: 14, fontWeight: 700, letterSpacing: "0.02em" }}>
+                ● ЗАЙНЯТА до {deals.fmtDate(busyNowUntil(detailListing.id))}
+              </div>
+            )}
             <button
-              disabled={!detailListing.available}
+              disabled={!detailListing.available || !!busyNowUntil(detailListing.id)}
               onClick={() => {
-                const contact = user?.phone || window.prompt("Вкажіть телефон або Telegram, щоб власник міг з вами зв'язатися:");
-                if (!contact || !contact.trim()) return;
-                trackViewed(detailListing.id);
-                try {
-                  fetch("/api/notify", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                      type: detailListing.type,
-                      region: detailListing.region,
-                      comment: `Клієнт відгукнувся на оголошення: ${detailListing.brand} (${detailListing.owner})`,
-                      contact,
-                      requesterName: user?.name || "Гість сайту",
-                    }),
-                  }).catch(() => {});
-                } catch (e) {}
-                flashToast(`Запит надіслано власнику "${detailListing.owner}"`);
+                respondToListing(detailListing);
                 setDetailListing(null);
               }}
-              style={{ ...primaryBtn, width: "100%", opacity: detailListing.available ? 1 : 0.4, cursor: detailListing.available ? "pointer" : "not-allowed" }}
+              style={{ ...primaryBtn, width: "100%", opacity: detailListing.available && !busyNowUntil(detailListing.id) ? 1 : 0.4, cursor: detailListing.available && !busyNowUntil(detailListing.id) ? "pointer" : "not-allowed" }}
             >
               ЗАПИТАТИ ПРО ОРЕНДУ
             </button>
@@ -3092,14 +3262,28 @@ export default function EquipmentMarketplace() {
         </Modal>
       )}
       {showMyRequests && user && (
-        <Modal onClose={() => setShowMyRequests(false)} title={t("nav_my_requests")}>
-          <MyRequestsPanel requests={requests.filter((r) => r.contact === user.phone)} reviews={reviews} onAddReview={handleAddReview} />
+        <Modal onClose={() => { setShowMyRequests(false); setClientTab(null); }} title="Мій кабінет" wide>
+          <ClientCabinet key={clientTab || "auto"} data={clientData} initialTab={clientTab} onRespond={handleRespondOffer} onRefresh={loadClientData} />
+        </Modal>
+      )}
+
+      {showNotifications && user && (
+        <Modal onClose={() => setShowNotifications(false)} title="Сповіщення" wide>
+          <NotificationsPanel items={notifications} onOpenItem={openNotification} onMarkAll={markAllNotifications} />
         </Modal>
       )}
 
       {showInbox && (
-        <Modal onClose={() => setShowInbox(false)} title="Запити для мене">
-          <OwnerInbox items={ownerInbox} onRespond={respondToRequest} onRefresh={() => loadInbox(false)} />
+        <Modal onClose={() => setShowInbox(false)} title="Кабінет власника" wide>
+          <OwnerCabinet
+            tab={ownerTab}
+            setTab={setOwnerTab}
+            inboxItems={ownerInbox}
+            bookings={ownerBookings}
+            onRespondRequest={respondToRequest}
+            onRefreshInbox={() => loadInbox(false)}
+            onRefreshBookings={loadOwnerBookings}
+          />
         </Modal>
       )}
 
@@ -3165,13 +3349,14 @@ export default function EquipmentMarketplace() {
 }
 
 // ---- Dispatcher panel ----
-function DispatcherPanel({ requests, owners, onDispatch, onOwnerAction, onRefresh, user, t }) {
+function DispatcherPanel({ requests, owners, listings, allBookings, onDispatch, onOwnerAction, onRefresh, onPropose, onManual, onConfirm, onCancel, user, t }) {
   const [filter, setFilter] = useState("all");
 
   const categories = [
     { key: "all", label: t("dispatcher_all"), test: () => true },
     { key: "new", label: t("dispatcher_new"), test: (r) => r.status === "new" },
-    { key: "dispatched", label: t("dispatcher_progress"), test: (r) => r.status === "dispatched" },
+    { key: "booked", label: "Очікують підтвердження", test: (r) => r.status === "booked" },
+    { key: "dispatched", label: t("dispatcher_progress"), test: (r) => r.status === "dispatched" || r.status === "offered" },
     { key: "taken", label: t("dispatcher_done"), test: (r) => r.status === "taken" },
   ];
 
@@ -3241,7 +3426,7 @@ function DispatcherPanel({ requests, owners, onDispatch, onOwnerAction, onRefres
           <div style={{ fontSize: 13, color: "#70777D" }}>Немає заявок у цій категорії.</div>
         ) : (
           filtered.map((req) => (
-            <RequestDispatchCard key={req.id} req={req} owners={owners} onDispatch={onDispatch} onOwnerAction={onOwnerAction} user={user} />
+            <RequestDispatchCard key={req.id} req={req} owners={owners} listings={listings} allBookings={allBookings} onDispatch={onDispatch} onOwnerAction={onOwnerAction} onPropose={onPropose} onManual={onManual} onConfirm={onConfirm} onCancel={onCancel} user={user} />
           ))
         )}
       </div>
@@ -3361,69 +3546,7 @@ function ReviewBox({ req, onSubmit }) {
   );
 }
 
-function MyRequestsPanel({ requests, reviews, onAddReview }) {
-  if (requests.length === 0) {
-    return (
-      <div style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 13, color: "#A3A8AD" }}>
-        Ви ще не залишали заявок. Коли залишите — статус буде видно тут.
-      </div>
-    );
-  }
-
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-      {requests.map((req) => {
-        const info = clientStatusInfo(req);
-        const existingReview = reviews.find((r) => r.requestId === req.id);
-        return (
-          <div key={req.id} style={{ border: "1px solid #63696D", padding: "14px 16px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
-              <div>
-                <div style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif", fontSize: 15, fontWeight: 600 }}>
-                  {req.type} — {req.region}
-                </div>
-                <div style={{ fontSize: 11.5, color: "#A3A8AD", fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", marginTop: 3 }}>
-                  Заявка #{req.id}{req.budget ? ` · до ${req.budget} ₴` : ""}
-                </div>
-              </div>
-            </div>
-            <div
-              style={{
-                marginTop: 10,
-                fontSize: 12.5,
-                fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
-                color: info.color,
-                display: "flex",
-                alignItems: "center",
-                gap: 6,
-              }}
-            >
-              <span style={{ width: 6, height: 6, borderRadius: "50%", background: info.color, display: "inline-block" }} />
-              {info.label}
-            </div>
-
-            {req.status === "taken" &&
-              (existingReview ? (
-                <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px dashed #63696D" }}>
-                  <Label>Ваш відгук</Label>
-                  <div style={{ marginTop: 6 }}>
-                    <StarRating value={existingReview.rating} readOnly />
-                  </div>
-                  {existingReview.comment && (
-                    <p style={{ fontSize: 12.5, color: "#F4F4F1", marginTop: 6 }}>{existingReview.comment}</p>
-                  )}
-                </div>
-              ) : (
-                <ReviewBox req={req} onSubmit={onAddReview} />
-              ))}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-function RequestDispatchCard({ req, owners, onDispatch, onOwnerAction, user }) {
+function RequestDispatchCard({ req, owners, listings, allBookings, onDispatch, onOwnerAction, onPropose, onManual, onConfirm, onCancel, user }) {
   const contactedIds = new Set(Object.keys(req.ownerStatuses));
   const uncontacted = owners.filter((o) => !contactedIds.has(String(o.id)));
   const suggestedUncontacted = uncontacted.filter((o) => o.types.includes(req.type) && (o.regions || []).includes(req.region));
@@ -3461,13 +3584,23 @@ function RequestDispatchCard({ req, owners, onDispatch, onOwnerAction, user }) {
         <div>
           <Label>
             Заявка #{req.id} ·{" "}
-            {req.status === "taken" ? "закрито" : req.status === "dispatched" ? "у роботі" : needsAttention ? "потрібна увага" : "нова"}
+            {req.status === "taken"
+              ? "закрито"
+              : req.status === "booked"
+              ? "клієнт підтвердив — потрібне ваше рішення"
+              : req.status === "offered"
+              ? "запропоновано клієнту"
+              : req.status === "dispatched"
+              ? "у роботі"
+              : needsAttention
+              ? "потрібна увага"
+              : "нова"}
           </Label>
           <div style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif", fontSize: 18, fontWeight: 600, marginTop: 2 }}>
             {req.type} — {req.region}
           </div>
           <div style={{ fontSize: 12.5, color: "#A3A8AD", marginTop: 4, fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif" }}>
-            Бюджет: {req.budget || "—"} ₴ · Дата: {req.dateFrom || "не вказано"} · Контакт: {req.contact}
+            Бюджет: {req.budget || "—"} ₴ · Період: {req.dateFrom ? (req.dateTo ? `${deals.fmtDate(req.dateFrom)} — ${deals.fmtDate(req.dateTo)}` : deals.fmtDate(req.dateFrom)) : "не вказано"}{req.withOperator ? " · з оператором" : ""} · Контакт: {req.contact}{req.hasAccount ? "" : " (без акаунта)"}
           </div>
           {req.comment && (
             <div style={{ fontSize: 12.5, color: "#F4F4F1", marginTop: 6, maxWidth: 480 }}>{req.comment}</div>
@@ -3479,6 +3612,12 @@ function RequestDispatchCard({ req, owners, onDispatch, onOwnerAction, user }) {
           </span>
         )}
       </div>
+
+      {req.status === "booked" && (
+        <div style={{ marginTop: 12, padding: "8px 12px", background: "rgba(255,181,46,0.1)", border: "1px solid #FFB52E", fontSize: 12, color: "#FFB52E", fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif" }}>
+          Клієнт підтвердив техніку. Підтвердьте оренду в блоці «Угода» нижче — після цього клієнт і власник отримають контакти.
+        </div>
+      )}
 
       {needsAttention && (
         <div style={{ marginTop: 12, padding: "8px 12px", background: "rgba(201,107,90,0.1)", border: "1px solid #c96b5a", fontSize: 12, color: "#e0a89c", fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif" }}>
@@ -3516,10 +3655,12 @@ function RequestDispatchCard({ req, owners, onDispatch, onOwnerAction, user }) {
         </div>
       )}
 
-      {/* Selection of new owners to contact (initial send, or re-dispatch after refusal) */}
-      {req.status !== "taken" && (
+      <DealsSection req={req} listings={listings} allBookings={allBookings} onPropose={onPropose} onManual={onManual} onConfirm={onConfirm} onCancel={onCancel} />
+
+      {/* Запит власникам: запасний шлях, коли в каталозі немає підходящої техніки */}
+      {!["taken", "booked"].includes(req.status) && (
         <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px dashed #63696D" }}>
-          <Label>{contactedOwners.length === 0 ? "Рекомендовано системою" : "Надіслати ще"}</Label>
+          <Label>{contactedOwners.length === 0 ? "Запитати у власників (якщо немає підходящої техніки)" : "Запитати у власників ще"}</Label>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 8 }}>
             {suggestedUncontacted.length === 0 && otherUncontacted.length === 0 && (
               <span style={{ fontSize: 12.5, color: "#A3A8AD" }}>Усіх власників уже задіяно.</span>
@@ -3545,14 +3686,19 @@ function RequestDispatchCard({ req, owners, onDispatch, onOwnerAction, user }) {
       )}
 
       {/* History log */}
-      {req.log.length > 0 && (
+      {(req.log.length > 0 || (req.events || []).length > 0) && (
         <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px dashed #63696D" }}>
           <button
             onClick={() => setShowHistory((s) => !s)}
             style={{ background: "none", border: "none", color: "#A3A8AD", cursor: "pointer", fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 11, letterSpacing: "0.08em", textTransform: "none", padding: 0 }}
           >
-            {showHistory ? "▲ Сховати історію" : `▼ Історія (${req.log.length})`}
+            {showHistory ? "▲ Сховати історію" : `▼ Історія (${req.log.length + (req.events || []).length})`}
           </button>
+          {showHistory && (req.events || []).length > 0 && (
+            <div style={{ marginTop: 8 }}>
+              <EventLog events={req.events} />
+            </div>
+          )}
           {showHistory && (
             <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 4 }}>
               {req.log.map((l, i) => (
@@ -3577,120 +3723,6 @@ function RequestDispatchCard({ req, owners, onDispatch, onOwnerAction, user }) {
         </div>
       )}
     </Plate>
-  );
-}
-
-const badgeStyle = {
-  fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
-  fontSize: 11,
-  padding: "5px 10px",
-  height: "fit-content",
-};
-
-const miniBtn = (color) => ({
-  background: "none",
-  border: `1px solid ${color}`,
-  color,
-  fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
-  fontSize: 10.5,
-  padding: "3px 8px",
-  cursor: "pointer",
-});
-
-const INBOX_STATUS = {
-  sent: { text: "Очікує вашої відповіді", color: "#FFB52E" },
-  accepted: { text: "Ви прийняли", color: "#6fae6f" },
-  rejected: { text: "Ви відмовились", color: "#70777D" },
-  expired: { text: "Заявку взяв інший власник", color: "#70777D" },
-};
-
-// Кабінет власника: запити від диспетчера з кнопками «Прийняти» / «Відмовитись».
-// Телефон клієнта приходить із бази лише після того, як власник прийняв заявку.
-function OwnerInbox({ items, onRespond, onRefresh }) {
-  const [busyId, setBusyId] = useState(null);
-  const font = "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif";
-
-  const act = async (id, action) => {
-    setBusyId(id);
-    try {
-      await onRespond(id, action);
-    } finally {
-      setBusyId(null);
-    }
-  };
-
-  const contactLink = (c) => {
-    const v = String(c || "").trim();
-    if (/^[+\d\s()-]{7,}$/.test(v)) return `tel:${v.replace(/[^\d+]/g, "")}`;
-    if (v.startsWith("@")) return `https://t.me/${v.slice(1)}`;
-    return null;
-  };
-
-  if (!items.length) {
-    return (
-      <div style={{ display: "flex", flexDirection: "column", gap: 12, fontFamily: font, fontSize: 13, color: "#A3A8AD" }}>
-        <div>Поки запитів немає. Коли диспетчер надішле вам заявку на вашу техніку, вона з'явиться тут.</div>
-        <button onClick={onRefresh} style={smallBtn}>Оновити</button>
-      </div>
-    );
-  }
-
-  const isPending = (x) => x.dispatch_status === "sent" && x.req_status !== "taken";
-  const ordered = [...items.filter(isPending), ...items.filter((x) => !isPending(x))];
-
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-      <button onClick={onRefresh} style={{ ...smallBtn, alignSelf: "flex-start" }}>Оновити</button>
-      {ordered.map((x) => {
-        const st = INBOX_STATUS[x.dispatch_status] || INBOX_STATUS.sent;
-        const link = contactLink(x.req_contact);
-        return (
-          <div key={x.dispatch_id} style={{ border: "1px solid #63696D", padding: "14px 14px", display: "flex", flexDirection: "column", gap: 8 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
-              <Label>Заявка #{x.request_id}</Label>
-              <span style={{ fontFamily: font, fontSize: 11.5, color: st.color }}>{st.text}</span>
-            </div>
-            <div style={{ fontFamily: font, fontSize: 16, fontWeight: 600 }}>
-              {x.req_type} — {x.req_region}
-            </div>
-            <div style={{ fontFamily: font, fontSize: 12.5, color: "#A3A8AD" }}>
-              Бюджет: {x.req_budget ? `${x.req_budget} ₴` : "—"} · Дата: {x.req_date_from || "не вказано"}
-            </div>
-            {x.req_comment && <div style={{ fontFamily: font, fontSize: 12.5, color: "#F4F4F1" }}>{x.req_comment}</div>}
-
-            {isPending(x) && (
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 4 }}>
-                <button disabled={busyId === x.dispatch_id} onClick={() => act(x.dispatch_id, "accepted")} style={{ ...primaryBtn, opacity: busyId === x.dispatch_id ? 0.6 : 1 }}>
-                  Прийняти
-                </button>
-                <button disabled={busyId === x.dispatch_id} onClick={() => act(x.dispatch_id, "rejected")} style={smallBtn}>
-                  Відмовитись
-                </button>
-              </div>
-            )}
-
-            {x.dispatch_status === "accepted" && (
-              <div style={{ marginTop: 4, padding: "10px 12px", background: "rgba(111,174,111,0.1)", border: "1px solid #6fae6f", fontFamily: font, fontSize: 13 }}>
-                <div style={{ color: "#6fae6f", fontSize: 11, marginBottom: 4 }}>Контакт клієнта</div>
-                <div style={{ fontWeight: 600 }}>{x.req_requester_name || "Клієнт"}</div>
-                <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginTop: 2 }}>
-                  {link ? (
-                    <a href={link} style={{ color: "#F4F4F1" }} target={link.startsWith("http") ? "_blank" : undefined} rel="noreferrer">
-                      {x.req_contact}
-                    </a>
-                  ) : (
-                    <span>{x.req_contact}</span>
-                  )}
-                  <button type="button" onClick={() => navigator.clipboard?.writeText(x.req_contact || "")} style={{ ...smallBtn, padding: "3px 10px", fontSize: 11 }}>
-                    Скопіювати
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        );
-      })}
-    </div>
   );
 }
 
@@ -3850,12 +3882,6 @@ function AuthForm({ onSubmit }) {
         {loading ? "Зачекайте..." : mode === "signup" ? "Зареєструватись" : "Увійти"}
       </button>
     </form>
-  );
-}
-
-function ErrorText({ children }) {
-  return (
-    <span style={{ color: "#c96b5a", fontSize: 11, fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif" }}>{children}</span>
   );
 }
 
@@ -4388,87 +4414,6 @@ function AiAssistant({ user, onPrefillRequest, onViewListing, listings, t, open,
 }
 
 // ---- Modal wrapper ----
-function Modal({ children, onClose, title, splitLeft }) {
-  const titleId = useRef(`modal-title-${Math.random().toString(36).slice(2, 9)}`).current;
-  const closeBtnRef = useRef(null);
-
-  useEffect(() => {
-    closeBtnRef.current?.focus();
-    const onKeyDown = (e) => {
-      if (e.key === "Escape") onClose();
-    };
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, [onClose]);
-
-  return (
-    <div
-      onClick={onClose}
-      style={{
-        position: "fixed",
-        inset: 0,
-        background: "rgba(10,9,8,.7)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: 16,
-        zIndex: 50,
-      }}
-    >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-        style={{
-          background: "#15181A",
-          border: "1px solid #48484a",
-          width: "100%",
-          maxWidth: splitLeft ? 760 : 460,
-          maxHeight: "88vh",
-          overflowY: "auto",
-          display: splitLeft ? "flex" : "block",
-        }}
-      >
-        {splitLeft && (
-          <div
-            style={{
-              flex: "0 0 280px",
-              background: "linear-gradient(180deg, #191C1F, #08090A)",
-              borderRight: "1px solid #202428",
-              padding: 28,
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "flex-end",
-            }}
-            className="auth-split-left"
-          >
-            <div style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif", fontSize: 26, fontWeight: 600, lineHeight: 1.15 }}>
-              ТЕХНІКА<br />ПОЧИНАЄТЬСЯ<br />З ПРАВИЛЬНОГО<br /><span style={{ color: "#FF6A1A" }}>ЗАПИТУ.</span>
-            </div>
-          </div>
-        )}
-        <div style={{ padding: 24, flex: 1 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
-          <h2 id={titleId} style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif", textTransform: "none", fontSize: 18, margin: 0 }}>
-            {title}
-          </h2>
-          <button
-            ref={closeBtnRef}
-            onClick={onClose}
-            aria-label="Закрити"
-            style={{ background: "none", border: "none", color: "#A3A8AD", fontSize: 20, cursor: "pointer", padding: 10, margin: -10 }}
-          >
-            ×
-          </button>
-        </div>
-        {children}
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // Стиснення фото в браузері: довга сторона до 1000 px, JPEG — щоб не вантажити мегабайти
 function resizeImageToDataUrl(file, maxSide = 1000, quality = 0.78) {
   return new Promise((resolve, reject) => {
@@ -4782,6 +4727,8 @@ function RequestForm({ onSubmit, user, initial, t, lang }) {
     type: initial?.type || TYPES[0],
     region: initial?.region || user?.region || REGIONS[0],
     dateFrom: "",
+    dateTo: "",
+    withOperator: false,
     budget: initial?.budget != null ? String(initial.budget) : "",
     comment: initial?.comment || "",
     contact: user?.phone || "",
@@ -4789,6 +4736,7 @@ function RequestForm({ onSubmit, user, initial, t, lang }) {
   }, { skipRestore: !!initial });
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
   const [contactError, setContactError] = useState(false);
+  const [dateError, setDateError] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   const isValidContact = (v) => {
@@ -4800,6 +4748,10 @@ function RequestForm({ onSubmit, user, initial, t, lang }) {
     e.preventDefault();
     if (!form.contact || !isValidContact(form.contact)) {
       setContactError(true);
+      return;
+    }
+    if (form.dateFrom && form.dateTo && form.dateTo < form.dateFrom) {
+      setDateError(true);
       return;
     }
     setSubmitting(true);
@@ -4857,9 +4809,19 @@ function RequestForm({ onSubmit, user, initial, t, lang }) {
       </Field>
 
       <StepLabel n={3} of={4} text={t("request_step_3")} />
-      <Field label="Коли потрібно">
-        <input type="date" value={form.dateFrom} onChange={set("dateFrom")} style={inputStyle} />
-      </Field>
+      <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+        <Field label="Потрібно з" style={{ flex: "1 1 140px" }}>
+          <input type="date" value={form.dateFrom} onChange={(e) => { setDateError(false); set("dateFrom")(e); }} style={inputStyle} />
+        </Field>
+        <Field label="По" style={{ flex: "1 1 140px" }}>
+          <input type="date" value={form.dateTo} onChange={(e) => { setDateError(false); set("dateTo")(e); }} style={inputStyle} />
+        </Field>
+      </div>
+      {dateError && <ErrorText>Кінець періоду не може бути раніше за початок</ErrorText>}
+      <label style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 13, color: "#A3A8AD", cursor: "pointer" }}>
+        <input type="checkbox" checked={!!form.withOperator} onChange={(e) => setForm((f) => ({ ...f, withOperator: e.target.checked }))} style={{ accentColor: "#FF6A1A", width: 18, height: 18 }} />
+        Потрібна техніка з оператором
+      </label>
       <Field label="Бюджет (₴, орієнтовно)">
         <input type="number" value={form.budget} onChange={set("budget")} placeholder="1000" style={inputStyle} />
       </Field>
@@ -4903,64 +4865,4 @@ function StepLabel({ n, of, text }) {
   );
 }
 
-function Field({ label, children, style }) {
-  return (
-    <label style={{ display: "flex", flexDirection: "column", gap: 6, ...style }}>
-      <span style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 10.5, letterSpacing: "0.08em", textTransform: "none", color: "#A3A8AD" }}>
-        {label}
-      </span>
-      {children}
-    </label>
-  );
-}
-
 // ---- shared styles ----
-const primaryBtn = {
-  background: "linear-gradient(90deg, #FF6A1A, #FFB52E)",
-  color: "#08090A",
-  border: "none",
-  borderRadius: 980,
-  padding: "12px 22px",
-  fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
-  fontSize: 14,
-  fontWeight: 600,
-  letterSpacing: "-0.01em",
-  textTransform: "none",
-  cursor: "pointer",
-  boxShadow: "0 4px 16px rgba(255, 90, 31, 0.3)",
-};
-
-const smallBtn = {
-  background: "transparent",
-  color: "#ffffff",
-  border: "1px solid rgba(255,255,255,0.18)",
-  borderRadius: 980,
-  padding: "8px 16px",
-  fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
-  fontSize: 13,
-  fontWeight: 500,
-  letterSpacing: "-0.01em",
-  textTransform: "none",
-  transition: "border-color 0.2s ease, color 0.2s ease",
-};
-
-const selectStyle = {
-  background: "#191C1F",
-  color: "#ffffff",
-  border: "1px solid #63696D",
-  borderRadius: 8,
-  padding: "9px 12px",
-  fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
-  fontSize: 13,
-};
-
-const inputStyle = {
-  background: "#191C1F",
-  color: "#ffffff",
-  border: "1px solid #63696D",
-  borderRadius: 8,
-  padding: "10px 12px",
-  fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
-  fontSize: 14,
-  outline: "none",
-};
