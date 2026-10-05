@@ -31,9 +31,9 @@ const TRANSLATIONS = {
     how_it_works_title: "Як це працює",
     step_1: "Розкажіть, що потрібно",
     step_2: "Диспетчер знаходить техніку",
-    step_3: "Власники отримують заявку",
-    step_4: "Один із них підтверджує",
-    step_5: "Ви отримуєте контакт",
+    step_3: "Ви отримуєте пропозицію в кабінеті",
+    step_4: "Підтверджуєте або відхиляєте",
+    step_5: "Отримуєте контакт власника",
     status_available: "ДОСТУПНА",
     status_busy: "ЗАЙНЯТА",
     sort_default: "За замовчуванням",
@@ -93,8 +93,8 @@ const TRANSLATIONS = {
     ai_greeting: "Привіт! Опишіть, яку роботу потрібно виконати — підберу техніку, поясню варіанти й різницю між ними. Або оберіть вид робіт нижче.",
     faq_items: [
       { q: "Скільки коштує розміщення техніки в каталозі?", a: "Реєстрація та додавання оголошень безкоштовні. Ми не беремо комісію з угод — власник і клієнт домовляються напряму." },
-      { q: "Як швидко власники відповідають на заявку?", a: "Диспетчер обирає, кому надіслати заявку, вручну — зазвичай перше підтвердження приходить протягом години в робочий час." },
-      { q: "Що якщо жоден власник не відгукнеться?", a: "Диспетчер бачить це одразу і може надіслати заявку іншим власникам або розширити регіон пошуку." },
+      { q: "Як швидко я отримаю пропозицію?", a: "Диспетчер вручну підбирає техніку під вашу заявку й надсилає пропозицію в особистий кабінет — зазвичай протягом години в робочий час. Ви отримаєте сповіщення. Щоб бачити відповіді онлайн, увійдіть в акаунт перед тим, як залишати заявку." },
+      { q: "Що якщо підходящої техніки не знайдеться?", a: "Диспетчер бачить це одразу, розширює пошук на інші регіони й запитує власників напряму. Заявка лишається активною, поки ви її не скасуєте." },
       { q: "Чи можна перевірити власника техніки перед угодою?", a: "У профілі власника відображається позначка верифікації — ми перевіряємо контакти та документи перед її наданням." },
     ],
   },
@@ -116,9 +116,9 @@ const TRANSLATIONS = {
     how_it_works_title: "Как это работает",
     step_1: "Расскажите, что нужно",
     step_2: "Диспетчер находит технику",
-    step_3: "Владельцы получают заявку",
-    step_4: "Один из них подтверждает",
-    step_5: "Вы получаете контакт",
+    step_3: "Вы получаете предложение в кабинете",
+    step_4: "Подтверждаете или отклоняете",
+    step_5: "Получаете контакт владельца",
     status_available: "ДОСТУПНА",
     status_busy: "ЗАНЯТА",
     sort_default: "По умолчанию",
@@ -178,8 +178,8 @@ const TRANSLATIONS = {
     ai_greeting: "Привет! Опишите, какую работу нужно выполнить — подберу технику, объясню варианты и разницу между ними. Или выберите вид работ ниже.",
     faq_items: [
       { q: "Сколько стоит размещение техники в каталоге?", a: "Регистрация и добавление объявлений бесплатны. Мы не берём комиссию со сделок — владелец и клиент договариваются напрямую." },
-      { q: "Как быстро владельцы отвечают на заявку?", a: "Диспетчер выбирает, кому отправить заявку, вручную — обычно первое подтверждение приходит в течение часа в рабочее время." },
-      { q: "Что если ни один владелец не откликнется?", a: "Диспетчер видит это сразу и может отправить заявку другим владельцам или расширить регион поиска." },
+      { q: "Как быстро я получу предложение?", a: "Диспетчер вручную подбирает технику под вашу заявку и отправляет предложение в личный кабинет — обычно в течение часа в рабочее время. Вы получите уведомление. Чтобы видеть ответы онлайн, войдите в аккаунт перед тем, как оставлять заявку." },
+      { q: "Что если подходящей техники не найдётся?", a: "Диспетчер видит это сразу, расширяет поиск на другие регионы и запрашивает владельцев напрямую. Заявка остаётся активной, пока вы её не отмените." },
       { q: "Можно ли проверить владельца техники перед сделкой?", a: "В профиле владельца отображается отметка верификации — мы проверяем контакты и документы перед её выдачей." },
     ],
   },
@@ -201,9 +201,9 @@ const TRANSLATIONS = {
     how_it_works_title: "How it works",
     step_1: "Tell us what you need",
     step_2: "Dispatcher finds equipment",
-    step_3: "Owners receive the request",
-    step_4: "One of them confirms",
-    step_5: "You get the contact",
+    step_3: "You get an offer in your cabinet",
+    step_4: "You confirm or decline",
+    step_5: "You get the owner's contact",
     status_available: "AVAILABLE",
     status_busy: "BUSY",
     sort_default: "Default",
@@ -263,8 +263,8 @@ const TRANSLATIONS = {
     ai_greeting: "Hi! Describe the work you need done — I'll pick the equipment and explain the options and differences. Or choose a job type below.",
     faq_items: [
       { q: "How much does listing equipment in the catalog cost?", a: "Registration and adding listings are free. We don't take a commission from deals — the owner and client arrange things directly." },
-      { q: "How fast do owners respond to a request?", a: "The dispatcher manually chooses who to send the request to — the first confirmation usually arrives within an hour during business hours." },
-      { q: "What if no owner responds?", a: "The dispatcher sees this immediately and can send the request to other owners or widen the search region." },
+      { q: "How fast will I get an offer?", a: "The dispatcher manually picks equipment for your request and sends an offer to your personal cabinet — usually within an hour during business hours. You will get a notification. Sign in before submitting to see replies online." },
+      { q: "What if no suitable equipment is found?", a: "The dispatcher sees this immediately, widens the search to other regions and asks owners directly. Your request stays active until you cancel it." },
       { q: "Can I verify the equipment owner before a deal?", a: "A verification badge is shown on the owner's profile — we check contacts and documents before granting it." },
     ],
   },
@@ -752,7 +752,8 @@ export default function EquipmentMarketplace() {
   const [role, setRole] = useState("client"); // client | owner
   const [lang, setLang] = useState("uk"); // uk | ru | en
   const t = useTranslate(lang);
-  const [listings, setListings] = useState(seedListings);
+  const [listings, setListings] = useState(supabase ? [] : seedListings);
+  const [listingsReady, setListingsReady] = useState(!supabase); // каталог завантажено з бази
   const [listingsFromDb, setListingsFromDb] = useState(false);
   const [filterType, setFilterType] = useState("Усі");
   const [filterRegion, setFilterRegion] = useState("Усі");
@@ -921,6 +922,7 @@ export default function EquipmentMarketplace() {
       .select("*")
       .order("created_at", { ascending: false })
       .then(({ data, error }) => {
+        setListingsReady(true);
         if (error) {
           console.error("Supabase load (listings) failed:", error.message);
           return;
@@ -928,6 +930,8 @@ export default function EquipmentMarketplace() {
         if (data && data.length) {
           setListings(data.map(mapListingRow));
           setListingsFromDb(true);
+        } else {
+          setListings(seedListings); // база порожня — показуємо демо-приклади
         }
       });
   }, []);
@@ -1448,6 +1452,11 @@ export default function EquipmentMarketplace() {
     const timer = setInterval(refreshBusy, 120000);
     return () => clearInterval(timer);
   }, []);
+  const busyNextRange = (listingId) => {
+    const today = new Date().toLocaleDateString("sv-SE");
+    const future = busyRanges.filter((r) => r.listing_id === listingId && r.date_from > today).sort((a, b) => (a.date_from < b.date_from ? -1 : 1));
+    return future[0] || null;
+  };
   const busyNowUntil = (listingId) => {
     const today = new Date().toLocaleDateString("sv-SE");
     const hit = busyRanges.filter((r) => r.listing_id === listingId && r.date_from <= today && r.date_to >= today);
@@ -2029,9 +2038,18 @@ export default function EquipmentMarketplace() {
         @media (max-width: 680px) {
           .sticky-cta { display: flex; }
           .ai-fab { bottom: 108px; }
-          .ai-panel { bottom: 168px; }
+          .ai-panel { bottom: 168px; max-height: calc(100vh - 200px); max-height: calc(100dvh - 200px); }
           body { padding-bottom: 0; }
         }
+        .skeleton {
+          background: linear-gradient(90deg, #15181A 25%, #1d2125 50%, #15181A 75%);
+          background-size: 200% 100%;
+          border-radius: 16px;
+          border: 1px solid rgba(255,255,255,0.06);
+          animation: skeletonPulse 1.4s ease-in-out infinite;
+        }
+        @keyframes skeletonPulse { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+        @media (prefers-reduced-motion: reduce) { .skeleton { animation: none; } }
         .equipment-card {
           transition: transform 0.25s cubic-bezier(0.16,1,0.3,1), box-shadow 0.25s ease, border-color 0.25s ease;
         }
@@ -2328,11 +2346,12 @@ export default function EquipmentMarketplace() {
           {t("how_it_works_title")}
         </button>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px 12px", flexWrap: "wrap", maxWidth: "100%" }}>
           <div
             style={{
               position: "relative",
               display: "flex",
+              maxWidth: "100%",
               background: "linear-gradient(160deg, #3a3a3c 0%, #17181a 55%, #0c0d0e 100%)",
               padding: 6,
               borderRadius: 980,
@@ -2617,6 +2636,7 @@ export default function EquipmentMarketplace() {
             <input
               value={heroSearch}
               onChange={(e) => setHeroSearch(e.target.value)}
+              aria-label={t("hero_search_placeholder")}
               placeholder={t("hero_search_placeholder")}
               style={{ ...inputStyle, flex: 1 }}
             />
@@ -2721,7 +2741,7 @@ export default function EquipmentMarketplace() {
 
       {/* Hero strip */}
       <div ref={appSectionRef} style={{ padding: "28px 24px 8px" }}>
-        <h1
+        <h2
           style={{
             fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif",
             fontWeight: 600,
@@ -2737,7 +2757,7 @@ export default function EquipmentMarketplace() {
             : role === "owner"
             ? "Здавайте техніку простою — заявки клієнтів щодня"
             : "Диспетчерська: вручну обирайте, кому піде заявка"}
-        </h1>
+        </h2>
         <p style={{ color: "#A3A8AD", marginTop: 10, maxWidth: 560, fontSize: 15 }}>
           {role === "client"
             ? "Фільтруйте по типу техніки, регіону та ціні, або залиште одну заявку — і власники самі відгукнуться."
@@ -2809,19 +2829,19 @@ export default function EquipmentMarketplace() {
       {/* Filters (client view) */}
       {role === "client" && (
         <div style={{ padding: "0 24px 8px", display: "flex", gap: 10, flexWrap: "wrap" }}>
-          <select value={filterType} onChange={(e) => setFilterType(e.target.value)} style={selectStyle}>
+          <select aria-label="Тип техніки" value={filterType} onChange={(e) => setFilterType(e.target.value)} style={selectStyle}>
             <option value="Усі">{t("filter_all")}</option>
             {TYPES.map((ty) => (
               <option key={ty} value={ty}>{tType(ty, lang)}</option>
             ))}
           </select>
-          <select value={filterRegion} onChange={(e) => setFilterRegion(e.target.value)} style={selectStyle}>
+          <select aria-label="Регіон" value={filterRegion} onChange={(e) => setFilterRegion(e.target.value)} style={selectStyle}>
             <option value="Усі">{t("filter_all")}</option>
             {REGIONS.filter((r) => r !== "Інше").map((r) => (
               <option key={r}>{r}</option>
             ))}
           </select>
-          <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} style={selectStyle}>
+          <select aria-label="Сортування" value={sortBy} onChange={(e) => setSortBy(e.target.value)} style={selectStyle}>
             <option value="default">{t("sort_default")}</option>
             <option value="price_asc">{t("sort_price_asc")}</option>
             <option value="price_desc">{t("sort_price_desc")}</option>
@@ -2830,6 +2850,7 @@ export default function EquipmentMarketplace() {
             type="number"
             value={filterMaxPrice}
             onChange={(e) => setFilterMaxPrice(e.target.value)}
+            aria-label={t("filter_price_placeholder")}
             placeholder={t("filter_price_placeholder")}
             style={{ ...selectStyle, width: 140 }}
           />
@@ -2969,7 +2990,7 @@ export default function EquipmentMarketplace() {
             </div>
 
             <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 4 }}>
-              {Object.entries(l.specs).map(([k, v]) => (
+              {Object.entries(l.specs).filter(([, v]) => v && v !== "—").map(([k, v]) => (
                 <div key={k} style={{ display: "flex", justifyContent: "space-between", fontSize: 12.5, fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", color: "#F4F4F1" }}>
                   <span style={{ color: "#A3A8AD" }}>{k}</span>
                   <span>{v}</span>
@@ -3024,6 +3045,11 @@ export default function EquipmentMarketplace() {
                     ● ЗАЙНЯТА до {deals.fmtDate(busyNowUntil(l.id))}
                   </div>
                 )}
+                {!busyNowUntil(l.id) && busyNextRange(l.id) && (
+                  <div style={{ fontSize: 11.5, color: "#FFB52E", marginTop: 4 }}>
+                    Найближча оренда: {deals.fmtDate(busyNextRange(l.id).date_from)} — {deals.fmtDate(busyNextRange(l.id).date_to)}
+                  </div>
+                )}
               </div>
               <button
                 disabled={!l.available || !!busyNowUntil(l.id)}
@@ -3042,7 +3068,8 @@ export default function EquipmentMarketplace() {
             </div>
           </Plate>
         ))}
-        {filtered.length === 0 && (
+        {!listingsReady && [0, 1, 2].map((i) => <div key={i} className="skeleton" style={{ height: 150 }} aria-hidden="true" />)}
+        {listingsReady && filtered.length === 0 && (
           <div style={{ color: "#A3A8AD", fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 13 }}>
             {t("catalog_empty")}
           </div>
@@ -3188,7 +3215,7 @@ export default function EquipmentMarketplace() {
             </div>
 
             <div style={{ display: "flex", flexDirection: "column", gap: 6, borderTop: "1px solid #202428", borderBottom: "1px solid #202428", padding: "12px 0" }}>
-              {Object.entries(detailListing.specs).map(([k, v]) => (
+              {Object.entries(detailListing.specs).filter(([, v]) => v && v !== "—").map(([k, v]) => (
                 <div key={k} style={{ display: "flex", justifyContent: "space-between", fontSize: 13 }}>
                   <span style={{ color: "#A3A8AD" }}>{k}</span>
                   <span>{v}</span>
@@ -3218,6 +3245,11 @@ export default function EquipmentMarketplace() {
             {busyNowUntil(detailListing.id) && (
               <div style={{ padding: "12px 14px", border: "1px solid #c96b5a", background: "rgba(201,107,90,0.1)", color: "#e0a89c", fontSize: 14, fontWeight: 700, letterSpacing: "0.02em" }}>
                 ● ЗАЙНЯТА до {deals.fmtDate(busyNowUntil(detailListing.id))}
+              </div>
+            )}
+            {!busyNowUntil(detailListing.id) && busyNextRange(detailListing.id) && (
+              <div style={{ padding: "10px 14px", border: "1px solid #FFB52E", background: "rgba(255,181,46,0.08)", color: "#FFB52E", fontSize: 13 }}>
+                Найближча оренда: {deals.fmtDate(busyNextRange(detailListing.id).date_from)} — {deals.fmtDate(busyNextRange(detailListing.id).date_to)}. Обирайте інші дати в заявці.
               </div>
             )}
             <button
@@ -4186,7 +4218,7 @@ function AiAssistant({ user, onPrefillRequest, onViewListing, listings, t, open,
         allTypes.length > 1 ? allTypes.map((ty) => findMatches(ty)[0]).filter(Boolean) : findMatches(allTypes[0]);
 
       const bundleNote = allTypes.length > 1 ? ` Потрібен комплект техніки: ${allTypes.join(", ")}.` : "";
-      const suggestion = mainType
+      const suggestion = mainType && (isJobAnswer || !ctx.types.length)
         ? {
             type: mainType,
             types: allTypes,
@@ -4746,14 +4778,11 @@ function RequestForm({ onSubmit, user, initial, t, lang }) {
 
   const submit = (e) => {
     e.preventDefault();
-    if (!form.contact || !isValidContact(form.contact)) {
-      setContactError(true);
-      return;
-    }
-    if (form.dateFrom && form.dateTo && form.dateTo < form.dateFrom) {
-      setDateError(true);
-      return;
-    }
+    const badContact = !form.contact || !isValidContact(form.contact);
+    const badDates = !!(form.dateFrom && form.dateTo && form.dateTo < form.dateFrom);
+    setContactError(badContact);
+    setDateError(badDates);
+    if (badContact || badDates) return;
     setSubmitting(true);
     onSubmit({ ...form, region: form.region === "Інше" ? (form.customRegion || "Інше") : form.region });
     draft.clear();

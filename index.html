@@ -1,9 +1,20 @@
 <!doctype html>
-<html lang="uk">
+<html lang="uk" translate="no">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Сайт має власний перемикач мов (UK/RU/EN). Автопереклад браузера переписує DOM
+         і ламає інтерфейс (застарілі картки, зіпсовані заголовки), тому вимикаємо його. -->
+    <meta name="google" content="notranslate" />
     <title>ТехМайданчик — біржа будтехніки</title>
+    <meta name="description" content="Оренда будівельної техніки в Україні: екскаватори, навантажувачі, самоскиди, крани, катки. Залиште заявку — диспетчер підбере техніку під вашу роботу." />
+    <meta name="theme-color" content="#08090A" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="uk_UA" />
+    <meta property="og:site_name" content="ТехМайданчик" />
+    <meta property="og:title" content="ТехМайданчик — біржа будтехніки" />
+    <meta property="og:description" content="Техніка знаходиться за годину, не за тиждень. Диспетчер підбирає екскаватор, самоскид, кран або каток під вашу роботу." />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   </head>
   <body style="margin:0; background:#08090A;">
     <div id="root"></div>
