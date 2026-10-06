@@ -485,6 +485,7 @@ const KIND_COLOR = {
   request_declined: AMBER,
   request_cancelled: "#70777D",
   role_changed: GREEN,
+  new_user: AMBER,
 };
 
 export function NotificationsPanel({ items, onOpenItem, onMarkAll }) {
@@ -624,10 +625,10 @@ export function OwnerInbox({ items, onRespond, onRefresh }) {
 
 
 // ---- Бронювання техніки клієнтом: техніка + дати → заявка диспетчеру ----
-export function BookingForm({ listing, busyRanges, onSubmit }) {
+export function BookingForm({ listing, busyRanges, onSubmit, initialFrom = "", initialTo = "" }) {
   const today = todayLocal();
-  const [from, setFrom] = useState("");
-  const [to, setTo] = useState("");
+  const [from, setFrom] = useState(initialFrom);
+  const [to, setTo] = useState(initialTo);
   const [operator, setOperator] = useState(false);
   const [comment, setComment] = useState("");
   const [busy, setBusy] = useState(false);
@@ -709,5 +710,76 @@ export function BookingForm({ listing, busyRanges, onSubmit }) {
         Диспетчер перевірить дати й підтвердить — зазвичай протягом години в робочий час. Контакт власника відкриється у вашому кабінеті після підтвердження.
       </div>
     </form>
+  );
+}
+
+
+// ---- Календар зайнятості техніки (2 місяці): червоним — зайнято ----
+const WEEKDAYS = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Нд"];
+
+export function AvailabilityCalendar({ ranges, months = 2, selectFrom, selectTo }) {
+  const today = todayLocal();
+  const base = new Date();
+  const blocks = [];
+  for (let m = 0; m < months; m++) {
+    const first = new Date(base.getFullYear(), base.getMonth() + m, 1);
+    const daysInMonth = new Date(first.getFullYear(), first.getMonth() + 1, 0).getDate();
+    const lead = (first.getDay() + 6) % 7; // тиждень починається з понеділка
+    const cells = Array(lead).fill(null);
+    for (let d = 1; d <= daysInMonth; d++) {
+      const iso = `${first.getFullYear()}-${String(first.getMonth() + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+      cells.push({
+        d,
+        iso,
+        busy: (ranges || []).some((r) => r.date_from <= iso && iso <= r.date_to),
+        past: iso < today,
+        today: iso === today,
+        sel: !!(selectFrom && selectTo && iso >= selectFrom && iso <= selectTo),
+      });
+    }
+    blocks.push({ title: first.toLocaleDateString("uk-UA", { month: "long", year: "numeric" }), cells });
+  }
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 14 }} aria-label="Календар зайнятості">
+      <div style={{ display: "flex", gap: 14, fontFamily: FONT, fontSize: 11.5, color: "#A3A8AD", flexWrap: "wrap" }}>
+        <span><span style={{ display: "inline-block", width: 10, height: 10, background: "rgba(201,107,90,0.55)", marginRight: 6, verticalAlign: "middle" }} />зайнято</span>
+        <span><span style={{ display: "inline-block", width: 10, height: 10, border: "1px solid #63696D", marginRight: 6, verticalAlign: "middle" }} />вільно</span>
+        {selectFrom && selectTo && <span><span style={{ display: "inline-block", width: 10, height: 10, border: "1px solid #FF6A1A", marginRight: 6, verticalAlign: "middle" }} />ваші дати</span>}
+      </div>
+      <div style={{ display: "flex", gap: 18, flexWrap: "wrap" }}>
+        {blocks.map((b) => (
+          <div key={b.title} style={{ flex: "1 1 220px", minWidth: 210 }}>
+            <div style={{ fontFamily: FONT, fontSize: 13, fontWeight: 600, marginBottom: 6, textTransform: "capitalize" }}>{b.title}</div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 2, fontFamily: FONT, fontSize: 11.5, textAlign: "center" }}>
+              {WEEKDAYS.map((w) => (
+                <div key={w} style={{ color: "#70777D", padding: "2px 0" }}>{w}</div>
+              ))}
+              {b.cells.map((cell, i) =>
+                cell ? (
+                  <div
+                    key={cell.iso}
+                    title={cell.busy ? "Зайнято" : "Вільно"}
+                    data-busy={cell.busy ? "1" : "0"}
+                    style={{
+                      padding: "5px 0",
+                      background: cell.busy ? "rgba(201,107,90,0.45)" : "transparent",
+                      color: cell.busy ? "#f0c4ba" : "#F4F4F1",
+                      opacity: cell.past ? 0.35 : 1,
+                      outline: cell.sel ? "1px solid #FF6A1A" : "none",
+                      fontWeight: cell.today ? 700 : 400,
+                      textDecoration: cell.today ? "underline" : "none",
+                    }}
+                  >
+                    {cell.d}
+                  </div>
+                ) : (
+                  <div key={`e${i}`} />
+                )
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }

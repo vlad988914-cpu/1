@@ -363,39 +363,94 @@ export function EquipmentBoard({ listings, requests, allBookings, onConfirm, onD
   );
 }
 
-// ---- Вкладка «Користувачі»: усі зареєстровані, їх ролі й активність ----
+// ---- Вкладка «Користувачі»: скільки всього, хто новий, видалення ----
 const ROLE_LABEL = { client: "Клієнт", owner: "Власник", dispatcher: "Диспетчер" };
 const ROLE_COLOR = { client: "#A3A8AD", owner: AMBER, dispatcher: GREEN };
+const DAY_MS = 86400000;
 
-export function UsersBoard({ users, requests, bookings, onSetRole }) {
+function Stat({ label, value, accent, big }) {
+  return (
+    <div style={{ border: `1px solid ${accent ? "#FF6A1A" : "#2a2e32"}`, padding: big ? "12px 18px" : "10px 14px", minWidth: big ? 170 : 120 }}>
+      <div style={{ fontFamily: FONT, fontSize: big ? 30 : 20, fontWeight: 700, color: accent ? "#FF6A1A" : "#F4F4F1", lineHeight: 1.1 }}>{value}</div>
+      <div style={{ fontFamily: FONT, fontSize: 11.5, color: "#A3A8AD", marginTop: 4 }}>{label}</div>
+    </div>
+  );
+}
+
+export function UsersBoard({ users, requests, bookings, listings, currentUserId, seenSince, onSetRole, onDelete }) {
   const [q, setQ] = useState("");
   const [role, setRole] = useState("all");
-  const filters = [["all", "Усі"], ["client", "Клієнти"], ["owner", "Власники"], ["dispatcher", "Диспетчери"]];
+  const today = todayLocal();
+  const now = Date.now();
+  const age = (u) => now - new Date(u.created_at).getTime();
+  const isStaff = (u) => u.role === "dispatcher";
+  const isNew = (u) => !isStaff(u) && age(u) < 7 * DAY_MS;
+  const isUnseen = (u) => !isStaff(u) && !!seenSince && u.created_at > seenSince;
+
+  const total = users.length;
+  const clients = users.filter((u) => u.role === "client").length;
+  const owners = users.filter((u) => u.role === "owner").length;
+  const newWeek = users.filter(isNew).length;
+  const newToday = users.filter((u) => !isStaff(u) && age(u) < DAY_MS).length;
+  const unseen = users.filter(isUnseen).length;
+
+  const ownerOfListing = (id) => (listings.find((l) => l.id === id) || {}).ownerId;
+  const activeRentals = (u) =>
+    bookings.filter(
+      (b) => ["reserved", "confirmed"].includes(b.status) && b.date_to >= today && (b.client_id === u.id || ownerOfListing(b.listing_id) === u.id)
+    ).length;
+
+  const filters = [
+    ["all", "Усі", total],
+    ["new", "Нові (7 днів)", newWeek],
+    ["client", "Клієнти", clients],
+    ["owner", "Власники", owners],
+    ["dispatcher", "Диспетчери", users.filter(isStaff).length],
+  ];
   const shown = users
-    .filter((u) => role === "all" || u.role === role)
+    .filter((u) => (role === "all" ? true : role === "new" ? isNew(u) : u.role === role))
     .filter((u) => !q || `${u.name} ${u.org || ""} ${u.phone} ${u.email}`.toLowerCase().includes(q.toLowerCase()))
     .sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
+
+  const askDelete = (u) => {
+    const what = u.role === "owner" ? "акаунт, його техніку з каталогу та незавершені заявки" : "акаунт і незавершені заявки";
+    if (window.confirm(`Видалити «${u.name}» (${u.email})?\n\nБуде видалено ${what}. Скасувати це не можна.`)) onDelete(u.id);
+  };
+
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-      <div style={{ fontFamily: FONT, fontSize: 13 }}>Зареєстровано: <b>{users.length}</b></div>
+    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+        <Stat big label="Усього зареєстровано" value={total} />
+        <Stat label="Клієнтів" value={clients} />
+        <Stat label="Власників" value={owners} />
+        <Stat label="Нових за 7 днів" value={newWeek} accent={newWeek > 0} />
+        <Stat label="Нових сьогодні" value={newToday} accent={newToday > 0} />
+        <Stat label="Після вашого останнього візиту" value={unseen} accent={unseen > 0} />
+      </div>
+
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-        {filters.map(([k, label]) => (
+        {filters.map(([k, label, count]) => (
           <button key={k} onClick={() => setRole(k)} style={{ ...smallBtn, padding: "5px 12px", fontSize: 12, borderColor: role === k ? "#FF6A1A" : "rgba(255,255,255,0.18)", color: role === k ? "#FF6A1A" : "#ffffff" }}>
-            {label} ({k === "all" ? users.length : users.filter((u) => u.role === k).length})
+            {label} ({count})
           </button>
         ))}
         <input aria-label="Пошук користувача" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Ім'я, телефон, email" style={{ ...inputStyle, padding: "7px 10px", fontSize: 12.5, minWidth: 200 }} />
       </div>
+
       {shown.length === 0 && <div style={{ fontFamily: FONT, fontSize: 13, color: "#A3A8AD" }}>Нікого не знайдено.</div>}
+
       {shown.map((u) => {
         const reqCount = requests.filter((r) => r.clientId === u.id).length;
-        const rentCount = bookings.filter((b) => b.client_id === u.id && ["reserved", "confirmed"].includes(b.status)).length;
+        const rentCount = activeRentals(u);
+        const mine = u.id === currentUserId;
+        const canDelete = !isStaff(u) && !mine;
         return (
-          <div key={u.id} style={{ border: "1px solid #2a2e32", padding: "10px 14px", fontFamily: FONT, fontSize: 12.5, display: "flex", flexDirection: "column", gap: 4 }}>
+          <div key={u.id} style={{ border: `1px solid ${isUnseen(u) ? "#FF6A1A" : "#2a2e32"}`, padding: "10px 14px", fontFamily: FONT, fontSize: 12.5, display: "flex", flexDirection: "column", gap: 4 }}>
             <div style={{ display: "flex", justifyContent: "space-between", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
               <span>
                 <b style={{ fontSize: 14 }}>{u.name}</b>
                 {u.org ? <span style={{ color: "#A3A8AD" }}> · {u.org}</span> : null}
+                {isNew(u) && <span style={{ marginLeft: 8, background: "#FF6A1A", color: "#08090A", fontSize: 10.5, fontWeight: 700, padding: "2px 7px", letterSpacing: "0.04em" }}>НОВИЙ</span>}
               </span>
               <span style={{ color: ROLE_COLOR[u.role], border: `1px solid ${ROLE_COLOR[u.role]}`, padding: "2px 8px", fontSize: 11.5 }}>{ROLE_LABEL[u.role] || u.role}</span>
             </div>
@@ -403,10 +458,10 @@ export function UsersBoard({ users, requests, bookings, onSetRole }) {
               {u.phone && u.phone !== "—" ? <a href={`tel:${String(u.phone).replace(/[^\d+]/g, "")}`} style={{ color: "#F4F4F1" }}>{u.phone}</a> : "телефон не вказано"} · {u.email}
             </div>
             <div style={{ color: "#70777D" }}>
-              З нами з {fmtDate(String(u.created_at).slice(0, 10))} · заявок: {reqCount} · активних оренд: {rentCount}
+              Зареєстровано {fmtDate(String(u.created_at).slice(0, 10))} · заявок: {reqCount} · активних оренд: {rentCount}
             </div>
-            {u.role !== "dispatcher" && (
-              <div>
+            {!isStaff(u) && (
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", paddingTop: 4 }}>
                 <button
                   onClick={() => {
                     const to = u.role === "owner" ? "client" : "owner";
@@ -416,6 +471,184 @@ export function UsersBoard({ users, requests, bookings, onSetRole }) {
                 >
                   {u.role === "owner" ? "Зробити клієнтом" : "Зробити власником"}
                 </button>
+                {canDelete && (
+                  <button
+                    onClick={() => askDelete(u)}
+                    disabled={rentCount > 0}
+                    title={rentCount > 0 ? "Є активні оренди — спершу скасуйте їх" : "Видалити користувача"}
+                    style={{ ...miniBtn(RED), opacity: rentCount > 0 ? 0.4 : 1, cursor: rentCount > 0 ? "not-allowed" : "pointer" }}
+                  >
+                    Видалити
+                  </button>
+                )}
+                {rentCount > 0 && <span style={{ color: AMBER, fontSize: 11.5, alignSelf: "center" }}>є активні оренди — видалення недоступне</span>}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ---- Вкладка «Хто в кого»: один екран — клієнт → яку техніку → у якого власника ----
+const PAIR_STATE = {
+  wanted: { text: "Клієнт хоче цю техніку — потрібне ваше рішення", color: AMBER, rank: 0 },
+  reserved: { text: "Клієнт підтвердив — підтвердіть оренду", color: AMBER, rank: 0 },
+  offered: { text: "Запропоновано клієнту, чекаємо відповіді", color: "#A3A8AD", rank: 1 },
+  open: { text: "Техніку ще не обрано", color: "#A3A8AD", rank: 2 },
+  confirmed: { text: "Оренду підтверджено", color: GREEN, rank: 3 },
+  active: { text: "Оренда триває", color: GREEN, rank: 3 },
+};
+const telHref = (v) => `tel:${String(v || "").replace(/[^\d+]/g, "")}`;
+const hoursAgo = (iso) => {
+  if (!iso) return "";
+  const h = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 3600000));
+  return h < 1 ? "щойно" : h < 24 ? `${h} год тому` : `${Math.round(h / 24)} дн тому`;
+};
+
+function PhoneLink({ value }) {
+  if (!value || value === "—") return <span style={{ color: "#70777D" }}>телефон не вказано</span>;
+  return <a href={telHref(value)} style={{ color: "#F4F4F1" }}>{value}</a>;
+}
+
+export function PairsBoard({ requests, listings, offers, bookings, users, onConfirm, onDecline, onConfirmBooking, onOpenRequests }) {
+  const [filter, setFilter] = useState("all");
+  const [busyKey, setBusyKey] = useState(null);
+  const today = todayLocal();
+  const L = (id) => listings.find((l) => l.id === id) || null;
+  const U = (id) => users.find((u) => u.id === id) || null;
+  const ownerOf = (l) => {
+    if (!l) return null;
+    const u = U(l.ownerId);
+    return { name: (u && (u.org || u.name)) || l.owner, phone: u ? u.phone : null };
+  };
+
+  const rows = [];
+  const hasBooking = new Set();
+  bookings.forEach((b) => {
+    if (!["reserved", "confirmed"].includes(b.status) || b.date_to < today) return;
+    const req = requests.find((r) => r.id === b.request_id) || null;
+    const cu = U(b.client_id);
+    const client = req ? { name: req.requesterName || "Клієнт", phone: req.contact } : cu ? { name: cu.name, phone: cu.phone } : { name: "Клієнт", phone: null };
+    const l = L(b.listing_id);
+    rows.push({
+      key: `b${b.id}`, state: b.status === "reserved" ? "reserved" : b.date_from <= today ? "active" : "confirmed",
+      client, listing: l, owner: ownerOf(l), from: b.date_from, to: b.date_to, req, booking: b, sort: b.date_from,
+    });
+    if (b.request_id) hasBooking.add(b.request_id);
+  });
+  requests.forEach((r) => {
+    if (hasBooking.has(r.id) || ["cancelled", "expired", "taken", "booked"].includes(r.status)) return;
+    const client = { name: r.requesterName || "Клієнт", phone: r.contact };
+    if (r.listingId) {
+      const l = L(r.listingId);
+      rows.push({ key: `w${r.id}`, state: "wanted", client, listing: l, owner: ownerOf(l), from: r.dateFrom, to: r.dateTo, req: r, sort: r.createdAt || "" });
+      return;
+    }
+    const prop = offers.find((o) => o.request_id === r.id && o.status === "proposed");
+    if (prop) {
+      const l = L(prop.listing_id);
+      rows.push({ key: `o${r.id}`, state: "offered", client, listing: l, owner: ownerOf(l), from: prop.date_from, to: prop.date_to, req: r, sort: r.createdAt || "" });
+      return;
+    }
+    rows.push({ key: `n${r.id}`, state: "open", client, listing: null, owner: null, from: r.dateFrom, to: r.dateTo, req: r, sort: r.createdAt || "" });
+  });
+  rows.sort((a, b) => PAIR_STATE[a.state].rank - PAIR_STATE[b.state].rank || (a.sort < b.sort ? -1 : 1));
+
+  const groups = {
+    all: { label: "Усе", test: () => true },
+    decide: { label: "Чекають рішення", test: (r) => PAIR_STATE[r.state].rank === 0 },
+    done: { label: "Підтверджені", test: (r) => PAIR_STATE[r.state].rank === 3 },
+    open: { label: "Без техніки", test: (r) => r.state === "open" },
+  };
+  const shown = rows.filter(groups[filter].test);
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        {Object.entries(groups).map(([k, g]) => (
+          <button
+            key={k}
+            onClick={() => setFilter(k)}
+            style={{ ...smallBtn, padding: "6px 14px", fontSize: 12.5, borderColor: filter === k ? "#FF6A1A" : "rgba(255,255,255,0.18)", color: filter === k ? "#FF6A1A" : "#ffffff" }}
+          >
+            {g.label} ({rows.filter(g.test).length})
+          </button>
+        ))}
+      </div>
+
+      {shown.length === 0 && (
+        <div style={{ fontFamily: FONT, fontSize: 13, color: "#A3A8AD" }}>
+          {rows.length === 0 ? "Поки ніхто нічого не хоче орендувати. Щойно клієнт забронює техніку, вона з'явиться тут." : "У цій групі нічого немає."}
+        </div>
+      )}
+
+      {shown.map((row) => {
+        const st = PAIR_STATE[row.state];
+        const l = row.listing;
+        return (
+          <div key={row.key} style={{ border: `1px solid ${st.color === "#A3A8AD" ? "#2a2e32" : st.color}`, padding: "12px 14px", display: "flex", flexDirection: "column", gap: 10, fontFamily: FONT, fontSize: 12.5 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
+              <span style={{ color: st.color, fontWeight: 600 }}>{st.text}</span>
+              {row.req && <span style={{ color: "#70777D" }}>заявка №{row.req.id}{row.req.createdAt ? ` · ${hoursAgo(row.req.createdAt)}` : ""}</span>}
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))", gap: 14 }}>
+              <div>
+                <Label>Хто хоче орендувати</Label>
+                <div style={{ fontSize: 15, fontWeight: 600, marginTop: 6 }}>{row.client.name}</div>
+                <PhoneLink value={row.client.phone} />
+              </div>
+              <div>
+                <Label>У кого</Label>
+                {l ? (
+                  <>
+                    <div style={{ fontSize: 15, fontWeight: 600, marginTop: 6 }}>
+                      {l.brand} <span style={{ fontWeight: 400, fontSize: 12.5, color: "#A3A8AD" }}>· {l.type} · {l.price} ₴/{l.unit}</span>
+                    </div>
+                    <div>
+                      Власник: <b>{row.owner ? row.owner.name : "—"}</b> · <PhoneLink value={row.owner && row.owner.phone} />
+                    </div>
+                  </>
+                ) : (
+                  <div style={{ marginTop: 6, color: "#A3A8AD" }}>
+                    {row.req ? `${row.req.type}, ${row.req.region}` : "—"}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {row.state === "wanted" ? (
+              <WantedActions req={row.req} listing={l} allBookings={bookings} onConfirm={onConfirm} onDecline={onDecline} />
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                <div>
+                  {fmtPeriod(row.from, row.to)}
+                  {row.req && row.req.withOperator ? " · з оператором" : ""}
+                </div>
+                {row.req && row.req.comment && <div style={{ color: "#A3A8AD" }}>{row.req.comment}</div>}
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  {row.state === "reserved" && (
+                    <button
+                      disabled={busyKey === row.key}
+                      onClick={async () => {
+                        setBusyKey(row.key);
+                        try {
+                          await onConfirmBooking(row.booking.id);
+                        } finally {
+                          setBusyKey(null);
+                        }
+                      }}
+                      style={{ ...primaryBtn, padding: "9px 18px", fontSize: 13 }}
+                    >
+                      Підтвердити оренду
+                    </button>
+                  )}
+                  {row.state === "open" && (
+                    <button onClick={onOpenRequests} style={miniBtn("#FF6A1A")}>Підібрати техніку →</button>
+                  )}
+                </div>
               </div>
             )}
           </div>

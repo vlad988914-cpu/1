@@ -26,7 +26,9 @@ export const REASON_TEXT = {
   has_booking: "Оренду вже підтверджено — для скасування зверніться до диспетчера",
   already_cancelled: "Заявку вже скасовано",
   no_listing: "У заявці не вибрано техніку",
-  is_dispatcher: "Роль диспетчера змінюється лише через SQL",
+  is_dispatcher: "Диспетчера не можна змінити чи видалити з сайту",
+  self: "Себе видалити не можна",
+  has_active_bookings: "У користувача є активні оренди — спершу скасуйте їх у панелі диспетчера",
   bad_role: "Недопустима роль",
 };
 export const reasonText = (res) => REASON_TEXT[res?.reason] || res?.message || "Не вдалося виконати дію";
@@ -54,6 +56,22 @@ export const createManualBooking = (requestId, listingId, dateFrom, dateTo) =>
 export const declineListingRequest = (requestId, reason) =>
   call("decline_listing_request", { p_request_id: requestId, p_reason: reason || null });
 export const setUserRole = (userId, role) => call("set_user_role", { p_user_id: userId, p_role: role });
+export const deleteUser = (userId) => call("delete_user", { p_user_id: userId });
+
+// Повідомлення в Telegram диспетчера: лише для користувачів, що увійшли (сервер перевіряє токен)
+export async function notifyDispatcher(payload) {
+  if (!supabase) return;
+  try {
+    const { data } = await supabase.auth.getSession();
+    const token = data && data.session && data.session.access_token;
+    if (!token) return;
+    await fetch("/api/notify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify(payload),
+    });
+  } catch (e) {}
+}
 
 // ---- Клієнт ----
 // Забронювати конкретну техніку на дати: заявка одразу йде диспетчеру

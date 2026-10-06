@@ -2,8 +2,8 @@ import React, { useState, useMemo, useEffect, useRef } from "react";
 import { supabase } from "./supabaseClient";
 import { Plate, Label, badgeStyle, miniBtn, ErrorText, Field, primaryBtn, smallBtn, selectStyle, inputStyle, Modal } from "./ui.jsx";
 import { answerFromKnowledge, FALLBACK_ANSWER, JOB_PILLS, HELPER_PILLS } from "../shared/workKnowledge.js";
-import { ClientCabinet, OwnerCabinet, NotificationsPanel, BookingForm } from "./cabinets.jsx";
-import { DealsSection, EventLog, EquipmentBoard, UsersBoard } from "./dispatcherDeals.jsx";
+import { ClientCabinet, OwnerCabinet, NotificationsPanel, BookingForm, AvailabilityCalendar } from "./cabinets.jsx";
+import { DealsSection, EventLog, EquipmentBoard, UsersBoard, PairsBoard } from "./dispatcherDeals.jsx";
 import * as deals from "./services/deals.js";
 
 // ---- Bot API config ----
@@ -626,108 +626,6 @@ const EQUIPMENT_INFO = {
   },
 };
 
-function EquipmentGuide({ listings, onSelectCategory, t, lang }) {
-  const [index, setIndex] = useState(0);
-  const touchStartX = useRef(null);
-  const type = TYPES[index];
-  const info = EQUIPMENT_INFO[type];
-  const count = listings.filter((l) => l.type === type).length;
-
-  const go = (dir) => setIndex((i) => (i + dir + TYPES.length) % TYPES.length);
-
-  const onTouchStart = (e) => { touchStartX.current = e.touches[0].clientX; };
-  const onTouchEnd = (e) => {
-    if (touchStartX.current == null) return;
-    const dx = e.changedTouches[0].clientX - touchStartX.current;
-    if (dx > 40) go(-1);
-    else if (dx < -40) go(1);
-    touchStartX.current = null;
-  };
-
-  return (
-    <div style={{ position: "relative", maxWidth: 480, margin: "0 auto" }}>
-      <button onClick={() => go(-1)} aria-label="Попередній тип" style={carouselArrowStyle("left")}>‹</button>
-      <button onClick={() => go(1)} aria-label="Наступний тип" style={carouselArrowStyle("right")}>›</button>
-
-      <div
-        key={index}
-        onTouchStart={onTouchStart}
-        onTouchEnd={onTouchEnd}
-        className="guide-card-motion"
-        style={{
-          background: "#15181A",
-          border: "1px solid #63696D",
-          borderRadius: 20,
-          padding: "28px 24px",
-          textAlign: "center",
-        }}
-      >
-        <div style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 12, color: "#70777D", marginBottom: 10 }}>
-          {String(index + 1).padStart(2, "0")} / {String(TYPES.length).padStart(2, "0")}
-        </div>
-        <div style={{ color: "#FF6A1A", filter: "drop-shadow(0 3px 5px rgba(0,0,0,0.4))", display: "flex", justifyContent: "center" }}>
-          <EquipmentIcon type={type} size={56} />
-        </div>
-        <h3 style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif", fontSize: 22, margin: "12px 0 4px" }}>
-          {tType(type, lang)}
-        </h3>
-        <div style={{ fontSize: 12, color: "#70777D", marginBottom: 14 }}>
-          {count} {count === 1 ? t("guide_listing_one") : t("guide_listing_many")}
-        </div>
-
-        <p style={{ color: "#A3A8AD", fontSize: 13.5, lineHeight: 1.6, maxWidth: 360, margin: "0 auto 18px" }}>
-          {info.definition}
-        </p>
-
-        <div style={{ textAlign: "left", marginBottom: 16 }}>
-          <Label>{t("guide_parts_label")}</Label>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
-            {info.parts.map((p) => (
-              <span key={p} style={{ fontSize: 12, color: "#F4F4F1", background: "#191C1F", borderRadius: 980, padding: "4px 12px" }}>
-                {p}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        <div style={{ textAlign: "left", marginBottom: 22 }}>
-          <Label>{t("guide_uses_label")}</Label>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
-            {info.uses.map((u) => (
-              <span key={u} style={{ fontSize: 12, color: "#FFB52E", background: "rgba(255,176,32,0.12)", border: "1px solid rgba(255,176,32,0.3)", borderRadius: 980, padding: "4px 12px" }}>
-                {u}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        <button onClick={() => onSelectCategory(type)} style={{ ...primaryBtn, width: "100%" }}>
-          {t("guide_choose_btn")}
-        </button>
-      </div>
-
-      <div style={{ display: "flex", justifyContent: "center", gap: 6, marginTop: 14 }}>
-        {TYPES.map((_, i) => (
-          <button
-            key={i}
-            onClick={() => setIndex(i)}
-            aria-label={`Тип ${i + 1}`}
-            style={{
-              width: 6,
-              height: 6,
-              borderRadius: "50%",
-              border: "none",
-              padding: 0,
-              background: index === i ? "#FF6A1A" : "#63696D",
-              cursor: "pointer",
-            }}
-          />
-        ))}
-      </div>
-    </div>
-  );
-}
-
 const carouselArrowStyle = (side) => ({
   position: "absolute",
   [side]: -6,
@@ -800,6 +698,9 @@ export default function EquipmentMarketplace() {
   const dispatcherUnlocked = user?.role === "dispatcher";
   const [filterMaxPrice, setFilterMaxPrice] = useState("");
   const [sortBy, setSortBy] = useState("default");
+  const [catFrom, setCatFrom] = useState(""); // дати, на які потрібна техніка (фільтр каталогу)
+  const [catTo, setCatTo] = useState("");
+  const [onlyFree, setOnlyFree] = useState(true);
   const [favorites, setFavorites] = useState(new Set());
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [recentlyViewed, setRecentlyViewed] = useState([]);
@@ -885,6 +786,13 @@ export default function EquipmentMarketplace() {
 
   const scrollToApp = () => appSectionRef.current?.scrollIntoView({ behavior: "smooth" });
 
+  const datesChosen = !!(catFrom && catTo && catTo >= catFrom);
+  // Коли зайнята техніка на вибрані дати: повертає останню дату звільнення або null
+  const busyOnChosen = (l) => {
+    if (!datesChosen) return null;
+    const hit = busyRanges.filter((r) => r.listing_id === l.id && deals.rangesOverlap(r.date_from, r.date_to, catFrom, catTo));
+    return hit.length ? hit.map((r) => r.date_to).sort().slice(-1)[0] : null;
+  };
   const filtered = useMemo(() => {
     const base = listings.filter(
       (l) =>
@@ -893,10 +801,15 @@ export default function EquipmentMarketplace() {
         (!filterMaxPrice || l.price <= Number(filterMaxPrice)) &&
         (!showFavoritesOnly || favorites.has(l.id))
     );
-    if (sortBy === "price_asc") return [...base].sort((a, b) => a.price - b.price);
-    if (sortBy === "price_desc") return [...base].sort((a, b) => b.price - a.price);
-    return base;
-  }, [listings, filterType, filterRegion, filterMaxPrice, showFavoritesOnly, favorites, sortBy]);
+    let out = base;
+    if (sortBy === "price_asc") out = [...base].sort((a, b) => a.price - b.price);
+    else if (sortBy === "price_desc") out = [...base].sort((a, b) => b.price - a.price);
+    if (catFrom && catTo && catTo >= catFrom) {
+      const isBusy = (l) => !l.available || busyRanges.some((r) => r.listing_id === l.id && deals.rangesOverlap(r.date_from, r.date_to, catFrom, catTo));
+      out = onlyFree ? out.filter((l) => !isBusy(l)) : [...out].sort((a, b) => Number(isBusy(a)) - Number(isBusy(b)));
+    }
+    return out;
+  }, [listings, filterType, filterRegion, filterMaxPrice, showFavoritesOnly, favorites, sortBy, catFrom, catTo, onlyFree, busyRanges]);
 
   // Середній рейтинг власника — рахуємо з відгуків, прив'язаних до його імені
   const ownerRatings = useMemo(() => {
@@ -938,7 +851,39 @@ export default function EquipmentMarketplace() {
       });
   }, []);
 
+  const refreshListings = async () => {
+    if (!supabase) return;
+    const { data, error } = await supabase.from("listings").select("*").order("created_at", { ascending: false });
+    if (error || !data) return;
+    setListings(data.length ? data.map(mapListingRow) : seedListings);
+    setListingsFromDb(data.length > 0);
+  };
+
   // Додавати техніку можуть лише власники (і диспетчер) — перевіряє також база (RLS)
+  // Орендувати може лише зареєстрований користувач: гостя просимо увійти й після входу відкриваємо форму
+  const [pendingRequest, setPendingRequest] = useState(null);
+  const openRequestForm = (prefill = null) => {
+    if (!user) {
+      setPendingRequest({ prefill });
+      setShowAuthForm(true);
+      flashToast("Щоб залишити заявку, увійдіть або зареєструйтесь — це 1 хвилина");
+      return;
+    }
+    setAiPrefill(prefill);
+    setRole("client");
+    setShowRequestForm(true);
+  };
+  useEffect(() => {
+    if (user && pendingRequest) {
+      const p = pendingRequest;
+      setPendingRequest(null);
+      setShowAuthForm(false);
+      setAiPrefill(p.prefill);
+      setRole("client");
+      setShowRequestForm(true);
+    }
+  }, [user, pendingRequest]);
+
   const openAddListing = () => {
     if (!user) {
       setShowAuthForm(true);
@@ -946,7 +891,7 @@ export default function EquipmentMarketplace() {
       return;
     }
     if (user.role !== "owner" && user.role !== "dispatcher") {
-      flashToast("Додавати техніку можуть лише власники. Зареєструйте акаунт «Власник техніки»");
+      flashToast("Додавати техніку можуть лише власники. Зареєструйтесь як «Власник техніки» або попросіть диспетчера відкрити кабінет власника");
       return;
     }
     setShowAddForm(true);
@@ -1035,47 +980,38 @@ export default function EquipmentMarketplace() {
   };
 
   const handleSubmitRequest = async (data) => {
-    // Надсилаємо заявку в Telegram (працює на реальному сайті; у чат-превью тихо ігнорується)
-    try {
-      fetch("/api/notify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      }).catch(() => {});
-    } catch (e) {}
-
-    // Зберігаємо заявку в базу даних — клієнт може лишати заявки без входу (client_id = null)
-    let savedId = null;
-    if (supabase) {
-      try {
-        // Без .select(): анонімний відвідувач може лише створювати заявку,
-        // читати чужі заявки (з телефонами) йому заборонено політиками RLS.
-        const { error } = await supabase.from("requests").insert({
-          client_id: user?.hasProfile ? user.id : null,
-          type: data.type,
-          region: data.region,
-          date_from: data.dateFrom || null,
-          date_to: data.dateTo || null,
-          with_operator: !!data.withOperator,
-          budget: data.budget ? Number(data.budget) : null,
-          comment: data.comment || null,
-          contact: data.contact,
-          requester_name: data.requesterName || null,
-        });
-        if (error) console.error("Supabase insert (requests) failed:", error.message);
-      } catch (e) {
-        console.error("Supabase unreachable:", e.message);
-      }
+    if (!supabase || !user?.id || !user.hasProfile) {
+      setShowRequestForm(false);
+      setPendingRequest({ prefill: aiPrefill });
+      setShowAuthForm(true);
+      flashToast("Щоб залишити заявку, увійдіть або зареєструйтесь");
+      return false;
     }
-
-    setRequests((prev) => [
-      { ...data, id: savedId || prev.length + 1, status: "new", ownerStatuses: {}, log: [] },
-      ...prev,
-    ]);
+    try {
+      const { error } = await supabase.from("requests").insert({
+        client_id: user.id,
+        type: data.type,
+        region: data.region,
+        date_from: data.dateFrom || null,
+        date_to: data.dateTo || null,
+        with_operator: !!data.withOperator,
+        budget: data.budget ? Number(data.budget) : null,
+        comment: data.comment || null,
+        contact: data.contact,
+        requester_name: data.requesterName || user.name || null,
+      });
+      if (error) throw error;
+    } catch (e) {
+      console.error("Supabase insert (requests) failed:", e.message || e);
+      flashToast("Не вдалося надіслати заявку: " + (e.message || "перевірте з'єднання"));
+      return false;
+    }
+    deals.notifyDispatcher(data); // Telegram диспетчера (лише для тих, хто увійшов)
     setShowRequestForm(false);
     setAiPrefill(null);
-    flashToast(user ? "Заявку прийнято. Хід і відповіді — у «Моєму кабінеті»" : "Заявку прийнято. Щоб бачити відповіді онлайн, увійдіть або зареєструйтесь");
-    if (user) setTimeout(() => loadClientData(), 600);
+    flashToast("Заявку прийнято. Хід і відповіді — у «Моєму кабінеті»");
+    setTimeout(() => loadClientData(), 600);
+    return true;
   };
 
   const nowTime = () => new Date().toLocaleTimeString("uk-UA", { hour: "2-digit", minute: "2-digit" });
@@ -1323,6 +1259,7 @@ export default function EquipmentMarketplace() {
           // угода: клієнт із акаунтом, період, пропозиції, броні й журнал дій
           hasAccount: !!r.client_id,
           clientId: r.client_id,
+          createdAt: r.created_at,
           dateTo: r.date_to,
           withOperator: !!r.with_operator,
           listingId: r.listing_id,
@@ -1361,6 +1298,18 @@ export default function EquipmentMarketplace() {
     dealResult(await deals.createManualBooking(reqId, listingId, from, to), "Оренду підтверджено: клієнт і власник бачать контакти одне одного");
   const handleDeclineRequest = async (reqId, reason) =>
     dealResult(await deals.declineListingRequest(reqId, reason), "Відхилено. Клієнта сповіщено, заявка чекає на альтернативу");
+  const handleDeleteUser = async (userId) => {
+    const res = await deals.deleteUser(userId);
+    if (!res.ok) {
+      flashToast(deals.reasonText(res));
+      return;
+    }
+    flashToast("Користувача видалено");
+    await loadDispatcherData();
+    refreshListings();
+    refreshBusy();
+  };
+  const [dispatcherViewRequest, setDispatcherViewRequest] = useState(null);
   const handleSetRole = async (userId, role) => {
     const res = await deals.setUserRole(userId, role);
     if (!res.ok) flashToast(deals.reasonText(res));
@@ -1424,13 +1373,7 @@ export default function EquipmentMarketplace() {
       if (res.reason === "busy") refreshBusy();
       return false;
     }
-    try {
-      fetch("/api/notify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type: l.type, region: l.region, comment: `Бронь ${l.brand}, ${deals.fmtDate(dateFrom)} — ${deals.fmtDate(dateTo)}`, contact: user.phone, requesterName: user.name }),
-      }).catch(() => {});
-    } catch (e) {}
+    deals.notifyDispatcher({ type: l.type, region: l.region, comment: `Бронь ${l.brand}, ${deals.fmtDate(dateFrom)} — ${deals.fmtDate(dateTo)}`, contact: user.phone, requesterName: user.name });
     setBookingListing(null);
     flashToast("Заявку надіслано. Відповідь і контакт власника з'являться в «Моєму кабінеті»");
     loadClientData();
@@ -1495,6 +1438,7 @@ export default function EquipmentMarketplace() {
     }
     if (user?.role === "dispatcher") {
       setRole("dispatcher");
+      if (n.kind === "new_user") setDispatcherViewRequest({ view: "users", n: Date.now() });
       loadDispatcherData();
       return;
     }
@@ -1533,35 +1477,29 @@ export default function EquipmentMarketplace() {
 
   // «Відгукнутись» на оголошення = заявка на цю техніку: іде диспетчеру, не власнику напряму
   const respondToListing = async (l) => {
-    const contact = user?.phone || window.prompt("Вкажіть телефон або Telegram, щоб диспетчер міг з вами зв'язатися:");
-    if (!contact || !contact.trim()) return false;
+    if (!user?.id || !user.hasProfile) {
+      setShowAuthForm(true);
+      flashToast("Щоб орендувати техніку, увійдіть або зареєструйтесь — це 1 хвилина");
+      return false;
+    }
     trackViewed(l.id);
     const comment = `Клієнт відгукнувся на оголошення: ${l.brand} (${l.owner})`;
-    try {
-      fetch("/api/notify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type: l.type, region: l.region, comment, contact, requesterName: user?.name || "Гість сайту" }),
-      }).catch(() => {});
-    } catch (e) {}
-    if (supabase) {
-      try {
-        const { error } = await supabase.from("requests").insert({
-          client_id: user?.hasProfile ? user.id : null,
-          type: l.type,
-          region: l.region,
-          contact: contact.trim(),
-          requester_name: user?.name || null,
-          comment,
-          listing_id: l.ownerId ? l.id : null,
-        });
-        if (error) console.error("Supabase insert (respond) failed:", error.message);
-      } catch (e) {
-        console.error("Supabase unreachable:", e.message);
-      }
+    const { error } = await supabase.from("requests").insert({
+      client_id: user.id,
+      type: l.type,
+      region: l.region,
+      contact: user.phone,
+      requester_name: user.name || null,
+      comment,
+      listing_id: l.ownerId ? l.id : null,
+    });
+    if (error) {
+      flashToast("Не вдалося надіслати: " + error.message);
+      return false;
     }
-    flashToast(user ? "Запит надіслано диспетчеру. Відповідь побачите в «Моєму кабінеті»" : "Запит надіслано. Диспетчер зв'яжеться з вами");
-    if (user) setTimeout(() => loadClientData(), 600);
+    deals.notifyDispatcher({ type: l.type, region: l.region, comment, contact: user.phone, requesterName: user.name });
+    flashToast("Запит надіслано диспетчеру. Відповідь побачите в «Моєму кабінеті»");
+    setTimeout(() => loadClientData(), 600);
     return true;
   };
 
@@ -2738,7 +2676,7 @@ export default function EquipmentMarketplace() {
             <button className="hero-pill" onClick={() => scrollToApp()}>
               {t("pill_catalog")}
             </button>
-            <button className="hero-pill" onClick={() => { setShowRequestForm(true); }}>
+            <button className="hero-pill" onClick={() => openRequestForm()}>
               {t("pill_request")}
             </button>
             <button className="hero-pill" onClick={() => { setRole("owner"); openAddListing(); }}>
@@ -2760,7 +2698,7 @@ export default function EquipmentMarketplace() {
       {/* How it works — the request workflow, as a technical process line */}
       <section id="how-it-works" style={{ padding: "48px 24px", borderBottom: "1px solid #202428" }}>
         <div style={{ maxWidth: 900, margin: "0 auto" }}>
-          <SectionDivider n={2} of={7} title={t("how_it_works_label")} />
+          <SectionDivider n={2} of={4} title={t("how_it_works_label")} />
           <h2 style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif", fontSize: 24, margin: "0 0 32px" }}>
             {t("how_it_works_title")}
           </h2>
@@ -2778,28 +2716,6 @@ export default function EquipmentMarketplace() {
         </div>
       </section>
 
-      {/* Equipment guide — flip through types to learn and choose */}
-      <section style={{ padding: "8px 24px 36px", borderBottom: "1px solid #202428" }}>
-        <div style={{ maxWidth: 780, margin: "0 auto" }}>
-          <div className="reveal" style={{ marginBottom: 20 }}>
-            <SectionDivider n={3} of={7} title={t("categories_label").toUpperCase()} />
-            <h2 style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif", fontSize: 22, textTransform: "none", margin: "0", textAlign: "center" }}>
-              {t("categories_title")}
-            </h2>
-          </div>
-          <EquipmentGuide
-            t={t}
-            lang={lang}
-            listings={listings}
-            onSelectCategory={(type) => {
-              setRole("client");
-              setFilterType(type);
-              scrollToApp();
-            }}
-          />
-        </div>
-      </section>
-
       {/* Honest placeholder instead of mock trust signals */}
       <div className="reveal" style={{ padding: "20px 24px", borderBottom: "1px solid #202428", textAlign: "center" }}>
         <span style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 12, color: "#A3A8AD", letterSpacing: "0.04em" }}>
@@ -2807,8 +2723,9 @@ export default function EquipmentMarketplace() {
         </span>
       </div>
 
-      {/* Hero strip */}
+      {/* Catalog */}
       <div ref={appSectionRef} style={{ padding: "28px 24px 8px" }}>
+        {role === "client" && <SectionDivider n={3} of={4} title="КАТАЛОГ ТЕХНІКИ" />}
         <h2
           style={{
             fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif",
@@ -2828,7 +2745,7 @@ export default function EquipmentMarketplace() {
         </h2>
         <p style={{ color: "#A3A8AD", marginTop: 10, maxWidth: 560, fontSize: 15 }}>
           {role === "client"
-            ? "Фільтруйте по типу техніки, регіону та ціні, або залиште одну заявку — і власники самі відгукнуться."
+            ? "Оберіть дати — покажемо, яка техніка вільна. Натисніть на картку: побачите, для чого вона, де використовується, параметри й календар зайнятості."
             : role === "owner"
             ? "Додайте техніку з характеристиками одноразово — заявки клієнтів з вашого регіону приходитимуть автоматично."
             : "Жодна заявка не йде власникам автоматично. Ви бачите рекомендації системи й вирішуєте, кому надіслати."}
@@ -2850,7 +2767,7 @@ export default function EquipmentMarketplace() {
         <div style={{ padding: "16px 24px", display: "flex", gap: 12, flexWrap: "wrap" }}>
           {role === "client" ? (
             <>
-              <button onClick={() => setShowRequestForm(true)} style={primaryBtn}>
+              <button onClick={() => openRequestForm()} style={primaryBtn}>
                 {t("add_request_btn")}
               </button>
               {user && (
@@ -2891,12 +2808,38 @@ export default function EquipmentMarketplace() {
       )}
 
       {role === "dispatcher" && (
-        <DispatcherPanel requests={requests} owners={dispatchOwners} listings={listings} allBookings={dealsData.bookings} onDispatch={handleDispatch} onOwnerAction={handleOwnerAction} onRefresh={loadDispatcherData} onPropose={handlePropose} onManual={handleManualBooking} onConfirm={handleConfirmBooking} onCancel={handleCancelBooking} onDecline={handleDeclineRequest} users={dispatchUsers} onSetRole={handleSetRole} user={user} t={t} />
+        <DispatcherPanel requests={requests} owners={dispatchOwners} listings={listings} allBookings={dealsData.bookings} offers={dealsData.offers} onDispatch={handleDispatch} onOwnerAction={handleOwnerAction} onRefresh={loadDispatcherData} onPropose={handlePropose} onManual={handleManualBooking} onConfirm={handleConfirmBooking} onCancel={handleCancelBooking} onDecline={handleDeclineRequest} users={dispatchUsers} onSetRole={handleSetRole} onDeleteUser={handleDeleteUser} viewRequest={dispatcherViewRequest} user={user} t={t} />
       )}
 
       {/* Filters (client view) */}
       {role === "client" && (
-        <div style={{ padding: "0 24px 8px", display: "flex", gap: 10, flexWrap: "wrap" }}>
+        <div style={{ padding: "0 24px 8px", display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+          <span style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 12.5, color: "#A3A8AD" }}>Коли потрібно:</span>
+          <input
+            type="date"
+            aria-label="Потрібно з"
+            min={new Date().toLocaleDateString("sv-SE")}
+            value={catFrom}
+            onChange={(e) => {
+              setCatFrom(e.target.value);
+              if (catTo && e.target.value && catTo < e.target.value) setCatTo(e.target.value);
+            }}
+            style={selectStyle}
+          />
+          <span style={{ color: "#70777D" }}>—</span>
+          <input type="date" aria-label="Потрібно по" min={catFrom || new Date().toLocaleDateString("sv-SE")} value={catTo} onChange={(e) => setCatTo(e.target.value)} style={selectStyle} />
+          {(catFrom || catTo) && (
+            <button onClick={() => { setCatFrom(""); setCatTo(""); }} aria-label="Скинути дати" style={{ ...selectStyle, cursor: "pointer", color: "#A3A8AD" }}>
+              ✕ Скинути
+            </button>
+          )}
+          {datesChosen && (
+            <label style={{ display: "flex", alignItems: "center", gap: 6, fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 12.5, color: "#A3A8AD", cursor: "pointer" }}>
+              <input type="checkbox" checked={onlyFree} onChange={(e) => setOnlyFree(e.target.checked)} style={{ accentColor: "#FF6A1A", width: 16, height: 16 }} />
+              Тільки вільна на ці дати
+            </label>
+          )}
+          <span style={{ flexBasis: "100%", height: 0 }} />
           <select aria-label="Тип техніки" value={filterType} onChange={(e) => setFilterType(e.target.value)} style={selectStyle}>
             <option value="Усі">{t("filter_all")}</option>
             {TYPES.map((ty) => (
@@ -3038,6 +2981,11 @@ export default function EquipmentMarketplace() {
                     {l.available ? t("status_available") : t("status_busy")}
                   </span>
                 </div>
+                {datesChosen && l.available && (
+                  <div style={{ fontSize: 11.5, fontWeight: 600, marginBottom: 4, color: busyOnChosen(l) ? "#c96b5a" : "#5FA876" }}>
+                    {busyOnChosen(l) ? `● Зайнята на ці дати (до ${deals.fmtDate(busyOnChosen(l))})` : "● Вільна на ваші дати"}
+                  </div>
+                )}
                 <Label>{tType(l.type, lang)}</Label>
                 <div style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif", fontSize: 18, fontWeight: 600, marginTop: 2 }}>
                   {l.brand}
@@ -3147,7 +3095,7 @@ export default function EquipmentMarketplace() {
 
       {/* FAQ */}
       <div className="reveal" style={{ padding: "8px 24px 64px", maxWidth: 640, margin: "0 auto" }}>
-        <SectionDivider n={7} of={7} title={t("faq_label").toUpperCase()} />
+        <SectionDivider n={4} of={4} title={t("faq_label").toUpperCase()} />
         <h2 style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif", fontSize: 22, textTransform: "none", margin: "0 0 12px" }}>
           {t("faq_title")}
         </h2>
@@ -3235,7 +3183,7 @@ export default function EquipmentMarketplace() {
       </footer>
 
       {detailListing && (
-        <Modal onClose={() => setDetailListing(null)} title={detailListing.brand}>
+        <Modal onClose={() => setDetailListing(null)} title={detailListing.brand} wide>
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             <div style={{ display: "flex", justifyContent: "center", padding: "20px 0", background: "#191C1F", borderRadius: 12 }}>
               {detailListing.photos && detailListing.photos.length > 0 ? (
@@ -3282,13 +3230,33 @@ export default function EquipmentMarketplace() {
               <div style={{ fontSize: 13, color: "#A3A8AD", marginTop: 2 }}>{detailListing.region}</div>
             </div>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: 6, borderTop: "1px solid #202428", borderBottom: "1px solid #202428", padding: "12px 0" }}>
-              {Object.entries(detailListing.specs).filter(([, v]) => v && v !== "—").map(([k, v]) => (
-                <div key={k} style={{ display: "flex", justifyContent: "space-between", fontSize: 13 }}>
-                  <span style={{ color: "#A3A8AD" }}>{k}</span>
-                  <span>{v}</span>
+            {EQUIPMENT_INFO[detailListing.type] && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                <div>
+                  <Label>Для чого служить</Label>
+                  <p style={{ margin: "8px 0 0", fontSize: 13.5, lineHeight: 1.55, color: "#D9DCDF" }}>{EQUIPMENT_INFO[detailListing.type].definition}</p>
                 </div>
-              ))}
+                <div>
+                  <Label>{t("guide_uses_label")}</Label>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
+                    {EQUIPMENT_INFO[detailListing.type].uses.map((u) => (
+                      <span key={u} style={{ fontSize: 12, padding: "4px 10px", borderRadius: 980, border: "1px solid #3a3f44", color: "#FFB52E" }}>{u}</span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div style={{ borderTop: "1px solid #202428", borderBottom: "1px solid #202428", padding: "12px 0" }}>
+              <Label>Параметри</Label>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 8 }}>
+                {[["Тип", tType(detailListing.type, lang)], ["Регіон", detailListing.region], ...Object.entries(detailListing.specs).filter(([, v]) => v && v !== "—")].map(([k, v]) => (
+                  <div key={k} style={{ display: "flex", justifyContent: "space-between", gap: 12, fontSize: 13 }}>
+                    <span style={{ color: "#A3A8AD" }}>{k}</span>
+                    <span style={{ textAlign: "right" }}>{v}</span>
+                  </div>
+                ))}
+              </div>
             </div>
 
             <div
@@ -3320,6 +3288,12 @@ export default function EquipmentMarketplace() {
                 Найближча оренда: {deals.fmtDate(busyNextRange(detailListing.id).date_from)} — {deals.fmtDate(busyNextRange(detailListing.id).date_to)}. Обирайте вільні дати.
               </div>
             )}
+            <div>
+              <Label>Коли техніка вільна</Label>
+              <div style={{ marginTop: 10 }}>
+                <AvailabilityCalendar ranges={busyRanges.filter((r) => r.listing_id === detailListing.id)} selectFrom={datesChosen ? catFrom : ""} selectTo={datesChosen ? catTo : ""} />
+              </div>
+            </div>
             <button
               disabled={!detailListing.available}
               onClick={() => {
@@ -3370,7 +3344,7 @@ export default function EquipmentMarketplace() {
 
       {bookingListing && (
         <Modal onClose={() => setBookingListing(null)} title="Бронювання техніки" wide>
-          <BookingForm listing={bookingListing} busyRanges={busyRanges} onSubmit={handleBook} />
+          <BookingForm listing={bookingListing} busyRanges={busyRanges} onSubmit={handleBook} initialFrom={datesChosen ? catFrom : ""} initialTo={datesChosen ? catTo : ""} />
         </Modal>
       )}
 
@@ -3411,11 +3385,7 @@ export default function EquipmentMarketplace() {
         listings={listings}
         open={aiOpen}
         setOpen={setAiOpen}
-        onPrefillRequest={(data) => {
-          setAiPrefill(data);
-          setRole("client");
-          setShowRequestForm(true);
-        }}
+        onPrefillRequest={(data) => openRequestForm(data)}
         onViewListing={(l) => openDetail(l)}
       />
 
@@ -3424,7 +3394,7 @@ export default function EquipmentMarketplace() {
           {role === "owner" ? "Готові здати техніку?" : "Потрібна техніка зараз?"}
         </span>
         <button
-          onClick={() => (role === "owner" ? openAddListing() : setShowRequestForm(true))}
+          onClick={() => (role === "owner" ? openAddListing() : openRequestForm())}
           style={{ ...primaryBtn, padding: "9px 16px" }}
         >
           {role === "owner" ? "Додати" : "Залишити заявку"}
@@ -3459,14 +3429,36 @@ export default function EquipmentMarketplace() {
 // Диспетчерська: три вкладки. «Заявки» — основна робота; «Техніка» — хто хоче кожну одиницю;
 // «Користувачі» — усі зареєстровані.
 function DispatcherPanel(props) {
-  const { requests, listings, allBookings, users, onSetRole, onManual, onDecline } = props;
-  const [view, setView] = useState("requests");
+  const { requests, listings, allBookings, offers, users, onSetRole, onManual, onDecline, onConfirm, onDeleteUser, viewRequest, user } = props;
+  const [view, setView] = useState("pairs");
+  // Нові користувачі від вашого останнього візиту у вкладку «Користувачі»
+  const SEEN_KEY = "techmaydanchik_users_seen";
+  const [seenAt] = useState(() => {
+    try {
+      return window.localStorage.getItem(SEEN_KEY) || new Date(Date.now() - 7 * 86400000).toISOString();
+    } catch (e) {
+      return new Date(Date.now() - 7 * 86400000).toISOString();
+    }
+  });
+  const unseenUsers = users.filter((u) => u.role !== "dispatcher" && u.created_at > seenAt).length;
+  useEffect(() => {
+    if (view === "users") {
+      try {
+        window.localStorage.setItem(SEEN_KEY, new Date().toISOString());
+      } catch (e) {}
+    }
+  }, [view]);
+  useEffect(() => {
+    if (viewRequest && viewRequest.view) setView(viewRequest.view);
+  }, [viewRequest]);
   const attention = requests.filter((r) => r.status === "new" || r.status === "booked").length;
   const wanted = requests.filter((r) => r.listingId && ["new", "dispatched", "offered"].includes(r.status)).length;
+  const decide = requests.filter((r) => r.listingId && ["new", "dispatched", "offered"].includes(r.status)).length + allBookings.filter((b) => b.status === "reserved").length;
   const tabs = [
+    ["pairs", "Хто в кого", decide],
     ["requests", "Заявки", attention],
     ["equipment", "Техніка", wanted],
-    ["users", "Користувачі", users.length],
+    ["users", "Користувачі", unseenUsers > 0 ? unseenUsers : users.length],
   ];
   return (
     <div>
@@ -3483,7 +3475,8 @@ function DispatcherPanel(props) {
             >
               {label}
               {count > 0 && (
-                <span style={{ marginLeft: 6, background: key === "users" ? "#2a2e32" : "#FF6A1A", color: key === "users" ? "#F4F4F1" : "#08090A", borderRadius: 980, padding: "1px 7px", fontSize: 11, fontWeight: 600 }}>
+                <span style={{ marginLeft: 6, background: key === "users" && unseenUsers === 0 ? "#2a2e32" : "#FF6A1A", color: key === "users" && unseenUsers === 0 ? "#F4F4F1" : "#08090A", borderRadius: 980, padding: "1px 7px", fontSize: 11, fontWeight: 600 }}>
+                  {key === "users" && unseenUsers > 0 ? "+" : ""}
                   {count}
                 </span>
               )}
@@ -3491,6 +3484,21 @@ function DispatcherPanel(props) {
           );
         })}
       </div>
+      {view === "pairs" && (
+        <div style={{ padding: "0 24px 48px" }}>
+          <PairsBoard
+            requests={requests}
+            listings={listings}
+            offers={offers || []}
+            bookings={allBookings}
+            users={users}
+            onConfirm={(r) => onManual(r.id, r.listingId, r.dateFrom, r.dateTo)}
+            onDecline={onDecline}
+            onConfirmBooking={onConfirm}
+            onOpenRequests={() => setView("requests")}
+          />
+        </div>
+      )}
       {view === "requests" && <DispatcherRequests {...props} />}
       {view === "equipment" && (
         <div style={{ padding: "0 24px 48px" }}>
@@ -3499,7 +3507,7 @@ function DispatcherPanel(props) {
       )}
       {view === "users" && (
         <div style={{ padding: "0 24px 48px" }}>
-          <UsersBoard users={users} requests={requests} bookings={allBookings} onSetRole={onSetRole} />
+          <UsersBoard users={users} requests={requests} bookings={allBookings} listings={listings} currentUserId={user && user.id} seenSince={seenAt} onSetRole={onSetRole} onDelete={onDeleteUser} />
         </div>
       )}
     </div>
@@ -3979,6 +3987,7 @@ function AuthForm({ onSubmit }) {
           Вхід
         </button>
       </div>
+      <div style={{ fontFamily: font, fontSize: 12, color: "#A3A8AD" }}>Орендувати й здавати техніку можуть лише зареєстровані користувачі.</div>
 
       {mode === "signup" && (
         <>
@@ -4933,8 +4942,11 @@ function RequestForm({ onSubmit, user, initial, t, lang }) {
     setDateError(badDates);
     if (badContact || badDates) return;
     setSubmitting(true);
-    onSubmit({ ...form, region: form.region === "Інше" ? (form.customRegion || "Інше") : form.region });
-    draft.clear();
+    Promise.resolve(onSubmit({ ...form, region: form.region === "Інше" ? (form.customRegion || "Інше") : form.region }))
+      .then((ok) => {
+        if (ok !== false) draft.clear();
+      })
+      .finally(() => setSubmitting(false));
   };
 
   return (
