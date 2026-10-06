@@ -1,7 +1,7 @@
 // Диспетчерська: «Підібрати техніку → Запропонувати клієнту → Підтвердити оренду» прямо в картці заявки.
 import React, { useState } from "react";
 import { Label, primaryBtn, smallBtn, inputStyle, miniBtn } from "./ui.jsx";
-import { fmtDate, fmtPeriod, fmtDateTime, todayLocal } from "./services/deals.js";
+import { fmtDate, fmtPeriod, fmtDateTime, todayLocal, unitLabel } from "./services/deals.js";
 
 const FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif";
 const GREEN = "#6fae6f";
@@ -116,7 +116,7 @@ export function EventLog({ events }) {
   );
 }
 
-export function DealsSection({ req, listings, allBookings, onPropose, onManual, onConfirm, onCancel, onDecline }) {
+export function DealsSection({ req, listings, users = [], allBookings, onPropose, onManual, onConfirm, onCancel, onDecline }) {
   const [from, setFrom] = useState(req.dateFrom || "");
   const [to, setTo] = useState(req.dateTo || "");
   const [busyKey, setBusyKey] = useState(null);
@@ -156,6 +156,13 @@ export function DealsSection({ req, listings, allBookings, onPropose, onManual, 
 
   return (
     <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px dashed #63696D" }}>
+      {/* Відгуки власників на заявку з дошки */}
+      {!closed && !req.listingId && liveResponses(req).length > 0 && (
+        <div style={{ marginBottom: 14 }}>
+          <ResponsesBlock req={req} listings={listings} users={users} allBookings={allBookings} dateFrom={from} dateTo={to} onConfirm={(listingId, f, t) => onManual(req.id, listingId, f, t)} />
+        </div>
+      )}
+
       {/* Клієнт сам обрав техніку й дати: підтвердити одним кліком */}
       {!closed && req.listingId && (
         <div style={{ border: "1px solid #FF6A1A", padding: "12px 14px", marginBottom: 14, display: "flex", flexDirection: "column", gap: 8 }}>
@@ -164,6 +171,11 @@ export function DealsSection({ req, listings, allBookings, onPropose, onManual, 
             {wantedListing ? wantedListing.brand : `Оголошення №${req.listingId}`}
             {wantedListing && <span style={{ fontWeight: 400, fontSize: 12.5, color: "#A3A8AD" }}> · {wantedListing.owner} · {wantedListing.price} ₴/{wantedListing.unit}</span>}
           </div>
+          {chosenResponse(req) && (
+            <div style={{ fontFamily: FONT, fontSize: 12.5, color: "#FF6A1A" }}>
+              Ціна за пропозицією власника: <b>{Number(chosenResponse(req).price).toLocaleString("uk-UA")} ₴ {unitLabel(chosenResponse(req).price_unit)}</b>
+            </div>
+          )}
           <WantedActions req={req} listing={wantedListing} allBookings={allBookings} onConfirm={(r) => onManual(r.id, r.listingId, r.dateFrom, r.dateTo)} onDecline={onDecline} />
           <div style={{ fontFamily: FONT, fontSize: 11.5, color: "#70777D" }}>
             Після підтвердження клієнт і власник одразу бачать контакти одне одного. Або запропонуйте іншу техніку нижче.
@@ -491,11 +503,68 @@ export function UsersBoard({ users, requests, bookings, listings, currentUserId,
   );
 }
 
+// Відгуки власників на заявку з дошки: диспетчер підтверджує оренду з обраною пропозицією одним кліком
+const liveResponses = (req) => (req.responses || []).filter((r) => ["sent", "chosen"].includes(r.status));
+export const chosenResponse = (req) => (req.responses || []).find((r) => r.listing_id === req.listingId && ["sent", "chosen"].includes(r.status)) || null;
+
+export function ResponsesBlock({ req, listings, users, allBookings, dateFrom, dateTo, onConfirm }) {
+  const [busyKey, setBusyKey] = useState(null);
+  const rs = liveResponses(req);
+  if (!rs.length) return null;
+  const from = dateFrom !== undefined ? dateFrom : req.dateFrom;
+  const to = dateTo !== undefined ? dateTo : req.dateTo;
+  const datesOk = !!(from && to && to >= from);
+  return (
+    <div style={{ border: "1px solid #FFB52E", padding: "12px 14px", display: "flex", flexDirection: "column", gap: 10, fontFamily: FONT, fontSize: 12.5 }}>
+      <Label>Відгуки власників ({rs.length})</Label>
+      {!datesOk && <div style={{ color: AMBER }}>У заявці немає дат — вкажіть період у блоці «Підібрати техніку» (вкладка «Заявки»), щоб підтвердити.</div>}
+      {rs.map((r) => {
+        const l = listings.find((x) => x.id === r.listing_id);
+        const owner = users.find((u) => u.id === r.owner_id);
+        const conflicts = conflictsFor(r.listing_id, from, to, allBookings);
+        const busyUntil = conflicts.length ? conflicts.map((c) => c.date_to).sort().slice(-1)[0] : null;
+        const blocked = !datesOk || !!busyUntil || (l && !l.available);
+        return (
+          <div key={r.id} style={{ borderLeft: `2px solid ${r.status === "chosen" ? GREEN : "#3a3f44"}`, paddingLeft: 10, display: "flex", flexDirection: "column", gap: 4 }}>
+            <div>
+              <b style={{ fontSize: 14 }}>{l ? l.brand : `№${r.listing_id}`}</b> · {owner ? owner.org || owner.name : l ? l.owner : "власник"}
+              {owner && owner.phone && owner.phone !== "—" ? <> · <a href={`tel:${String(owner.phone).replace(/[^\d+]/g, "")}`} style={{ color: "#F4F4F1" }}>{owner.phone}</a></> : null}
+            </div>
+            <div>
+              <b style={{ color: "#FF6A1A" }}>{Number(r.price).toLocaleString("uk-UA")} ₴ {unitLabel(r.price_unit)}</b>
+              {r.note ? <span style={{ color: "#A3A8AD" }}> · «{r.note}»</span> : null}
+              {busyUntil ? <span style={{ color: RED }}> · зайнята до {fmtDate(busyUntil)}</span> : null}
+              {r.status === "chosen" ? <span style={{ color: GREEN }}> · клієнт обрав цю пропозицію</span> : null}
+            </div>
+            <div>
+              <button
+                disabled={blocked || busyKey === r.id}
+                onClick={async () => {
+                  setBusyKey(r.id);
+                  try {
+                    await onConfirm(r.listing_id, from, to);
+                  } finally {
+                    setBusyKey(null);
+                  }
+                }}
+                style={{ ...primaryBtn, padding: "8px 16px", fontSize: 12.5, opacity: blocked ? 0.45 : 1, cursor: blocked ? "not-allowed" : "pointer" }}
+              >
+                Підтвердити оренду з цією пропозицією
+              </button>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 // ---- Вкладка «Хто в кого»: один екран — клієнт → яку техніку → у якого власника ----
 const PAIR_STATE = {
   wanted: { text: "Клієнт хоче цю техніку — потрібне ваше рішення", color: AMBER, rank: 0 },
   reserved: { text: "Клієнт підтвердив — підтвердіть оренду", color: AMBER, rank: 0 },
   offered: { text: "Запропоновано клієнту, чекаємо відповіді", color: "#A3A8AD", rank: 1 },
+  responses: { text: "Є відгуки власників — оберіть і підтвердіть", color: AMBER, rank: 0 },
   open: { text: "Техніку ще не обрано", color: "#A3A8AD", rank: 2 },
   confirmed: { text: "Оренду підтверджено", color: GREEN, rank: 3 },
   active: { text: "Оренда триває", color: GREEN, rank: 3 },
@@ -512,7 +581,7 @@ function PhoneLink({ value }) {
   return <a href={telHref(value)} style={{ color: "#F4F4F1" }}>{value}</a>;
 }
 
-export function PairsBoard({ requests, listings, offers, bookings, users, onConfirm, onDecline, onConfirmBooking, onOpenRequests }) {
+export function PairsBoard({ requests, listings, offers, bookings, users, onConfirm, onDecline, onConfirmBooking, onManual, onOpenRequests }) {
   const [filter, setFilter] = useState("all");
   const [busyKey, setBusyKey] = useState(null);
   const today = todayLocal();
@@ -552,7 +621,7 @@ export function PairsBoard({ requests, listings, offers, bookings, users, onConf
       rows.push({ key: `o${r.id}`, state: "offered", client, listing: l, owner: ownerOf(l), from: prop.date_from, to: prop.date_to, req: r, sort: r.createdAt || "" });
       return;
     }
-    rows.push({ key: `n${r.id}`, state: "open", client, listing: null, owner: null, from: r.dateFrom, to: r.dateTo, req: r, sort: r.createdAt || "" });
+    rows.push({ key: `n${r.id}`, state: liveResponses(r).length ? "responses" : "open", client, listing: null, owner: null, from: r.dateFrom, to: r.dateTo, req: r, sort: r.createdAt || "" });
   });
   rows.sort((a, b) => PAIR_STATE[a.state].rank - PAIR_STATE[b.state].rank || (a.sort < b.sort ? -1 : 1));
 
@@ -560,7 +629,7 @@ export function PairsBoard({ requests, listings, offers, bookings, users, onConf
     all: { label: "Усе", test: () => true },
     decide: { label: "Чекають рішення", test: (r) => PAIR_STATE[r.state].rank === 0 },
     done: { label: "Підтверджені", test: (r) => PAIR_STATE[r.state].rank === 3 },
-    open: { label: "Без техніки", test: (r) => r.state === "open" },
+    open: { label: "Без техніки", test: (r) => r.state === "open" || r.state === "responses" },
   };
   const shown = rows.filter(groups[filter].test);
 
@@ -620,7 +689,14 @@ export function PairsBoard({ requests, listings, offers, bookings, users, onConf
             </div>
 
             {row.state === "wanted" ? (
-              <WantedActions req={row.req} listing={l} allBookings={bookings} onConfirm={onConfirm} onDecline={onDecline} />
+              <>
+                {chosenResponse(row.req) && (
+                  <div style={{ color: "#FF6A1A" }}>
+                    Ціна за пропозицією власника: <b>{Number(chosenResponse(row.req).price).toLocaleString("uk-UA")} ₴ {unitLabel(chosenResponse(row.req).price_unit)}</b>
+                  </div>
+                )}
+                <WantedActions req={row.req} listing={l} allBookings={bookings} onConfirm={onConfirm} onDecline={onDecline} />
+              </>
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                 <div>
@@ -645,10 +721,14 @@ export function PairsBoard({ requests, listings, offers, bookings, users, onConf
                       Підтвердити оренду
                     </button>
                   )}
-                  {row.state === "open" && (
+                  {(row.state === "open" || row.state === "responses") && (
                     <button onClick={onOpenRequests} style={miniBtn("#FF6A1A")}>Підібрати техніку →</button>
                   )}
                 </div>
+                {row.state === "responses" && (
+                  <ResponsesBlock req={row.req} listings={listings} users={users} allBookings={bookings} onConfirm={(listingId, f, t) => onManual(row.req.id, listingId, f, t)} />
+                )}
+                {row.req && row.req.isPublic && row.state !== "responses" && <div style={{ color: "#70777D" }}>Заявка вивішена на дошці запитів</div>}
               </div>
             )}
           </div>

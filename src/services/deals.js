@@ -29,6 +29,15 @@ export const REASON_TEXT = {
   is_dispatcher: "Диспетчера не можна змінити чи видалити з сайту",
   self: "Себе видалити не можна",
   has_active_bookings: "У користувача є активні оренди — спершу скасуйте їх у панелі диспетчера",
+  not_owner: "Відгукуватись можуть власники техніки (кабінет власника)",
+  closed: "Заявку вже закрито або знято з дошки",
+  own_request: "Це ваша власна заявка",
+  not_your_listing: "Оберіть свою техніку",
+  wrong_type: "Тип техніки не збігається із заявкою",
+  already_responded: "Ви вже відгукнулись цією технікою",
+  already_chosen: "Клієнт уже обрав вашу пропозицію — зверніться до диспетчера",
+  bad_price: "Вкажіть ціну більше нуля",
+  bad_unit: "Невірна одиниця ціни",
   bad_role: "Недопустима роль",
 };
 export const reasonText = (res) => REASON_TEXT[res?.reason] || res?.message || "Не вдалося виконати дію";
@@ -73,6 +82,21 @@ export async function notifyDispatcher(payload) {
   } catch (e) {}
 }
 
+// ---- Дошка запитів ----
+export async function fetchPublicWanted() {
+  const res = await call("public_wanted", {});
+  return res.ok && Array.isArray(res.data) ? res.data : [];
+}
+export const respondToWanted = (requestId, listingId, price, unit, note) =>
+  call("respond_to_wanted", { p_request_id: requestId, p_listing_id: listingId, p_price: price || null, p_price_unit: unit || null, p_note: note || null });
+export const chooseResponse = (responseId) => call("choose_response", { p_response_id: responseId });
+export const setRequestPublic = (requestId, isPublic) => call("set_request_public", { p_request_id: requestId, p_public: !!isPublic });
+export const withdrawResponse = (responseId) => call("withdraw_response", { p_response_id: responseId });
+export async function fetchOwnerResponses() {
+  const res = await call("owner_responses", {});
+  return res.ok && Array.isArray(res.data) ? res.data : [];
+}
+
 // ---- Клієнт ----
 // Забронювати конкретну техніку на дати: заявка одразу йде диспетчеру
 export const requestListing = (listingId, dateFrom, dateTo, comment, withOperator) =>
@@ -104,15 +128,16 @@ export async function fetchListingBusy() {
 
 // ---- Диспетчер: усі пропозиції, броні та журнал ----
 export async function fetchDispatcherDeals() {
-  if (!supabase) return { offers: [], bookings: [], events: [] };
-  const [o, b, e] = await Promise.all([
+  if (!supabase) return { offers: [], bookings: [], events: [], responses: [] };
+  const [o, b, e, w] = await Promise.all([
     supabase.from("offers").select("*").order("created_at", { ascending: true }),
     supabase.from("bookings").select("*").order("created_at", { ascending: true }),
     supabase.from("activity_log").select("*").order("created_at", { ascending: true }).limit(1000),
+    supabase.from("wanted_responses").select("*").order("created_at", { ascending: true }),
   ]);
-  const err = o.error || b.error || e.error;
+  const err = o.error || b.error || e.error || w.error;
   if (err) console.error("Supabase load (deals) failed:", err.message);
-  return { offers: o.data || [], bookings: b.data || [], events: e.data || [] };
+  return { offers: o.data || [], bookings: b.data || [], events: e.data || [], responses: w.data || [] };
 }
 
 // ---- Сповіщення ----
@@ -170,3 +195,11 @@ export const daysInclusive = (from, to) => {
 };
 export const rangesOverlap = (aFrom, aTo, bFrom, bTo) => aFrom <= bTo && bFrom <= aTo;
 export const todayLocal = () => todayStr();
+
+export const BUDGET_UNITS = [
+  ["зміну", "за зміну"],
+  ["добу", "за добу"],
+  ["год", "за годину"],
+  ["період", "за весь період"],
+];
+export const unitLabel = (u) => (BUDGET_UNITS.find((x) => x[0] === u) || [u, u ? `за ${u}` : ""])[1];

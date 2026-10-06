@@ -2,7 +2,8 @@
 // Принцип екрана: «що мені тут зробити далі?» — активна дія завжди найпомітніша.
 import React, { useState } from "react";
 import { Plate, Label, Field, ErrorText, primaryBtn, smallBtn, selectStyle, inputStyle } from "./ui.jsx";
-import { bookingPhase, fmtDate, fmtPeriod, fmtDateTime, daysInclusive, rangesOverlap, todayLocal } from "./services/deals.js";
+import { bookingPhase, fmtDate, fmtPeriod, fmtDateTime, daysInclusive, rangesOverlap, todayLocal, unitLabel } from "./services/deals.js";
+import { OwnerResponses } from "./wanted.jsx";
 
 const FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif";
 const GREEN = "#6fae6f";
@@ -194,14 +195,18 @@ const REQUEST_INFO = {
 
 const CANCELABLE = ["new", "dispatched", "offered"];
 
-function RequestCard({ req, onCancel }) {
+function RequestCard({ req, onCancel, onTogglePublic, onChoose }) {
   const base = REQUEST_INFO[req.status] || REQUEST_INFO.new;
   const info =
     req.status === "new" && req.listing_id
       ? { ...base, text: "Диспетчер перевіряє вашу бронь і підтвердить — ви отримаєте сповіщення" }
+      : req.status === "new" && req.is_public
+      ? { ...base, text: "Заявка на дошці запитів: власники можуть відгукнутись, диспетчер теж підбирає техніку" }
       : base;
   const [asking, setAsking] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [choosing, setChoosing] = useState(null);
+  const responses = req.responses || [];
   return (
     <Plate style={{ padding: 14, display: "flex", flexDirection: "column", gap: 8 }}>
       <div style={{ display: "flex", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
@@ -219,7 +224,7 @@ function RequestCard({ req, onCancel }) {
       <div style={{ fontFamily: FONT, fontSize: 12.5, color: "#A3A8AD" }}>
         {fmtPeriod(req.date_from, req.date_to)}
         {req.with_operator ? " · з оператором" : ""}
-        {req.budget ? ` · бюджет ${req.budget} ₴` : ""}
+        {req.budget ? ` · ${Number(req.budget).toLocaleString("uk-UA")} ₴ ${unitLabel(req.budget_unit || "період")}` : ""}
       </div>
       {req.comment && <div style={{ fontFamily: FONT, fontSize: 12.5, color: "#F4F4F1" }}>{req.comment}</div>}
       {info.step > 0 && (
@@ -233,6 +238,64 @@ function RequestCard({ req, onCancel }) {
         </div>
       )}
       <div style={{ fontFamily: FONT, fontSize: 12.5, color: info.color }}>{info.text}</div>
+
+      {onTogglePublic && CANCELABLE.includes(req.status) && !req.listing_id && (
+        <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+          <span style={{ fontFamily: FONT, fontSize: 12, color: req.is_public ? GREEN : "#70777D" }}>
+            {req.is_public ? "● Заявку видно на дошці запитів" : "Заявка не вивішена на дошці"}
+          </span>
+          <button onClick={() => onTogglePublic(req.id, !req.is_public)} style={{ ...smallBtn, padding: "5px 12px", fontSize: 12 }}>
+            {req.is_public ? "Зняти з дошки" : "Вивісити на дошці"}
+          </button>
+        </div>
+      )}
+
+      {responses.length > 0 && (
+        <div style={{ borderTop: "1px dashed #3a3f44", paddingTop: 10, display: "flex", flexDirection: "column", gap: 10 }}>
+          <Label>Відгуки власників ({responses.length})</Label>
+          {responses.map((r) => {
+            const l = r.listing;
+            const specs = Object.entries(l.specs || {}).filter(([, v]) => v && v !== "—").slice(0, 3);
+            return (
+              <div key={r.id} style={{ border: `1px solid ${r.status === "chosen" ? GREEN : "#2a2e32"}`, padding: "10px 12px", display: "flex", flexDirection: "column", gap: 6 }}>
+                <EquipmentPhoto listing={l} height={110} />
+                <div style={{ fontFamily: FONT, fontSize: 15, fontWeight: 600 }}>{l.brand}</div>
+                <div style={{ fontFamily: FONT, fontSize: 12.5, color: "#A3A8AD" }}>
+                  {l.type} · {l.region}
+                  {l.owner_name ? ` · ${l.owner_name}` : ""}
+                  {specs.length > 0 ? ` · ${specs.map(([k, v]) => `${k}: ${v}`).join(" · ")}` : ""}
+                </div>
+                <div style={{ fontFamily: FONT, fontSize: 16, fontWeight: 700, color: "#FF6A1A" }}>
+                  {Number(r.price).toLocaleString("uk-UA")} ₴ {unitLabel(r.price_unit)}
+                </div>
+                {r.note && <div style={{ fontFamily: FONT, fontSize: 12.5, color: "#D9DCDF" }}>«{r.note}»</div>}
+                {r.status === "chosen" ? (
+                  <div style={{ fontFamily: FONT, fontSize: 12.5, color: GREEN }}>Обрано — диспетчер підтверджує оренду</div>
+                ) : (
+                  !req.listing_id &&
+                  onChoose && (
+                    <button
+                      disabled={choosing === r.id}
+                      onClick={async () => {
+                        setChoosing(r.id);
+                        try {
+                          await onChoose(r.id);
+                        } finally {
+                          setChoosing(null);
+                        }
+                      }}
+                      style={{ ...confirmBtn, flex: "none", width: "100%", opacity: choosing === r.id ? 0.6 : 1 }}
+                    >
+                      Обрати цю пропозицію
+                    </button>
+                  )
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
       {onCancel && CANCELABLE.includes(req.status) &&
         (asking ? (
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
@@ -325,17 +388,18 @@ function ClientBookingCard({ booking }) {
 }
 
 // ---- Кабінет клієнта ----
-export function ClientCabinet({ data, onRespond, onRefresh, onCancelRequest, initialTab }) {
+export function ClientCabinet({ data, onRespond, onRefresh, onCancelRequest, onTogglePublic, onChooseResponse, initialTab }) {
   const pending = data.offers.filter((o) => o.status === "proposed");
   const history = data.offers.filter((o) => o.status !== "proposed");
   const hasRental = data.bookings.some((b) => ["reserved", "confirmed"].includes(b.status));
-  // Спершу те, що вимагає дії або вже підтверджено: пропозиція → оренда з контактом → заявки
-  const [tab, setTab] = useState(initialTab || (pending.length ? "offers" : hasRental ? "rentals" : "requests"));
+  const newResponses = data.requests.reduce((n, r) => n + (r.responses || []).filter((x) => x.status === "sent" && !r.listing_id).length, 0);
+  // Спершу те, що вимагає дії: пропозиція → відгуки на заявку → оренда з контактом → заявки
+  const [tab, setTab] = useState(initialTab || (pending.length ? "offers" : newResponses ? "requests" : hasRental ? "rentals" : "requests"));
   const [showHistory, setShowHistory] = useState(false);
 
   const tabs = [
     { key: "offers", label: "Пропозиції", count: pending.length, alert: true },
-    { key: "requests", label: "Мої заявки", count: data.requests.length },
+    { key: "requests", label: "Мої заявки", count: newResponses > 0 ? newResponses : data.requests.length, alert: newResponses > 0 },
     { key: "rentals", label: "Мої оренди", count: data.bookings.filter((b) => ["reserved", "confirmed"].includes(b.status)).length },
   ];
 
@@ -385,7 +449,7 @@ export function ClientCabinet({ data, onRespond, onRefresh, onCancelRequest, ini
           <>
             {data.requests.length === 0 && <Empty>Заявок поки немає. Натисніть «Залишити заявку» на головній сторінці.</Empty>}
             {data.requests.map((r) => (
-              <RequestCard key={r.id} req={r} onCancel={onCancelRequest} />
+              <RequestCard key={r.id} req={r} onCancel={onCancelRequest} onTogglePublic={onTogglePublic} onChoose={onChooseResponse} />
             ))}
           </>
         )}
@@ -449,7 +513,7 @@ export function OwnerBookings({ bookings, onRefresh }) {
   );
 }
 
-export function OwnerCabinet({ tab, setTab, inboxItems, bookings, onRespondRequest, onRefreshInbox, onRefreshBookings }) {
+export function OwnerCabinet({ tab, setTab, inboxItems, bookings, responses = [], onWithdrawResponse, onRefreshResponses, onRespondRequest, onRefreshInbox, onRefreshBookings }) {
   const pendingRequests = inboxItems.filter((x) => x.dispatch_status === "sent" && x.req_status !== "taken").length;
   const reserved = bookings.filter((b) => b.status === "reserved").length;
   return (
@@ -457,6 +521,7 @@ export function OwnerCabinet({ tab, setTab, inboxItems, bookings, onRespondReque
       <Tabs
         tabs={[
           { key: "rentals", label: "Оренди моєї техніки", count: reserved, alert: true },
+          { key: "responses", label: "Мої відгуки", count: responses.filter((x) => x.status === "chosen" && x.request.status !== "taken").length, alert: true },
           { key: "requests", label: "Запити від диспетчера", count: pendingRequests, alert: true },
         ]}
         value={tab}
@@ -464,6 +529,8 @@ export function OwnerCabinet({ tab, setTab, inboxItems, bookings, onRespondReque
       />
       {tab === "rentals" ? (
         <OwnerBookings bookings={bookings} onRefresh={onRefreshBookings} />
+      ) : tab === "responses" ? (
+        <OwnerResponses items={responses} onWithdraw={onWithdrawResponse} onRefresh={onRefreshResponses} />
       ) : (
         <OwnerInbox items={inboxItems} onRespond={onRespondRequest} onRefresh={onRefreshInbox} />
       )}
@@ -486,6 +553,9 @@ const KIND_COLOR = {
   request_cancelled: "#70777D",
   role_changed: GREEN,
   new_user: AMBER,
+  wanted_response: AMBER,
+  response_chosen: GREEN,
+  response_closed: "#70777D",
 };
 
 export function NotificationsPanel({ items, onOpenItem, onMarkAll }) {

@@ -3,6 +3,7 @@ import { supabase } from "./supabaseClient";
 import { Plate, Label, badgeStyle, miniBtn, ErrorText, Field, primaryBtn, smallBtn, selectStyle, inputStyle, Modal } from "./ui.jsx";
 import { answerFromKnowledge, FALLBACK_ANSWER, JOB_PILLS, HELPER_PILLS } from "../shared/workKnowledge.js";
 import { ClientCabinet, OwnerCabinet, NotificationsPanel, BookingForm, AvailabilityCalendar } from "./cabinets.jsx";
+import { WantedBoard, RespondForm } from "./wanted.jsx";
 import { DealsSection, EventLog, EquipmentBoard, UsersBoard, PairsBoard } from "./dispatcherDeals.jsx";
 import * as deals from "./services/deals.js";
 
@@ -94,7 +95,7 @@ const TRANSLATIONS = {
     faq_items: [
       { q: "Скільки коштує розміщення техніки в каталозі?", a: "Реєстрація та додавання оголошень безкоштовні. Ми не беремо комісію з угод — власник і клієнт домовляються напряму." },
       { q: "Як швидко підтвердять бронь?", a: "Диспетчер перевіряє техніку й дати та підтверджує вручну — зазвичай протягом години в робочий час. Підтвердження й контакт власника з'являться в «Моєму кабінеті», ви отримаєте сповіщення. Для цього потрібен акаунт — реєстрація займає хвилину." },
-      { q: "Що якщо підходящої техніки не знайдеться?", a: "Диспетчер бачить це одразу, розширює пошук на інші регіони й запитує власників напряму. Заявка лишається активною, поки ви її не скасуєте." },
+      { q: "Що якщо підходящої техніки не знайдеться?", a: "Вивісьте заявку на «Дошці запитів»: дати, строк і ціну, яку готові заплатити. Власники самі запропонують свою техніку, ви оберете, а диспетчер підтвердить оренду — і відкриються контакти. Диспетчер також запитує власників напряму. Заявка лишається активною, поки ви її не скасуєте." },
       { q: "Чи можна перевірити власника техніки перед угодою?", a: "У профілі власника відображається позначка верифікації — ми перевіряємо контакти та документи перед її наданням." },
     ],
   },
@@ -179,7 +180,7 @@ const TRANSLATIONS = {
     faq_items: [
       { q: "Сколько стоит размещение техники в каталоге?", a: "Регистрация и добавление объявлений бесплатны. Мы не берём комиссию со сделок — владелец и клиент договариваются напрямую." },
       { q: "Как быстро подтвердят бронь?", a: "Диспетчер проверяет технику и даты и подтверждает вручную — обычно в течение часа в рабочее время. Подтверждение и контакт владельца появятся в «Моём кабинете», вы получите уведомление. Для этого нужен аккаунт — регистрация занимает минуту." },
-      { q: "Что если подходящей техники не найдётся?", a: "Диспетчер видит это сразу, расширяет поиск на другие регионы и запрашивает владельцев напрямую. Заявка остаётся активной, пока вы её не отмените." },
+      { q: "Что если подходящей техники не найдётся?", a: "Вывесите заявку на «Доске запросов»: даты, срок и цену, которую готовы заплатить. Владельцы сами предложат свою технику, вы выберете, а диспетчер подтвердит аренду — и откроются контакты. Диспетчер также запрашивает владельцев напрямую. Заявка остаётся активной, пока вы её не отмените." },
       { q: "Можно ли проверить владельца техники перед сделкой?", a: "В профиле владельца отображается отметка верификации — мы проверяем контакты и документы перед её выдачей." },
     ],
   },
@@ -264,7 +265,7 @@ const TRANSLATIONS = {
     faq_items: [
       { q: "How much does listing equipment in the catalog cost?", a: "Registration and adding listings are free. We don't take a commission from deals — the owner and client arrange things directly." },
       { q: "How fast is a booking confirmed?", a: "The dispatcher checks the equipment and dates and confirms manually — usually within an hour during business hours. The confirmation and the owner's contact appear in your cabinet and you get a notification. An account is needed — signing up takes a minute." },
-      { q: "What if no suitable equipment is found?", a: "The dispatcher sees this immediately, widens the search to other regions and asks owners directly. Your request stays active until you cancel it." },
+      { q: "What if no suitable equipment is found?", a: "Post your request on the Wanted board: dates, term and the price you are ready to pay. Owners offer their equipment, you choose, and the dispatcher confirms the rental — then contacts open. The dispatcher also asks owners directly. Your request stays active until you cancel it." },
       { q: "Can I verify the equipment owner before a deal?", a: "A verification badge is shown on the owner's profile — we check contacts and documents before granting it." },
     ],
   },
@@ -678,6 +679,10 @@ export default function EquipmentMarketplace() {
   const [dealsData, setDealsData] = useState({ offers: [], bookings: [], events: [] }); // для диспетчера
   const [dispatchUsers, setDispatchUsers] = useState([]); // усі зареєстровані користувачі (для диспетчера)
   const [bookingListing, setBookingListing] = useState(null); // техніка, яку клієнт зараз бронює
+  const [wantedItems, setWantedItems] = useState([]); // публічна «Дошка запитів»
+  const [wantedLoaded, setWantedLoaded] = useState(false);
+  const [respondingWanted, setRespondingWanted] = useState(null); // запит, на який власник пише відгук
+  const [ownerResponses, setOwnerResponses] = useState([]); // відгуки цього власника
 
   // Читання заявок з бази для панелі диспетчера потребує входу диспетчера (RLS) —
   // це наступний крок. Поки що заявки видно в Supabase Table Editor і в Telegram.
@@ -723,6 +728,10 @@ export default function EquipmentMarketplace() {
   };
   const clientPending = clientData.offers.filter((o) => o.status === "proposed").length;
   const inboxPending = ownerInbox.filter((x) => x.dispatch_status === "sent" && x.req_status !== "taken").length;
+  const ownerAttention =
+    inboxPending +
+    ownerBookings.filter((b) => b.status === "reserved").length +
+    ownerResponses.filter((x) => x.status === "chosen" && x.request.status !== "taken").length;
   const [scrolled, setScrolled] = useState(false);
   const appSectionRef = useRef(null);
   const heroRef = useRef(null);
@@ -996,6 +1005,8 @@ export default function EquipmentMarketplace() {
         date_to: data.dateTo || null,
         with_operator: !!data.withOperator,
         budget: data.budget ? Number(data.budget) : null,
+        budget_unit: data.budget ? data.budgetUnit || "період" : null,
+        is_public: !!data.isPublic,
         comment: data.comment || null,
         contact: data.contact,
         requester_name: data.requesterName || user.name || null,
@@ -1009,8 +1020,11 @@ export default function EquipmentMarketplace() {
     deals.notifyDispatcher(data); // Telegram диспетчера (лише для тих, хто увійшов)
     setShowRequestForm(false);
     setAiPrefill(null);
-    flashToast("Заявку прийнято. Хід і відповіді — у «Моєму кабінеті»");
-    setTimeout(() => loadClientData(), 600);
+    flashToast(data.isPublic ? "Заявку прийнято й вивішено на «Дошці запитів». Відгуки — у «Моєму кабінеті»" : "Заявку прийнято. Хід і відповіді — у «Моєму кабінеті»");
+    setTimeout(() => {
+      loadClientData();
+      loadWanted();
+    }, 600);
     return true;
   };
 
@@ -1260,6 +1274,9 @@ export default function EquipmentMarketplace() {
           hasAccount: !!r.client_id,
           clientId: r.client_id,
           createdAt: r.created_at,
+          isPublic: !!r.is_public,
+          budgetUnit: r.budget_unit,
+          responses: (dealsRes.responses || []).filter((w) => w.request_id === r.id),
           dateTo: r.date_to,
           withOperator: !!r.with_operator,
           listingId: r.listing_id,
@@ -1395,6 +1412,68 @@ export default function EquipmentMarketplace() {
     setOwnerBookings(await deals.fetchOwnerCabinet());
   };
 
+  // ---- Дошка запитів: публічні заявки, відгуки власників, вибір клієнта ----
+  const loadWanted = async () => {
+    setWantedItems(await deals.fetchPublicWanted());
+    setWantedLoaded(true);
+  };
+  useEffect(() => {
+    loadWanted();
+    const timer = setInterval(() => {
+      if (!document.hidden) loadWanted();
+    }, 120000);
+    return () => clearInterval(timer);
+  }, [user?.id]);
+
+  const loadOwnerResponses = async () => {
+    if (!supabase || user?.role !== "owner") return;
+    setOwnerResponses(await deals.fetchOwnerResponses());
+  };
+
+  const openRespond = (item) => {
+    if (!user) {
+      setShowAuthForm(true);
+      flashToast("Щоб відгукнутись, увійдіть як власник техніки");
+      return;
+    }
+    if (user.role !== "owner") {
+      flashToast("Відгукуватись можуть власники техніки. Зареєструйтесь як «Власник» або попросіть диспетчера відкрити кабінет власника");
+      return;
+    }
+    setRespondingWanted(item);
+  };
+  const handleRespondWanted = async ({ listingId, price, unit, note }) => {
+    const res = await deals.respondToWanted(respondingWanted.req_id, listingId, price, unit, note);
+    if (!res.ok) {
+      flashToast(res.reason === "busy" && res.busy_until ? `Ця техніка зайнята на дати заявки (до ${deals.fmtDate(res.busy_until)})` : deals.reasonText(res));
+      loadWanted();
+      return false;
+    }
+    setRespondingWanted(null);
+    flashToast("Пропозицію надіслано. Клієнт і диспетчер отримали сповіщення");
+    loadWanted();
+    loadOwnerResponses();
+    return true;
+  };
+  const handleWithdrawResponse = async (responseId) => {
+    const res = await deals.withdrawResponse(responseId);
+    flashToast(res.ok ? "Відгук забрано" : deals.reasonText(res));
+    await loadOwnerResponses();
+    loadWanted();
+  };
+  const handleChooseResponse = async (responseId) => {
+    const res = await deals.chooseResponse(responseId);
+    flashToast(res.ok ? "Пропозицію обрано. Диспетчер підтвердить оренду — ви отримаєте сповіщення" : deals.reasonText(res));
+    await loadClientData();
+    loadWanted();
+  };
+  const handleTogglePublic = async (requestId, isPublic) => {
+    const res = await deals.setRequestPublic(requestId, isPublic);
+    flashToast(res.ok ? (isPublic ? "Заявку вивішено на дошці запитів" : "Заявку знято з дошки") : deals.reasonText(res));
+    await loadClientData();
+    loadWanted();
+  };
+
   // ---- Сповіщення (дзвіночок) ----
   const notifMaxRef = useRef(0);
   const notifLoadedRef = useRef(false);
@@ -1440,6 +1519,12 @@ export default function EquipmentMarketplace() {
       setRole("dispatcher");
       if (n.kind === "new_user") setDispatcherViewRequest({ view: "users", n: Date.now() });
       loadDispatcherData();
+      return;
+    }
+    if (user?.role === "owner" && ["response_chosen", "response_closed"].includes(n.kind)) {
+      setOwnerTab("responses");
+      loadOwnerResponses();
+      setShowInbox(true);
       return;
     }
     if (user?.role === "owner" && ["booking_reserved", "booking_confirmed", "booking_cancelled"].includes(n.kind)) {
@@ -1530,14 +1615,17 @@ export default function EquipmentMarketplace() {
     if (!supabase || user?.role !== "owner") {
       setOwnerInbox([]);
       setOwnerBookings([]);
+      setOwnerResponses([]);
       return;
     }
     loadInbox(true);
     loadOwnerBookings();
+    loadOwnerResponses();
     const timer = setInterval(() => {
       if (!document.hidden) {
         loadInbox(true);
         loadOwnerBookings();
+        loadOwnerResponses();
       }
     }, 60000);
     return () => clearInterval(timer);
@@ -2698,7 +2786,7 @@ export default function EquipmentMarketplace() {
       {/* How it works — the request workflow, as a technical process line */}
       <section id="how-it-works" style={{ padding: "48px 24px", borderBottom: "1px solid #202428" }}>
         <div style={{ maxWidth: 900, margin: "0 auto" }}>
-          <SectionDivider n={2} of={4} title={t("how_it_works_label")} />
+          <SectionDivider n={2} of={5} title={t("how_it_works_label")} />
           <h2 style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif", fontSize: 24, margin: "0 0 32px" }}>
             {t("how_it_works_title")}
           </h2>
@@ -2725,7 +2813,7 @@ export default function EquipmentMarketplace() {
 
       {/* Catalog */}
       <div ref={appSectionRef} style={{ padding: "28px 24px 8px" }}>
-        {role === "client" && <SectionDivider n={3} of={4} title="КАТАЛОГ ТЕХНІКИ" />}
+        {role === "client" && <SectionDivider n={3} of={5} title="КАТАЛОГ ТЕХНІКИ" />}
         <h2
           style={{
             fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif",
@@ -2791,15 +2879,22 @@ export default function EquipmentMarketplace() {
               {user?.role === "owner" && (
                 <button
                   onClick={() => {
-                    setOwnerTab(ownerBookings.some((b) => b.status === "reserved") || inboxPending === 0 ? "rentals" : "requests");
+                    setOwnerTab(
+                      ownerResponses.some((x) => x.status === "chosen" && x.request.status !== "taken")
+                        ? "responses"
+                        : ownerBookings.some((b) => b.status === "reserved") || inboxPending === 0
+                        ? "rentals"
+                        : "requests"
+                    );
                     setShowInbox(true);
                     loadInbox(false);
                     loadOwnerBookings();
+                    loadOwnerResponses();
                   }}
-                  style={inboxPending + ownerBookings.filter((b) => b.status === "reserved").length > 0 ? { ...smallBtn, borderColor: "#FF6A1A", color: "#FF6A1A" } : smallBtn}
+                  style={ownerAttention > 0 ? { ...smallBtn, borderColor: "#FF6A1A", color: "#FF6A1A" } : smallBtn}
                 >
                   Кабінет власника
-                  {inboxPending + ownerBookings.filter((b) => b.status === "reserved").length > 0 ? ` (${inboxPending + ownerBookings.filter((b) => b.status === "reserved").length})` : ""}
+                  {ownerAttention > 0 ? ` (${ownerAttention})` : ""}
                 </button>
               )}
             </>
@@ -3093,9 +3188,26 @@ export default function EquipmentMarketplace() {
       </div>
       )}
 
+      {/* Дошка запитів: хто що шукає */}
+      <div className="reveal" style={{ padding: "8px 24px 0", maxWidth: 1100, margin: "0 auto" }}>
+        <SectionDivider n={4} of={5} title="ДОШКА ЗАПИТІВ" />
+      </div>
+      <WantedBoard
+        items={wantedItems}
+        loaded={wantedLoaded}
+        user={user}
+        onPublish={() => openRequestForm()}
+        onRespond={openRespond}
+        onUnpublish={(id) => handleTogglePublic(id, false)}
+        onSignIn={() => {
+          setShowAuthForm(true);
+          flashToast("Щоб відгукнутись, увійдіть як власник техніки");
+        }}
+      />
+
       {/* FAQ */}
       <div className="reveal" style={{ padding: "8px 24px 64px", maxWidth: 640, margin: "0 auto" }}>
-        <SectionDivider n={4} of={4} title={t("faq_label").toUpperCase()} />
+        <SectionDivider n={5} of={5} title={t("faq_label").toUpperCase()} />
         <h2 style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif", fontSize: 22, textTransform: "none", margin: "0 0 12px" }}>
           {t("faq_title")}
         </h2>
@@ -3338,7 +3450,22 @@ export default function EquipmentMarketplace() {
       )}
       {showMyRequests && user && (
         <Modal onClose={() => { setShowMyRequests(false); setClientTab(null); }} title="Мій кабінет" wide>
-          <ClientCabinet key={clientTab || "auto"} data={clientData} initialTab={clientTab} onRespond={handleRespondOffer} onRefresh={loadClientData} onCancelRequest={handleCancelRequest} />
+          <ClientCabinet key={clientTab || "auto"} data={clientData} initialTab={clientTab} onRespond={handleRespondOffer} onRefresh={loadClientData} onCancelRequest={handleCancelRequest} onTogglePublic={handleTogglePublic} onChooseResponse={handleChooseResponse} />
+        </Modal>
+      )}
+
+      {respondingWanted && user && (
+        <Modal onClose={() => setRespondingWanted(null)} title="Пропозиція власника" wide>
+          <RespondForm
+            request={respondingWanted}
+            myListings={listings.filter((l) => l.ownerId === user.id)}
+            busyRanges={busyRanges}
+            onSubmit={handleRespondWanted}
+            onAddListing={() => {
+              setRespondingWanted(null);
+              openAddListing();
+            }}
+          />
         </Modal>
       )}
 
@@ -3361,6 +3488,9 @@ export default function EquipmentMarketplace() {
             setTab={setOwnerTab}
             inboxItems={ownerInbox}
             bookings={ownerBookings}
+            responses={ownerResponses}
+            onWithdrawResponse={handleWithdrawResponse}
+            onRefreshResponses={loadOwnerResponses}
             onRespondRequest={respondToRequest}
             onRefreshInbox={() => loadInbox(false)}
             onRefreshBookings={loadOwnerBookings}
@@ -3453,7 +3583,9 @@ function DispatcherPanel(props) {
   }, [viewRequest]);
   const attention = requests.filter((r) => r.status === "new" || r.status === "booked").length;
   const wanted = requests.filter((r) => r.listingId && ["new", "dispatched", "offered"].includes(r.status)).length;
-  const decide = requests.filter((r) => r.listingId && ["new", "dispatched", "offered"].includes(r.status)).length + allBookings.filter((b) => b.status === "reserved").length;
+  const decide =
+    requests.filter((r) => ["new", "dispatched", "offered"].includes(r.status) && (r.listingId || (r.responses || []).some((x) => ["sent", "chosen"].includes(x.status)))).length +
+    allBookings.filter((b) => b.status === "reserved").length;
   const tabs = [
     ["pairs", "Хто в кого", decide],
     ["requests", "Заявки", attention],
@@ -3495,6 +3627,7 @@ function DispatcherPanel(props) {
             onConfirm={(r) => onManual(r.id, r.listingId, r.dateFrom, r.dateTo)}
             onDecline={onDecline}
             onConfirmBooking={onConfirm}
+            onManual={onManual}
             onOpenRequests={() => setView("requests")}
           />
         </div>
@@ -3514,7 +3647,7 @@ function DispatcherPanel(props) {
   );
 }
 
-function DispatcherRequests({ requests, owners, listings, allBookings, onDispatch, onOwnerAction, onRefresh, onPropose, onManual, onConfirm, onCancel, onDecline, user, t }) {
+function DispatcherRequests({ requests, owners, users, listings, allBookings, onDispatch, onOwnerAction, onRefresh, onPropose, onManual, onConfirm, onCancel, onDecline, user, t }) {
   const [filter, setFilter] = useState("all");
 
   const categories = [
@@ -3591,7 +3724,7 @@ function DispatcherRequests({ requests, owners, listings, allBookings, onDispatc
           <div style={{ fontSize: 13, color: "#70777D" }}>Немає заявок у цій категорії.</div>
         ) : (
           filtered.map((req) => (
-            <RequestDispatchCard key={req.id} req={req} owners={owners} listings={listings} allBookings={allBookings} onDispatch={onDispatch} onOwnerAction={onOwnerAction} onPropose={onPropose} onManual={onManual} onConfirm={onConfirm} onCancel={onCancel} onDecline={onDecline} user={user} />
+            <RequestDispatchCard key={req.id} req={req} owners={owners} users={users} listings={listings} allBookings={allBookings} onDispatch={onDispatch} onOwnerAction={onOwnerAction} onPropose={onPropose} onManual={onManual} onConfirm={onConfirm} onCancel={onCancel} onDecline={onDecline} user={user} />
           ))
         )}
       </div>
@@ -3711,7 +3844,7 @@ function ReviewBox({ req, onSubmit }) {
   );
 }
 
-function RequestDispatchCard({ req, owners, listings, allBookings, onDispatch, onOwnerAction, onPropose, onManual, onConfirm, onCancel, onDecline, user }) {
+function RequestDispatchCard({ req, owners, users, listings, allBookings, onDispatch, onOwnerAction, onPropose, onManual, onConfirm, onCancel, onDecline, user }) {
   const contactedIds = new Set(Object.keys(req.ownerStatuses));
   const uncontacted = owners.filter((o) => !contactedIds.has(String(o.id)));
   const suggestedUncontacted = uncontacted.filter((o) => o.types.includes(req.type) && (o.regions || []).includes(req.region));
@@ -3820,7 +3953,7 @@ function RequestDispatchCard({ req, owners, listings, allBookings, onDispatch, o
         </div>
       )}
 
-      <DealsSection req={req} listings={listings} allBookings={allBookings} onPropose={onPropose} onManual={onManual} onConfirm={onConfirm} onCancel={onCancel} onDecline={onDecline} />
+      <DealsSection req={req} listings={listings} users={users} allBookings={allBookings} onPropose={onPropose} onManual={onManual} onConfirm={onConfirm} onCancel={onCancel} onDecline={onDecline} />
 
       {/* Запит власникам: запасний шлях, коли в каталозі немає підходящої техніки */}
       {!["taken", "booked"].includes(req.status) && (
@@ -4920,6 +5053,8 @@ function RequestForm({ onSubmit, user, initial, t, lang }) {
     dateTo: "",
     withOperator: false,
     budget: initial?.budget != null ? String(initial.budget) : "",
+    budgetUnit: "зміну",
+    isPublic: true,
     comment: initial?.comment || "",
     contact: user?.phone || "",
     requesterName: user?.name || "",
@@ -5012,9 +5147,29 @@ function RequestForm({ onSubmit, user, initial, t, lang }) {
         <input type="checkbox" checked={!!form.withOperator} onChange={(e) => setForm((f) => ({ ...f, withOperator: e.target.checked }))} style={{ accentColor: "#FF6A1A", width: 18, height: 18 }} />
         Потрібна техніка з оператором
       </label>
-      <Field label="Бюджет (₴, орієнтовно)">
-        <input type="number" value={form.budget} onChange={set("budget")} placeholder="1000" style={inputStyle} />
-      </Field>
+      <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+        <Field label="Ціна, яку готові заплатити (₴)" style={{ flex: "1 1 150px" }}>
+          <input type="number" min="0" value={form.budget} onChange={set("budget")} placeholder="2000" style={inputStyle} />
+        </Field>
+        <Field label="Одиниця" style={{ flex: "1 1 150px" }}>
+          <select value={form.budgetUnit} onChange={set("budgetUnit")} style={{ ...selectStyle, width: "100%", minHeight: 44 }}>
+            {deals.BUDGET_UNITS.map(([v, label]) => (
+              <option key={v} value={v}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </Field>
+      </div>
+      <label style={{ display: "flex", alignItems: "flex-start", gap: 8, fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 13, color: "#D9DCDF", cursor: "pointer" }}>
+        <input type="checkbox" checked={!!form.isPublic} onChange={(e) => setForm((f) => ({ ...f, isPublic: e.target.checked }))} style={{ accentColor: "#FF6A1A", width: 18, height: 18, marginTop: 2 }} />
+        <span>
+          Вивісити заявку на «Дошці запитів» — власники зможуть запропонувати свою техніку
+          <span style={{ display: "block", fontSize: 11.5, color: "#70777D", marginTop: 2 }}>
+            Усі побачать: тип техніки, регіон, дати, ціну, коментар і ваше ім'я (без прізвища). Телефон не показується — не пишіть його в коментарі.
+          </span>
+        </span>
+      </label>
 
       <StepLabel n={4} of={4} text={t("request_step_4")} />
       <Field label="Контакт для зв'язку (телефон/Telegram)">
