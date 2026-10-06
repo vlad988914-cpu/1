@@ -191,3 +191,28 @@ export function Modal({ children, onClose, title, splitLeft, wide }) {
   );
 }
 
+
+// Пометка на карточках: хто це — той, хто орендує, чи той, хто здає техніку
+export function RoleTag({ kind, style }) {
+  const rent = kind === "rent";
+  const color = rent ? "#6fae6f" : "#FF6A1A";
+  return (
+    <span
+      style={{
+        display: "inline-block",
+        fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
+        fontSize: 10.5,
+        fontWeight: 700,
+        letterSpacing: "0.06em",
+        textTransform: "uppercase",
+        color,
+        border: `1px solid ${color}`,
+        padding: "2px 7px",
+        whiteSpace: "nowrap",
+        ...style,
+      }}
+    >
+      {rent ? "Орендую" : "Здаю техніку"}
+    </span>
+  );
+}

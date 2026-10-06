@@ -1,7 +1,7 @@
 // Кабінети клієнта й власника та панель сповіщень.
 // Принцип екрана: «що мені тут зробити далі?» — активна дія завжди найпомітніша.
 import React, { useState } from "react";
-import { Plate, Label, Field, ErrorText, primaryBtn, smallBtn, selectStyle, inputStyle } from "./ui.jsx";
+import { Plate, Label, Field, ErrorText, RoleTag, primaryBtn, smallBtn, selectStyle, inputStyle } from "./ui.jsx";
 import { bookingPhase, fmtDate, fmtPeriod, fmtDateTime, daysInclusive, rangesOverlap, todayLocal, unitLabel } from "./services/deals.js";
 import { OwnerResponses } from "./wanted.jsx";
 
@@ -209,8 +209,11 @@ function RequestCard({ req, onCancel, onTogglePublic, onChoose }) {
   const responses = req.responses || [];
   return (
     <Plate style={{ padding: 14, display: "flex", flexDirection: "column", gap: 8 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
-        <Label>Заявка №{req.id}</Label>
+      <div style={{ display: "flex", justifyContent: "space-between", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+        <span style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+          <RoleTag kind="rent" />
+          <Label>Заявка №{req.id}</Label>
+        </span>
         <StatusBadge color={info.color}>{info.text.split(" — ")[0].split(",")[0]}</StatusBadge>
       </div>
       <div style={{ fontFamily: FONT, fontSize: 17, fontWeight: 600 }}>
@@ -371,8 +374,11 @@ function ClientBookingCard({ booking }) {
   const l = booking.listing;
   return (
     <Plate style={{ padding: 14, display: "flex", flexDirection: "column", gap: 8 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
-        <Label>Оренда{booking.request_id ? ` · заявка №${booking.request_id}` : ""}</Label>
+      <div style={{ display: "flex", justifyContent: "space-between", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+        <span style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+          <RoleTag kind="rent" />
+          <Label>Оренда{booking.request_id ? ` · заявка №${booking.request_id}` : ""}</Label>
+        </span>
         <StatusBadge color={info.color}>{info.text.split(" — ")[0]}</StatusBadge>
       </div>
       <div style={{ fontFamily: FONT, fontSize: 17, fontWeight: 600 }}>{l.brand}</div>
@@ -475,8 +481,11 @@ function OwnerBookingCard({ booking }) {
   const c = booking.client || {};
   return (
     <Plate style={{ padding: 14, display: "flex", flexDirection: "column", gap: 8 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
-        <Label>{l.brand}</Label>
+      <div style={{ display: "flex", justifyContent: "space-between", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+        <span style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+          <RoleTag kind="lease" />
+          <Label>{l.brand}</Label>
+        </span>
         <StatusBadge color={info.color}>{info.text.split(" — ")[0]}</StatusBadge>
       </div>
       <div style={{ fontFamily: FONT, fontSize: 16, fontWeight: 600 }}>{fmtPeriod(booking.date_from, booking.date_to)}</div>

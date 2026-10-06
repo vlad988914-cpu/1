@@ -1,7 +1,7 @@
 // «Дошка запитів»: клієнт вивішує заявку (дати, строк, ціна), власники відгукуються своєю технікою,
 // клієнт обирає, диспетчер підтверджує — і лише тоді відкриваються контакти.
 import React, { useState } from "react";
-import { Plate, Label, Field, ErrorText, primaryBtn, smallBtn, selectStyle, inputStyle } from "./ui.jsx";
+import { Plate, Label, Field, ErrorText, RoleTag, primaryBtn, smallBtn, selectStyle, inputStyle } from "./ui.jsx";
 import { fmtDate, daysInclusive, rangesOverlap, todayLocal, unitLabel, BUDGET_UNITS } from "./services/deals.js";
 
 const FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif";
@@ -27,7 +27,10 @@ function WantedCard({ item, user, onRespond, onUnpublish, onSignIn }) {
   return (
     <Plate style={{ padding: 14, display: "flex", flexDirection: "column", gap: 8 }}>
       <div style={{ display: "flex", justifyContent: "space-between", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-        <Label>{item.req_type}</Label>
+        <span style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+          <RoleTag kind="rent" />
+          <Label>{item.req_type}</Label>
+        </span>
         <span style={{ fontFamily: FONT, fontSize: 11.5, color: item.req_responses > 0 ? GREEN : "#70777D", border: `1px solid ${item.req_responses > 0 ? GREEN : "#2a2e32"}`, padding: "2px 8px" }}>
           {item.req_responses > 0 ? `Відгуків: ${item.req_responses}` : "Поки без відгуків"}
         </span>
@@ -259,8 +262,11 @@ export function OwnerResponses({ items, onWithdraw, onRefresh }) {
         const st = done ? { text: "Оренду підтверджено", color: GREEN } : RESPONSE_STATE[x.status] || RESPONSE_STATE.sent;
         return (
           <Plate key={x.id} style={{ padding: 14, display: "flex", flexDirection: "column", gap: 6 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
-              <Label>{x.listing.brand}</Label>
+            <div style={{ display: "flex", justifyContent: "space-between", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+              <span style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                <RoleTag kind="lease" />
+                <Label>{x.listing.brand}</Label>
+              </span>
               <span style={{ fontFamily: FONT, fontSize: 11.5, color: st.color }}>{st.text}</span>
             </div>
             <div style={{ fontFamily: FONT, fontSize: 14, fontWeight: 600 }}>

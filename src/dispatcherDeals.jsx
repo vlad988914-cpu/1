@@ -1,6 +1,6 @@
 // Диспетчерська: «Підібрати техніку → Запропонувати клієнту → Підтвердити оренду» прямо в картці заявки.
 import React, { useState } from "react";
-import { Label, primaryBtn, smallBtn, inputStyle, miniBtn } from "./ui.jsx";
+import { Label, RoleTag, primaryBtn, smallBtn, inputStyle, miniBtn } from "./ui.jsx";
 import { fmtDate, fmtPeriod, fmtDateTime, todayLocal, unitLabel } from "./services/deals.js";
 
 const FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif";
@@ -339,17 +339,29 @@ export function EquipmentBoard({ listings, requests, allBookings, onConfirm, onD
     .filter(({ l }) => !q || `${l.brand} ${l.owner} ${l.type} ${l.region}`.toLowerCase().includes(q.toLowerCase()))
     .sort((a, b) => b.wanting.length - a.wanting.length || String(a.l.brand).localeCompare(String(b.l.brand)));
 
+  const allRows = listings.filter((l) => l.ownerId);
+  const busyNowCount = allRows.filter((l) => !l.available || allBookings.some((b) => b.listing_id === l.id && ["reserved", "confirmed"].includes(b.status) && b.date_from <= today && b.date_to >= today)).length;
+  const demandCount = allRows.filter((l) => requests.some((r) => r.listingId === l.id && ["new", "dispatched", "offered"].includes(r.status))).length;
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+        <Stat big label="Техніки в каталозі" value={allRows.length} />
+        <Stat label="Вільна зараз" value={allRows.length - busyNowCount} />
+        <Stat label="Зайнята зараз" value={busyNowCount} />
+        <Stat label="На яку є запити" value={demandCount} accent={demandCount > 0} />
+      </div>
       <input aria-label="Пошук техніки" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Пошук: марка, власник, тип, місто" style={{ ...inputStyle, maxWidth: 360 }} />
       {rows.length === 0 && <div style={{ fontFamily: FONT, fontSize: 13, color: "#A3A8AD" }}>Техніки в каталозі поки немає.</div>}
       {rows.map(({ l, wanting, bookings }) => {
         const nowBooking = bookings.find((b) => b.date_from <= today && b.date_to >= today);
         return (
           <div key={l.id} style={{ border: `1px solid ${wanting.length ? "#FF6A1A" : "#2a2e32"}`, padding: "12px 14px", display: "flex", flexDirection: "column", gap: 8, fontFamily: FONT, fontSize: 12.5 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
-              <span>
-                <b style={{ fontSize: 15 }}>{l.brand}</b> · {l.type} · {l.owner} · {l.region} · {l.price} ₴/{l.unit}
+            <div style={{ display: "flex", justifyContent: "space-between", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+              <span style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                <RoleTag kind="lease" />
+                <span>
+                  <b style={{ fontSize: 15 }}>{l.brand}</b> · {l.type} · {l.owner} · {l.region} · {l.price} ₴/{l.unit}
+                </span>
               </span>
               {!l.available ? <span style={{ color: RED }}>недоступна</span> : nowBooking ? <span style={{ color: RED }}>зайнята до {fmtDate(nowBooking.date_to)}</span> : <span style={{ color: GREEN }}>вільна</span>}
             </div>
@@ -389,7 +401,8 @@ function Stat({ label, value, accent, big }) {
   );
 }
 
-export function UsersBoard({ users, requests, bookings, listings, currentUserId, seenSince, onSetRole, onDelete }) {
+export function UsersBoard({ users: allUsers, requests, bookings, listings, currentUserId, seenSince, onSetRole, onDelete, lockRole }) {
+  const users = lockRole ? allUsers.filter((u) => u.role === lockRole) : allUsers;
   const [q, setQ] = useState("");
   const [role, setRole] = useState("all");
   const today = todayLocal();
@@ -412,13 +425,18 @@ export function UsersBoard({ users, requests, bookings, listings, currentUserId,
       (b) => ["reserved", "confirmed"].includes(b.status) && b.date_to >= today && (b.client_id === u.id || ownerOfListing(b.listing_id) === u.id)
     ).length;
 
-  const filters = [
-    ["all", "Усі", total],
-    ["new", "Нові (7 днів)", newWeek],
-    ["client", "Клієнти", clients],
-    ["owner", "Власники", owners],
-    ["dispatcher", "Диспетчери", users.filter(isStaff).length],
-  ];
+  const filters = lockRole
+    ? [
+        ["all", "Усі", total],
+        ["new", "Нові (7 днів)", newWeek],
+      ]
+    : [
+        ["all", "Усі", total],
+        ["new", "Нові (7 днів)", newWeek],
+        ["client", "Клієнти", clients],
+        ["owner", "Власники", owners],
+        ["dispatcher", "Диспетчери", users.filter(isStaff).length],
+      ];
   const shown = users
     .filter((u) => (role === "all" ? true : role === "new" ? isNew(u) : u.role === role))
     .filter((u) => !q || `${u.name} ${u.org || ""} ${u.phone} ${u.email}`.toLowerCase().includes(q.toLowerCase()))
@@ -432,9 +450,9 @@ export function UsersBoard({ users, requests, bookings, listings, currentUserId,
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-        <Stat big label="Усього зареєстровано" value={total} />
-        <Stat label="Клієнтів" value={clients} />
-        <Stat label="Власників" value={owners} />
+        <Stat big label={lockRole === "owner" ? "Усього власників" : lockRole === "client" ? "Усього клієнтів" : "Усього зареєстровано"} value={total} />
+        {!lockRole && <Stat label="Клієнтів" value={clients} />}
+        {!lockRole && <Stat label="Власників" value={owners} />}
         <Stat label="Нових за 7 днів" value={newWeek} accent={newWeek > 0} />
         <Stat label="Нових сьогодні" value={newToday} accent={newToday > 0} />
         <Stat label="Після вашого останнього візиту" value={unseen} accent={unseen > 0} />
@@ -665,12 +683,12 @@ export function PairsBoard({ requests, listings, offers, bookings, users, onConf
 
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))", gap: 14 }}>
               <div>
-                <Label>Хто хоче орендувати</Label>
+                <span style={{ display: "flex", alignItems: "center", gap: 8 }}><RoleTag kind="rent" /><Label>Хто хоче орендувати</Label></span>
                 <div style={{ fontSize: 15, fontWeight: 600, marginTop: 6 }}>{row.client.name}</div>
                 <PhoneLink value={row.client.phone} />
               </div>
               <div>
-                <Label>У кого</Label>
+                <span style={{ display: "flex", alignItems: "center", gap: 8 }}><RoleTag kind="lease" /><Label>У кого</Label></span>
                 {l ? (
                   <>
                     <div style={{ fontSize: 15, fontWeight: 600, marginTop: 6 }}>

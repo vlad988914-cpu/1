@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import { supabase } from "./supabaseClient";
-import { Plate, Label, badgeStyle, miniBtn, ErrorText, Field, primaryBtn, smallBtn, selectStyle, inputStyle, Modal } from "./ui.jsx";
+import { Plate, Label, badgeStyle, miniBtn, ErrorText, Field, primaryBtn, smallBtn, selectStyle, inputStyle, Modal, RoleTag } from "./ui.jsx";
 import { answerFromKnowledge, FALLBACK_ANSWER, JOB_PILLS, HELPER_PILLS } from "../shared/workKnowledge.js";
 import { ClientCabinet, OwnerCabinet, NotificationsPanel, BookingForm, AvailabilityCalendar } from "./cabinets.jsx";
 import { WantedBoard, RespondForm } from "./wanted.jsx";
@@ -2581,6 +2581,7 @@ export default function EquipmentMarketplace() {
           {user ? (
             <button
               onClick={() => setShowProfile(true)}
+              aria-label={`${t("profile_title")}: ${user.name}`}
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -2597,7 +2598,10 @@ export default function EquipmentMarketplace() {
               <span style={{ width: 20, height: 20, borderRadius: "50%", background: "#FF6A1A", color: "#08090A", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 11 }}>
                 {user.name.trim().charAt(0).toUpperCase()}
               </span>
-              <span>{user.name.split(" ")[0]}</span>
+              <span style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", lineHeight: 1.15 }}>
+                <span style={{ fontSize: 9.5, letterSpacing: "0.08em", textTransform: "uppercase", color: "#A3A8AD" }}>{t("profile_title")}</span>
+                <span style={{ fontSize: 13 }}>{user.name.split(" ")[0]}</span>
+              </span>
             </button>
           ) : (
             <button onClick={() => setShowAuthForm(true)} style={{ ...smallBtn, borderColor: "#FF6A1A", color: "#FF6A1A" }}>
@@ -3070,6 +3074,9 @@ export default function EquipmentMarketplace() {
             </button>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
               <div>
+                <div style={{ marginBottom: 6 }}>
+                  <RoleTag kind="lease" />
+                </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 3 }}>
                   <span className={l.available ? "status-dot-available" : ""} style={{ width: 6, height: 6, borderRadius: "50%", background: l.available ? "#5FA876" : "#70777D", display: "inline-block" }} />
                   <span style={{ fontSize: 10.5, color: "#70777D", fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif" }}>
@@ -3297,6 +3304,9 @@ export default function EquipmentMarketplace() {
       {detailListing && (
         <Modal onClose={() => setDetailListing(null)} title={detailListing.brand} wide>
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <div>
+              <RoleTag kind="lease" />
+            </div>
             <div style={{ display: "flex", justifyContent: "center", padding: "20px 0", background: "#191C1F", borderRadius: 12 }}>
               {detailListing.photos && detailListing.photos.length > 0 ? (
                 <img
@@ -3505,6 +3515,48 @@ export default function EquipmentMarketplace() {
       )}
       {showProfile && user && (
         <Modal onClose={() => setShowProfile(false)} title={t("profile_title")}>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
+            {user.role === "dispatcher" ? (
+              <button
+                onClick={() => {
+                  setShowProfile(false);
+                  setRole("dispatcher");
+                }}
+                style={{ ...primaryBtn, minHeight: 44 }}
+              >
+                Панель диспетчера
+              </button>
+            ) : (
+              <>
+                <button
+                  onClick={() => {
+                    setShowProfile(false);
+                    setClientTab(null);
+                    loadClientData();
+                    setShowMyRequests(true);
+                  }}
+                  style={{ ...smallBtn, minHeight: 44, display: "flex", alignItems: "center", gap: 8 }}
+                >
+                  <RoleTag kind="rent" /> Мої заявки й оренди
+                </button>
+                {user.role === "owner" && (
+                  <button
+                    onClick={() => {
+                      setShowProfile(false);
+                      setOwnerTab("rentals");
+                      setShowInbox(true);
+                      loadInbox(false);
+                      loadOwnerBookings();
+                      loadOwnerResponses();
+                    }}
+                    style={{ ...smallBtn, minHeight: 44, display: "flex", alignItems: "center", gap: 8 }}
+                  >
+                    <RoleTag kind="lease" /> Кабінет власника
+                  </button>
+                )}
+              </>
+            )}
+          </div>
           <ProfileForm user={user} onSave={handleUpdateProfile} onLogout={handleLogout} />
         </Modal>
       )}
@@ -3586,35 +3638,67 @@ function DispatcherPanel(props) {
   const decide =
     requests.filter((r) => ["new", "dispatched", "offered"].includes(r.status) && (r.listingId || (r.responses || []).some((x) => ["sent", "chosen"].includes(x.status)))).length +
     allBookings.filter((b) => b.status === "reserved").length;
-  const tabs = [
-    ["pairs", "Хто в кого", decide],
-    ["requests", "Заявки", attention],
-    ["equipment", "Техніка", wanted],
-    ["users", "Користувачі", unseenUsers > 0 ? unseenUsers : users.length],
+  const clientsCount = users.filter((u) => u.role === "client").length;
+  const ownersCount = users.filter((u) => u.role === "owner").length;
+  // Дві сторони ринку: «Візьму в оренду» (клієнти) і «Здам в оренду» (власники з технікою)
+  const groups = [
+    {
+      title: "Візьму в оренду",
+      color: "#6fae6f",
+      tabs: [
+        ["pairs", "Хто в кого", decide],
+        ["requests", "Заявки", attention],
+        ["clients", "Клієнти", clientsCount],
+      ],
+    },
+    {
+      title: "Здам в оренду",
+      color: "#FF6A1A",
+      tabs: [
+        ["equipment", "Техніка", wanted],
+        ["owners", "Власники", ownersCount],
+      ],
+    },
+    {
+      title: "Облік",
+      color: "#A3A8AD",
+      tabs: [["users", "Користувачі", unseenUsers > 0 ? unseenUsers : users.length]],
+    },
   ];
+  const sansFont = "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif";
+  const quiet = (key) => (key === "users" && unseenUsers === 0) || key === "clients" || key === "owners";
   return (
     <div>
-      <div role="tablist" style={{ display: "flex", gap: 4, padding: "0 24px", borderBottom: "1px solid #202428", margin: "0 0 14px", overflowX: "auto" }}>
-        {tabs.map(([key, label, count]) => {
-          const active = view === key;
-          return (
-            <button
-              key={key}
-              role="tab"
-              aria-selected={active}
-              onClick={() => setView(key)}
-              style={{ background: "none", border: "none", borderBottom: `2px solid ${active ? "#FF6A1A" : "transparent"}`, color: active ? "#F4F4F1" : "#A3A8AD", fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 14, padding: "10px 14px", cursor: "pointer", whiteSpace: "nowrap", minHeight: 44 }}
-            >
-              {label}
-              {count > 0 && (
-                <span style={{ marginLeft: 6, background: key === "users" && unseenUsers === 0 ? "#2a2e32" : "#FF6A1A", color: key === "users" && unseenUsers === 0 ? "#F4F4F1" : "#08090A", borderRadius: 980, padding: "1px 7px", fontSize: 11, fontWeight: 600 }}>
-                  {key === "users" && unseenUsers > 0 ? "+" : ""}
-                  {count}
-                </span>
-              )}
-            </button>
-          );
-        })}
+      <div role="tablist" aria-label="Розділи диспетчерської" style={{ display: "flex", flexWrap: "wrap", gap: "10px 30px", padding: "0 24px", borderBottom: "1px solid #202428", margin: "0 0 14px" }}>
+        {groups.map((g) => (
+          <div key={g.title} role="presentation" style={{ display: "flex", flexDirection: "column" }}>
+            <div style={{ fontFamily: sansFont, fontSize: 12.5, fontWeight: 700, letterSpacing: "0.09em", textTransform: "uppercase", color: g.color, padding: "4px 14px 0", borderTop: `2px solid ${g.color}` }}>
+              {g.title}
+            </div>
+            <div style={{ display: "flex", gap: 2, overflowX: "auto" }}>
+              {g.tabs.map(([key, label, count]) => {
+                const active = view === key;
+                return (
+                  <button
+                    key={key}
+                    role="tab"
+                    aria-selected={active}
+                    onClick={() => setView(key)}
+                    style={{ background: "none", border: "none", borderBottom: `2px solid ${active ? "#FF6A1A" : "transparent"}`, color: active ? "#F4F4F1" : "#A3A8AD", fontFamily: sansFont, fontSize: 14, padding: "8px 14px", cursor: "pointer", whiteSpace: "nowrap", minHeight: 44 }}
+                  >
+                    {label}
+                    {count > 0 && (
+                      <span style={{ marginLeft: 6, background: quiet(key) ? "#2a2e32" : "#FF6A1A", color: quiet(key) ? "#F4F4F1" : "#08090A", borderRadius: 980, padding: "1px 7px", fontSize: 11, fontWeight: 600 }}>
+                        {key === "users" && unseenUsers > 0 ? "+" : ""}
+                        {count}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </div>
       {view === "pairs" && (
         <div style={{ padding: "0 24px 48px" }}>
@@ -3636,6 +3720,11 @@ function DispatcherPanel(props) {
       {view === "equipment" && (
         <div style={{ padding: "0 24px 48px" }}>
           <EquipmentBoard listings={listings} requests={requests} allBookings={allBookings} onConfirm={(r) => onManual(r.id, r.listingId, r.dateFrom, r.dateTo)} onDecline={onDecline} />
+        </div>
+      )}
+      {(view === "clients" || view === "owners") && (
+        <div style={{ padding: "0 24px 48px" }}>
+          <UsersBoard users={users} requests={requests} bookings={allBookings} listings={listings} currentUserId={user && user.id} seenSince={seenAt} onSetRole={onSetRole} onDelete={onDeleteUser} lockRole={view === "clients" ? "client" : "owner"} />
         </div>
       )}
       {view === "users" && (
@@ -3880,6 +3969,9 @@ function RequestDispatchCard({ req, owners, users, listings, allBookings, onDisp
     <Plate style={{ padding: "20px 18px" }}>
       <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
         <div>
+          <div style={{ marginBottom: 6 }}>
+            <RoleTag kind="rent" />
+          </div>
           <Label>
             Заявка #{req.id} ·{" "}
             {req.status === "taken"
