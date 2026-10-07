@@ -2671,7 +2671,7 @@ export default function EquipmentMarketplace() {
               {t("hero_cta_owner")}
             </button>
           </div>
-          <div className="mo-in ss-l ss-opt" style={{ "--i": 6, display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 8, marginBottom: 8 }}>
+          <div className="mo-in ss-l ss-opt-p" style={{ "--i": 6, display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 8, marginBottom: 8 }}>
             <button className="hero-pill" onClick={() => scrollToApp()}>
               {t("pill_catalog")}
             </button>

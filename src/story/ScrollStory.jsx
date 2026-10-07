@@ -95,20 +95,7 @@ export default function ScrollStory({ config = defaultStory, onCta, intro }) {
       <div className="ss-pin">
         <div className="ss-bg" aria-hidden="true" />
         <div className="ss-grid">
-          <div className="ss-left">
-            <ol className="ss-rail" aria-label="Етапи огляду">
-              <span className="ss-rail-line" aria-hidden="true">
-                <span ref={fillRef} className="ss-rail-fill" />
-              </span>
-              {stages.map((s, i) => (
-                <li key={s.id}>
-                  <button type="button" className="ss-rail-btn" data-on={i === stage ? "" : undefined} onClick={() => go(i)} aria-current={i === stage ? "step" : undefined}>
-                    <b>{String(i + 1).padStart(2, "0")}</b>
-                    <span>{s.kicker}</span>
-                  </button>
-                </li>
-              ))}
-            </ol>
+          <div className="ss-caps-col">
             <div className="ss-caps" aria-live="polite">
               {stages.map((s, i) => (
                 <div key={s.id} className="ss-cap" data-on={i === stage ? "" : undefined} data-stage={s.id} aria-hidden={i === stage ? undefined : "true"} inert={i === stage ? undefined : ""}>
@@ -159,6 +146,21 @@ export default function ScrollStory({ config = defaultStory, onCta, intro }) {
               {cur.kicker}
             </div>
             {!ready && !failed && <div className="ss-loading" aria-hidden="true" />}
+          </div>
+          <div className="ss-rail-col">
+            <ol className="ss-rail" aria-label="Етапи огляду">
+              <span className="ss-rail-line" aria-hidden="true">
+                <span ref={fillRef} className="ss-rail-fill" />
+              </span>
+              {stages.map((s, i) => (
+                <li key={s.id}>
+                  <button type="button" className="ss-rail-btn" data-on={i === stage ? "" : undefined} onClick={() => go(i)} aria-current={i === stage ? "step" : undefined}>
+                    <b>{String(i + 1).padStart(2, "0")}</b>
+                    <span>{s.kicker}</span>
+                  </button>
+                </li>
+              ))}
+            </ol>
           </div>
         </div>
         <div className="ss-hint" aria-hidden="true">
