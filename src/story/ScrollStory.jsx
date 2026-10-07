@@ -1,9 +1,41 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "./story.css";
 import { defaultStory } from "./story.config.js";
-import { progressOf, timeAt, stageAt, scrollTargetFor, follow } from "./story.logic.js";
+import { progressOf, timeAt, stageAt, scrollTargetFor, follow, formatSpec } from "./story.logic.js";
+import { easeOutExpo } from "../motion/tokens.js";
 
 const prefersReduced = () => typeof window !== "undefined" && !!window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/** Число параметра «набігає» щоразу, коли етап стає активним (reduced-motion — одразу кінцеве значення). */
+function SpecValue({ value, decimals = 0, active }) {
+  const [v, setV] = useState(0);
+  useEffect(() => {
+    if (!active) {
+      setV(0);
+      return undefined;
+    }
+    if (prefersReduced()) {
+      setV(value);
+      return undefined;
+    }
+    let raf = 0;
+    let start = null;
+    const tick = (now) => {
+      if (start === null) start = now;
+      const k = Math.min(1, Math.max(0, (now - start) / 900));
+      setV(value * easeOutExpo(k));
+      if (k < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [active, value]);
+  return (
+    <>
+      <span aria-hidden="true">{formatSpec(v, decimals)}</span>
+      <span className="mo-sr">{formatSpec(value, decimals)}</span>
+    </>
+  );
+}
 
 /**
  * ScrollStory — «залипна» сцена: прокрутка сторінки = перемотка відео, підписи змінюються за етапами.
@@ -108,6 +140,22 @@ export default function ScrollStory({ config = defaultStory, onCta, intro }) {
                       </div>
                       <h2 className="ss-title">{s.title}</h2>
                       <p className="ss-text">{s.text}</p>
+                      {s.specs && (
+                        <dl className="ss-specs">
+                          {s.specs.map((sp, k) => (
+                            <div key={sp.label} className={sp.primary ? "ss-spec ss-spec-main" : "ss-spec ss-spec-row"} style={{ "--i": k }}>
+                              <dd>
+                                <b>
+                                  <SpecValue value={sp.value} decimals={sp.decimals} active={i === stage} />
+                                </b>
+                                <span className="ss-unit">{sp.unit}</span>
+                              </dd>
+                              <dt>{sp.label}</dt>
+                            </div>
+                          ))}
+                        </dl>
+                      )}
+                      {s.note && <p className="ss-note">{s.note}</p>}
                     </>
                   )}
                   {s.cta && onCta && (

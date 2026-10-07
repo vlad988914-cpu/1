@@ -2,7 +2,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { defaultStory } from "../src/story/story.config.js";
-import { timeAt, stageAt, progressOf, scrollTargetFor, follow, clamp01 } from "../src/story/story.logic.js";
+import { timeAt, stageAt, progressOf, scrollTargetFor, follow, clamp01, formatSpec } from "../src/story/story.logic.js";
 
 const { stops, stages, video } = defaultStory;
 
@@ -71,4 +71,28 @@ test("згладжування наздоганяє ціль незалежно 
   assert.ok(Math.abs(a - b) < 0.1 && Math.abs(a - c) < 0.2, `${a} ${b} ${c}`);
   assert.ok(a > 9.9);
   assert.equal(follow(5, 5, 16), 5);
+});
+
+test("параметри етапів: ківш і стріла мають цифри, кабіна — без змін", () => {
+  const by = Object.fromEntries(stages.map((s) => [s.id, s]));
+  assert.ok(by.bucket.specs && by.boom.specs, "ківш і стріла мають specs");
+  assert.equal(by.cab.specs, undefined, "кабіна без параметрів (як було)");
+  assert.equal(by.machine.specs, undefined);
+  for (const st of [by.bucket, by.boom]) {
+    assert.equal(st.specs.filter((x) => x.primary).length, 1, `${st.id}: одна велика цифра`);
+    assert.ok(st.specs[0].primary, `${st.id}: велика цифра — перша`);
+    for (const sp of st.specs) {
+      assert.ok(Number.isFinite(sp.value) && sp.value > 0, `${st.id}: value`);
+      assert.ok(sp.unit && sp.label, `${st.id}: unit/label`);
+    }
+  }
+  assert.deepEqual([by.bucket.specs[0].value, by.bucket.specs[0].unit], [0.98, "м³"]);
+});
+
+test("формат параметрів: десяткова кома й фіксована кількість знаків", () => {
+  assert.equal(formatSpec(0.98, 2), "0,98");
+  assert.equal(formatSpec(137, 0), "137");
+  assert.equal(formatSpec(9.29, 2), "9,29");
+  assert.equal(formatSpec(0, 2), "0,00");
+  assert.equal(formatSpec(6.0299, 2), "6,03");
 });

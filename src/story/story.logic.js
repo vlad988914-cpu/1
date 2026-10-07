@@ -41,3 +41,6 @@ export function scrollTargetFor(i, stages, sectionTop, sectionHeight, vh) {
 
 /** Згладжування «наздоганяє» ціль незалежно від частоти кадрів: k = 1 - e^(−dt/τ). */
 export const follow = (cur, target, dtMs, tau = 90) => cur + (target - cur) * (1 - Math.exp(-Math.max(0, dtMs) / tau));
+
+/** Число для підпису параметра: десяткова кома, фіксована кількість знаків (0,98 · 137 · 9,29). */
+export const formatSpec = (v, decimals = 0) => Number(v).toFixed(decimals).replace(".", ",");
