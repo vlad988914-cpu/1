@@ -15,6 +15,7 @@
 
 /* ───── фон: розмите продовження неба ───── */
 .hx-ambient {
+  opacity: calc(1 - var(--hx-scroll, 0) * 0.7);
   position: absolute;
   inset: -6%;
   z-index: 0;
@@ -43,6 +44,8 @@
   padding: 12px 0 28px;
 }
 .hx-content {
+  translate: 0 calc(var(--hx-scroll, 0) * -28px);
+  opacity: calc(1 - var(--hx-scroll, 0) * 0.55);
   position: relative;
   z-index: 3;
   padding: 4px 20px 0;
@@ -50,6 +53,9 @@
   transition: opacity 0.6s ease, transform 0.8s cubic-bezier(0.22, 0.8, 0.3, 1);
 }
 .hx-stage-frame {
+  translate: 0 calc(var(--hx-scroll, 0) * 56px); /* паралакс при прокрутке: сцена едет медленнее страницы */
+  scale: calc(1 + var(--hx-scroll, 0) * 0.06); /* уходя, кадр чуть «наезжает» и растворяется в следующую сцену */
+  opacity: calc(1 - var(--hx-scroll, 0) * 0.9);
   position: relative;
   order: -1;
   justify-self: center;
@@ -413,6 +419,9 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .hx-stage-frame, .hx-content { translate: none; scale: none; }
+  .hx-stage-frame, .hx-ambient { opacity: 1; }
+  .hx-content { opacity: 1; }
   .hx-mote, .hx-sweep, .hx-puff, .hx-sun, .hx-lightsweep, .hx-vibrate, .hx-marker::after { animation: none !important; }
   .hx-content { transition: none; }
 }

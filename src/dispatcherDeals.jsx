@@ -1,6 +1,7 @@
 // Диспетчерська: «Підібрати техніку → Запропонувати клієнту → Підтвердити оренду» прямо в картці заявки.
 import React, { useState } from "react";
 import { Label, RoleTag, primaryBtn, smallBtn, inputStyle, miniBtn } from "./ui.jsx";
+import { CountUp } from "./motion/index.jsx";
 import { fmtDate, fmtPeriod, fmtDateTime, todayLocal, unitLabel } from "./services/deals.js";
 
 const FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif";
@@ -395,7 +396,7 @@ const DAY_MS = 86400000;
 function Stat({ label, value, accent, big }) {
   return (
     <div style={{ border: `1px solid ${accent ? "#FF6A1A" : "#2a2e32"}`, padding: big ? "12px 18px" : "10px 14px", minWidth: big ? 170 : 120 }}>
-      <div style={{ fontFamily: FONT, fontSize: big ? 30 : 20, fontWeight: 700, color: accent ? "#FF6A1A" : "#F4F4F1", lineHeight: 1.1 }}>{value}</div>
+      <div style={{ fontFamily: FONT, fontSize: big ? 30 : 20, fontWeight: 700, color: accent ? "#FF6A1A" : "#F4F4F1", lineHeight: 1.1 }}>{typeof value === "number" ? <CountUp value={value} duration={700} /> : value}</div>
       <div style={{ fontFamily: FONT, fontSize: 11.5, color: "#A3A8AD", marginTop: 4 }}>{label}</div>
     </div>
   );

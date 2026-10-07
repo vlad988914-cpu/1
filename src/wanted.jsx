@@ -21,11 +21,11 @@ export function priceText(budget, unit) {
 }
 
 // ---------------- Картка запиту ----------------
-function WantedCard({ item, user, onRespond, onUnpublish, onSignIn }) {
+function WantedCard({ item, index = 0, user, onRespond, onUnpublish, onSignIn }) {
   const days = daysInclusive(item.req_date_from, item.req_date_to);
   const isOwner = user && user.role === "owner";
   return (
-    <Plate style={{ padding: 14, display: "flex", flexDirection: "column", gap: 8 }}>
+    <Plate className="mo-card-in" style={{ "--i": index, padding: 14, display: "flex", flexDirection: "column", gap: 8 }}>
       <div style={{ display: "flex", justifyContent: "space-between", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
         <span style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
           <RoleTag kind="rent" />
@@ -122,8 +122,8 @@ export function WantedBoard({ items, user, onPublish, onRespond, onUnpublish, on
         </div>
       )}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 14 }}>
-        {visible.map((item) => (
-          <WantedCard key={item.req_id} item={item} user={user} onRespond={onRespond} onUnpublish={onUnpublish} onSignIn={onSignIn} />
+        {visible.map((item, i) => (
+          <WantedCard key={item.req_id} item={item} index={i} user={user} onRespond={onRespond} onUnpublish={onUnpublish} onSignIn={onSignIn} />
         ))}
       </div>
       {list.length > 6 && !shownAll && (

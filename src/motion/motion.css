@@ -1,0 +1,226 @@
+/* ТехМайданчик — слой движения. Анимируются только transform / opacity. */
+:root {
+  --mo-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --mo-ease-soft: cubic-bezier(0.25, 1, 0.5, 1);
+  --mo-ease-in: cubic-bezier(0.7, 0, 0.84, 0);
+  --mo-ease-inout: cubic-bezier(0.65, 0, 0.35, 1);
+  --mo-fast: 160ms;
+  --mo-base: 280ms;
+  --mo-slow: 480ms;
+  --mo-hero: 900ms;
+}
+
+/* ───── 1. Обратная связь: все кнопки «нажимаются» одинаково ───── */
+button, [role="tab"], a {
+  transition:
+    transform var(--mo-fast) var(--mo-ease-soft),
+    background-color var(--mo-base) var(--mo-ease-soft),
+    border-color var(--mo-base) var(--mo-ease-soft),
+    color var(--mo-base) var(--mo-ease-soft),
+    opacity var(--mo-base) var(--mo-ease-soft),
+    box-shadow var(--mo-base) var(--mo-ease-soft);
+}
+button:not(:disabled):active, [role="tab"]:active { transform: scale(0.97); }
+button:disabled { transition: opacity var(--mo-base) var(--mo-ease-soft); }
+
+input:not([type="checkbox"]):not([type="radio"]), select, textarea {
+  transition: border-color var(--mo-base) var(--mo-ease-soft), box-shadow var(--mo-base) var(--mo-ease-soft), background-color var(--mo-base) var(--mo-ease-soft);
+}
+input:not([type="checkbox"]):not([type="radio"]):focus, select:focus, textarea:focus {
+  border-color: #ff6a1a !important;
+  box-shadow: 0 0 0 3px rgba(255, 106, 26, 0.18);
+  outline: none;
+}
+
+/* ───── 2. Первое впечатление (hero): каскад вместо «всё сразу» ───── */
+@keyframes mo-rise {
+  from { opacity: 0; transform: translate3d(0, 22px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+.mo-in {
+  /* backwards, не both: после конца управление возвращается инлайн-transform (паралакс текста) */
+  animation: mo-rise var(--mo-hero) var(--mo-ease-out) backwards;
+  animation-delay: calc(0.12s + var(--i, 0) * 0.09s);
+}
+
+/* Заголовок: слова выезжают из-под «шторки» (маска) со ступенькой 60 мс */
+.mo-sr { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.mo-words { display: inline; }
+.mo-word {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: top;
+  padding: 0.04em 0 0.14em;
+  margin: -0.04em 0 -0.14em;
+}
+.mo-word-in {
+  display: inline-block;
+  animation: mo-word 900ms var(--mo-ease-out) backwards;
+  animation-delay: var(--d, 0.3s);
+  will-change: transform;
+}
+@keyframes mo-word {
+  from { transform: translate3d(0, 112%, 0); }
+  to { transform: translate3d(0, 0, 0); }
+}
+
+/* ───── 3. Прокрутка: линии «рисуются», шаги идут по порядку ───── */
+.section-divider .line {
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 1100ms var(--mo-ease-out);
+}
+.section-divider .line:last-of-type { transform-origin: right center; transition-delay: 120ms; }
+.section-divider.is-visible .line { transform: scaleX(1); }
+.section-divider .num, .section-divider .title {
+  opacity: 0;
+  transform: translate3d(0, 6px, 0);
+  transition: opacity 600ms var(--mo-ease-out) 200ms, transform 600ms var(--mo-ease-out) 200ms;
+}
+.section-divider.is-visible .num, .section-divider.is-visible .title { opacity: 1; transform: none; }
+
+.mo-steps { position: relative; }
+.mo-steps::before {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; top: 28px;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(255, 106, 26, 0.55), rgba(255, 106, 26, 0.08) 85%);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 1400ms var(--mo-ease-inout) 150ms;
+  pointer-events: none;
+}
+.mo-steps.is-visible::before { transform: scaleX(1); }
+.mo-step { opacity: 0; transform: translate3d(0, 18px, 0); }
+.mo-steps.is-visible .mo-step {
+  animation: mo-rise 800ms var(--mo-ease-out) both;
+  animation-delay: calc(var(--i, 0) * 110ms + 100ms);
+}
+.mo-step .mo-dash {
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 600ms var(--mo-ease-out);
+  transition-delay: calc(var(--i, 0) * 110ms + 350ms);
+}
+.mo-steps.is-visible .mo-dash { transform: scaleX(1); }
+
+/* Каскад на карточках в сетке: ровно, без «лесенки» длиннее 0.5 с */
+.reveal { transition-duration: 0.8s, 0.8s; }
+
+/* Входящие карточки в сетке: i-я стартует через min(i,8)·60 мс */
+.mo-card-in { animation: mo-rise 700ms var(--mo-ease-out) backwards; animation-delay: calc(min(var(--i, 0), 8) * 60ms); }
+@media (prefers-reduced-motion: reduce) { .mo-card-in { animation-duration: 1ms !important; animation-delay: 0s !important; } }
+
+/* ───── 4. Карточки: свет следует за курсором ───── */
+.mo-spot { position: relative; isolation: isolate; }
+.mo-spot::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: radial-gradient(260px circle at var(--mx, 50%) var(--my, 50%), rgba(255, 106, 26, 0.16), rgba(255, 106, 26, 0) 62%);
+  opacity: 0;
+  transition: opacity var(--mo-base) var(--mo-ease-soft);
+  pointer-events: none;
+}
+@media (hover: hover) { .mo-spot:hover::before { opacity: 1; } }
+
+/* ───── 5. Окна: появление 380 мс, уход ≈ 75% этого ───── */
+@keyframes mo-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes mo-fade-out { from { opacity: 1; } to { opacity: 0; } }
+@keyframes mo-pop-in {
+  from { opacity: 0; transform: translate3d(0, 16px, 0) scale(0.975); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+@keyframes mo-pop-out {
+  from { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+  to { opacity: 0; transform: translate3d(0, 10px, 0) scale(0.985); }
+}
+.mo-backdrop { animation: mo-fade-in 240ms var(--mo-ease-soft) both; }
+.mo-backdrop[data-closing] { animation: mo-fade-out 200ms var(--mo-ease-in) both; }
+.mo-dialog { animation: mo-pop-in 380ms var(--mo-ease-out) both; }
+.mo-dialog[data-closing] { animation: mo-pop-out 200ms var(--mo-ease-in) both; }
+
+/* ───── 6. Тост, колокольчик, индикатор вкладок ───── */
+@keyframes mo-toast-in {
+  from { opacity: 0; transform: translate3d(-50%, 14px, 0) scale(0.97); }
+  to { opacity: 1; transform: translate3d(-50%, 0, 0) scale(1); }
+}
+.mo-toast { animation: mo-toast-in 380ms var(--mo-ease-out) both; }
+
+@keyframes mo-ring {
+  0% { transform: rotate(0); }
+  15% { transform: rotate(14deg); }
+  30% { transform: rotate(-11deg); }
+  45% { transform: rotate(7deg); }
+  60% { transform: rotate(-4deg); }
+  80% { transform: rotate(1.5deg); }
+  100% { transform: rotate(0); }
+}
+.mo-ring svg { transform-origin: 50% 8%; animation: mo-ring 900ms var(--mo-ease-soft) both; }
+@keyframes mo-badge-pop {
+  0% { transform: scale(0.4); }
+  60% { transform: scale(1.18); }
+  100% { transform: scale(1); }
+}
+.mo-badge-pop { animation: mo-badge-pop 420ms var(--mo-ease-out) both; }
+
+.mo-tabs { position: relative; }
+.mo-ind {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100px;
+  height: 2px;
+  background: #ff6a1a;
+  transform-origin: 0 0;
+  transition: transform 460ms var(--mo-ease-out), opacity 220ms var(--mo-ease-soft);
+  pointer-events: none;
+}
+.mo-ind[data-still] { transition: none; }
+
+/* ───── 7. Счётчики ───── */
+.mo-stats { display: flex; gap: 10px 36px; justify-content: center; flex-wrap: wrap; margin-bottom: 10px; }
+.mo-stat b { font: 700 22px/1 -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif; color: #f4f4f1; font-variant-numeric: tabular-nums; }
+.mo-stat span { display: block; margin-top: 4px; font: 11.5px/1.2 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif; color: #a3a8ad; letter-spacing: 0.04em; }
+
+/* ───── 8. Тонкая полоса прогресса прокрутки ───── */
+.mo-progress {
+  position: fixed;
+  left: 0; top: 0;
+  width: 100%;
+  height: 2px;
+  z-index: 60;
+  background: linear-gradient(90deg, #ff6a1a, #ffb52e);
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+  pointer-events: none;
+  will-change: transform;
+}
+
+/* ───── 9. Магнитная кнопка: translate — отдельное свойство, не конфликтует с transform ───── */
+[data-magnetic] { transition: translate 500ms var(--mo-ease-out), transform var(--mo-fast) var(--mo-ease-soft), box-shadow var(--mo-base) var(--mo-ease-soft); }
+[data-magnetic].is-pulling { transition: translate 90ms linear, transform var(--mo-fast) var(--mo-ease-soft), box-shadow var(--mo-base) var(--mo-ease-soft); }
+
+/* ───── Доступность: уважать «уменьшить движение» (растворение вместо перемещения) ───── */
+@media (prefers-reduced-motion: reduce) {
+  .mo-in, .mo-word-in, .mo-step, .mo-dialog, .mo-backdrop, .mo-toast, .mo-ring svg, .mo-badge-pop { animation-duration: 1ms !important; animation-delay: 0s !important; }
+  .mo-step { opacity: 1; transform: none; }
+  .section-divider .line, .mo-steps::before, .mo-dash { transform: none; transition: none; }
+  .section-divider .num, .section-divider .title { opacity: 1; transform: none; transition: none; }
+  .mo-ind { transition: none; }
+  .mo-spot::before { transition: none; }
+  [data-magnetic] { translate: none !important; }
+  button:not(:disabled):active, [role="tab"]:active { transform: none; }
+}
+
+/* ───── 10. «Перелив» сцен: свет на фоне и мягкие стыки ───── */
+.mo-aura { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
+.mo-aura span { position: absolute; width: 90vmax; height: 90vmax; border-radius: 50%; opacity: 0; will-change: opacity, transform; }
+.mo-aura span:nth-child(1) { left: 38%; top: -34vmax; background: radial-gradient(circle, rgba(60, 130, 255, 0.20), rgba(60, 130, 255, 0) 62%); }
+.mo-aura span:nth-child(2) { left: -34vmax; top: 6vh; background: radial-gradient(circle, rgba(255, 106, 26, 0.17), rgba(255, 106, 26, 0) 62%); }
+.mo-aura span:nth-child(3) { right: -30vmax; top: 30vh; background: radial-gradient(circle, rgba(255, 181, 46, 0.15), rgba(255, 181, 46, 0) 62%); }
+[data-scene] { border-color: transparent !important; position: relative; }
+@media (prefers-reduced-motion: reduce) { .mo-aura span { opacity: 0.35 !important; transform: none !important; } }

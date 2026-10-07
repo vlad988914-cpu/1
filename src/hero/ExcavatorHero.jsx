@@ -183,6 +183,29 @@ export default function ExcavatorHero({ config = defaultHeroConfig, onSelectHots
     rawY.set(((e.clientY - r.top) / r.height * 2 - 1) * PARALLAX * 0.7 * k);
   };
 
+  // ───── прокрутка: сцена «відстає», текст трохи піднімається й гасне (через CSS-змінну, без React-рендерів) ─────
+  useEffect(() => {
+    if (reduced) return undefined;
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      const r = rootRef.current;
+      if (!r) return;
+      const rect = r.getBoundingClientRect();
+      const p = Math.min(1, Math.max(0, -rect.top / Math.max(1, rect.height)));
+      r.style.setProperty("--hx-scroll", p.toFixed(3));
+    };
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      cancelAnimationFrame(raf);
+    };
+  }, [reduced]);
+
   // ───── вибір зони ─────
   const timers = useRef({ leave: null, enter: null, pending: null });
   const clearTimers = () => {

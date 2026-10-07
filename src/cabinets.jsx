@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { Plate, Label, Field, ErrorText, RoleTag, primaryBtn, smallBtn, selectStyle, inputStyle } from "./ui.jsx";
 import { bookingPhase, fmtDate, fmtPeriod, fmtDateTime, daysInclusive, rangesOverlap, todayLocal, unitLabel } from "./services/deals.js";
 import { OwnerResponses } from "./wanted.jsx";
+import { SlidingTabs } from "./motion/index.jsx";
 
 const FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif";
 const GREEN = "#6fae6f";
@@ -32,37 +33,23 @@ const declineBtn = {
 
 function Tabs({ tabs, value, onChange }) {
   return (
-    <div role="tablist" style={{ display: "flex", gap: 4, borderBottom: "1px solid #202428", marginBottom: 14, overflowX: "auto" }}>
-      {tabs.map((t) => {
-        const active = t.key === value;
-        return (
-          <button
-            key={t.key}
-            role="tab"
-            aria-selected={active}
-            onClick={() => onChange(t.key)}
-            style={{
-              background: "none",
-              border: "none",
-              borderBottom: `2px solid ${active ? "#FF6A1A" : "transparent"}`,
-              color: active ? "#F4F4F1" : "#A3A8AD",
-              fontFamily: FONT,
-              fontSize: 13,
-              padding: "10px 12px",
-              cursor: "pointer",
-              whiteSpace: "nowrap",
-              minHeight: 44,
-            }}
-          >
+    <div role="tablist" style={{ borderBottom: "1px solid #202428", marginBottom: 14 }}>
+      <SlidingTabs
+        tabs={tabs}
+        value={value}
+        onChange={onChange}
+        buttonStyle={(active) => ({ background: "none", border: "none", color: active ? "#F4F4F1" : "#A3A8AD", fontFamily: FONT, fontSize: 13, padding: "10px 12px", cursor: "pointer", whiteSpace: "nowrap", minHeight: 44 })}
+        renderLabel={(t) => (
+          <>
             {t.label}
             {t.count > 0 && (
-              <span style={{ marginLeft: 6, background: t.alert ? "#FF6A1A" : "#2a2e32", color: t.alert ? "#08090A" : "#F4F4F1", borderRadius: 980, padding: "1px 7px", fontSize: 11, fontWeight: 600 }}>
+              <span key={t.count} className="mo-badge-pop" style={{ display: "inline-block", marginLeft: 6, background: t.alert ? "#FF6A1A" : "#2a2e32", color: t.alert ? "#08090A" : "#F4F4F1", borderRadius: 980, padding: "1px 7px", fontSize: 11, fontWeight: 600 }}>
                 {t.count}
               </span>
             )}
-          </button>
-        );
-      })}
+          </>
+        )}
+      />
     </div>
   );
 }

@@ -1,10 +1,10 @@
 // Спільні елементи інтерфейсу: картка, підпис, кнопки, поля, модальне вікно.
 // Винесено з головного файлу, щоб нові екрани (кабінети, диспетчерська) могли ними користуватись.
-import React, { useEffect, useRef } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 
 export const Plate = ({ children, style, className, onClick }) => (
   <div
-    className={className}
+    className={`mo-spot ${className || ""}`.trim()}
     onClick={onClick}
     style={{
       position: "relative",
@@ -113,19 +113,36 @@ export const inputStyle = {
 export function Modal({ children, onClose, title, splitLeft, wide }) {
   const titleId = useRef(`modal-title-${Math.random().toString(36).slice(2, 9)}`).current;
   const closeBtnRef = useRef(null);
+  const [closing, setClosing] = useState(false);
+  const exitTimer = useRef(null);
+
+  // Уход короче входа (≈75%): сначала проигрываем анимацию, потом сообщаем родителю
+  const requestClose = useCallback(() => {
+    if (exitTimer.current) return;
+    const reduce = typeof window !== "undefined" && window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduce) {
+      onClose();
+      return;
+    }
+    setClosing(true);
+    exitTimer.current = setTimeout(onClose, 200);
+  }, [onClose]);
+  useEffect(() => () => clearTimeout(exitTimer.current), []);
 
   useEffect(() => {
     closeBtnRef.current?.focus();
     const onKeyDown = (e) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") requestClose();
     };
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, [onClose]);
+  }, [requestClose]);
 
   return (
     <div
-      onClick={onClose}
+      className="mo-backdrop"
+      data-closing={closing ? "" : undefined}
+      onClick={requestClose}
       style={{
         position: "fixed",
         inset: 0,
@@ -138,6 +155,8 @@ export function Modal({ children, onClose, title, splitLeft, wide }) {
       }}
     >
       <div
+        className="mo-dialog"
+        data-closing={closing ? "" : undefined}
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
@@ -177,7 +196,7 @@ export function Modal({ children, onClose, title, splitLeft, wide }) {
           </h2>
           <button
             ref={closeBtnRef}
-            onClick={onClose}
+            onClick={requestClose}
             aria-label="Закрити"
             style={{ background: "none", border: "none", color: "#A3A8AD", fontSize: 20, cursor: "pointer", padding: 10, margin: -10 }}
           >

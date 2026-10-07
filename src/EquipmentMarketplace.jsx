@@ -5,6 +5,8 @@ import { answerFromKnowledge, FALLBACK_ANSWER, JOB_PILLS, HELPER_PILLS } from ".
 import { ClientCabinet, OwnerCabinet, NotificationsPanel, BookingForm, AvailabilityCalendar } from "./cabinets.jsx";
 import { WantedBoard, RespondForm } from "./wanted.jsx";
 import ExcavatorHero from "./hero/ExcavatorHero.jsx";
+import ScrollStory from "./story/ScrollStory.jsx";
+import { SplitWords, CountUp, SlidingTabs, ScrollProgress, SceneAura, useSpotlight, useMagnetic, useReveal, useScenes } from "./motion/index.jsx";
 import { DealsSection, EventLog, EquipmentBoard, UsersBoard, PairsBoard } from "./dispatcherDeals.jsx";
 import * as deals from "./services/deals.js";
 
@@ -544,7 +546,7 @@ const ICONS_BY_TYPE = {
 
 function SectionDivider({ n, of, title }) {
   return (
-    <div className="section-divider">
+    <div className="section-divider mo-io">
       <span className="num">{String(n).padStart(2, "0")}</span>
       <span className="line" />
       <span className="title">{title}</span>
@@ -735,6 +737,8 @@ export default function EquipmentMarketplace() {
     ownerResponses.filter((x) => x.status === "chosen" && x.request.status !== "taken").length;
   const [scrolled, setScrolled] = useState(false);
   const appSectionRef = useRef(null);
+  useSpotlight(); // світло карток слідує за курсором
+  useMagnetic(); // головна кнопка «тягнеться» до курсора
   const heroRef = useRef(null);
   const [parallax, setParallax] = useState({ x: 0, y: 0 });
 
@@ -777,28 +781,9 @@ export default function EquipmentMarketplace() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  useEffect(() => {
-    const els = document.querySelectorAll(".reveal:not(.is-visible)");
-    const io = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("is-visible");
-            io.unobserve(entry.target);
-          }
-        });
-      },
-      { threshold: 0.15 }
-    );
-    els.forEach((el) => io.observe(el));
-    // Заголовок героя повністю обрізаний clip-path'ом, тож IntersectionObserver його «не бачить»:
-    // відкриваємо по таймеру (він завжди на першому екрані)
-    const wipes = [...document.querySelectorAll(".reveal-wipe:not(.is-visible)")].map((el, i) => setTimeout(() => el.classList.add("is-visible"), 220 + i * 140));
-    return () => {
-      io.disconnect();
-      wipes.forEach(clearTimeout);
-    };
-  }, [role, listings.length, requests.length]);
+  // Поява при прокрутці з каскадом 60 мс (потолок 0,5 с), див. src/motion
+  useReveal([role, listings.length, requests.length, wantedItems.length]);
+  useScenes([role, listings.length, requests.length, wantedItems.length]); // сцены «переливаются» друг в друга
 
   const scrollToApp = () => appSectionRef.current?.scrollIntoView({ behavior: "smooth" });
 
@@ -1517,6 +1502,18 @@ export default function EquipmentMarketplace() {
     return () => clearInterval(timer);
   }, [user?.id]);
   const unreadCount = notifications.filter((n) => !n.read_at).length;
+  const prevUnread = useRef(unreadCount);
+  const [bellRing, setBellRing] = useState(0);
+  useEffect(() => {
+    if (unreadCount > prevUnread.current) {
+      setBellRing((k) => k + 1);
+      const t = setTimeout(() => setBellRing(0), 1000);
+      prevUnread.current = unreadCount;
+      return () => clearTimeout(t);
+    }
+    prevUnread.current = unreadCount;
+    return undefined;
+  }, [unreadCount]);
 
   const openNotification = async (n) => {
     if (!n.read_at) {
@@ -1674,6 +1671,8 @@ export default function EquipmentMarketplace() {
   return (
     <div
       style={{
+        position: "relative",
+        isolation: "isolate",
         minHeight: "100vh",
         background: "#08090A",
         color: "#ffffff",
@@ -1681,6 +1680,8 @@ export default function EquipmentMarketplace() {
       }}
     >
       <FontLink />
+      <ScrollProgress />
+      <SceneAura />
       <style>{`
         @keyframes shimmerFlow {
           0% { background-position: 0% 50%; }
@@ -2556,6 +2557,7 @@ export default function EquipmentMarketplace() {
                 loadNotifications(false);
               }}
               aria-label={`Сповіщення${unreadCount ? ` (${unreadCount})` : ""}`}
+              className={bellRing ? "mo-ring" : undefined}
               style={{ position: "relative", background: "#191C1F", border: "1px solid #63696D", width: 38, height: 38, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#ffffff" }}
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -2563,7 +2565,7 @@ export default function EquipmentMarketplace() {
                 <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
               </svg>
               {unreadCount > 0 && (
-                <span style={{ position: "absolute", top: -7, right: -7, background: "#FF6A1A", color: "#08090A", borderRadius: 980, fontSize: 10.5, fontWeight: 700, minWidth: 18, height: 18, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 4px" }}>
+                <span key={unreadCount} className="mo-badge-pop" style={{ position: "absolute", top: -7, right: -7, background: "#FF6A1A", color: "#08090A", borderRadius: 980, fontSize: 10.5, fontWeight: 700, minWidth: 18, height: 18, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 4px" }}>
                   {unreadCount > 99 ? "99+" : unreadCount}
                 </span>
               )}
@@ -2607,8 +2609,9 @@ export default function EquipmentMarketplace() {
       <ExcavatorHero sectionRef={heroRef} onSelectHotspot={handleHeroHotspot}>
         <div className="hx-left" style={{ maxWidth: 640, margin: "0 auto", position: "relative" }}>
           <div
-            className="reveal badge-pulse"
+            className="mo-in badge-pulse"
             style={{
+              "--i": 0,
               display: "inline-block",
               fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
               fontSize: 11,
@@ -2623,14 +2626,14 @@ export default function EquipmentMarketplace() {
             {t("hero_badge")}
           </div>
           <div
-            className="blur-fade-in"
+            className="mo-in"
             onClick={() => setAiOpen(true)}
             style={{
+              "--i": 1,
               fontSize: "clamp(13px,3vw,16px)",
               lineHeight: 1.3,
               color: "#A3A8AD",
               marginBottom: 10,
-              animationDelay: "0.1s",
               cursor: "pointer",
               textDecoration: "underline",
               textDecorationColor: "rgba(163,168,173,0.35)",
@@ -2642,7 +2645,6 @@ export default function EquipmentMarketplace() {
             {t("ai_hint_line2")}
           </div>
           <h1
-            className="reveal-wipe"
             style={{
               fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif",
               fontWeight: 600,
@@ -2653,16 +2655,16 @@ export default function EquipmentMarketplace() {
               ...parallaxStyle(12),
             }}
           >
-            {t("hero_title_1")}{" "}
+            <SplitWords text={t("hero_title_1")} delay={0.32} offset={0} />{" "}
             <br className="hx-br" />
-            {t("hero_title_2")}
+            <SplitWords text={t("hero_title_2")} delay={0.32} offset={String(t("hero_title_1")).split(/\s+/).filter(Boolean).length} />
           </h1>
-          <p className="hx-left" style={{ color: "#A3A8AD", fontSize: 15.5, maxWidth: 480, margin: "0 auto 28px", minHeight: 44 }}>
+          <p className="hx-left mo-in" style={{ "--i": 3, color: "#A3A8AD", fontSize: 15.5, maxWidth: 480, margin: "0 auto 28px", minHeight: 44 }}>
             {typedIntro}
             {!typedIntroDone && <span className="typewriter-cursor" />}
           </p>
           <form
-            className="reveal reveal-2 hx-left"
+            className="mo-in hx-left"
             onSubmit={(e) => {
               e.preventDefault();
               const query = heroSearch.trim().toLowerCase();
@@ -2671,7 +2673,7 @@ export default function EquipmentMarketplace() {
               if (matchedType) setFilterType(matchedType);
               scrollToApp();
             }}
-            style={{ display: "flex", gap: 8, maxWidth: 420, margin: "0 auto 20px" }}
+            style={{ "--i": 4, display: "flex", gap: 8, maxWidth: 420, margin: "0 auto 20px" }}
           >
             <input
               value={heroSearch}
@@ -2684,13 +2686,14 @@ export default function EquipmentMarketplace() {
               {t("hero_search_btn")}
             </button>
           </form>
-          <div className="reveal reveal-2 hx-left" style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap", marginBottom: 44 }}>
+          <div className="mo-in hx-left" style={{ "--i": 5, display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap", marginBottom: 44 }}>
             <button
               onClick={() => {
                 setRole("client");
                 setAiOpen(true);
               }}
               className="glass-cta"
+              data-magnetic
               style={{ display: "inline-flex", alignItems: "center", gap: 8 }}
             >
               <IconExcavator size={16} />
@@ -2706,7 +2709,7 @@ export default function EquipmentMarketplace() {
               {t("hero_cta_owner")}
             </button>
           </div>
-          <div className="reveal reveal-2 hx-left" style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 8, marginBottom: 8 }}>
+          <div className="mo-in hx-left" style={{ "--i": 6, display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 8, marginBottom: 8 }}>
             <button className="hero-pill" onClick={() => scrollToApp()}>
               {t("pill_catalog")}
             </button>
@@ -2727,22 +2730,31 @@ export default function EquipmentMarketplace() {
         </div>
       </ExcavatorHero>
 
+      {/* «Техніка зблизька»: прокрутка веде камеру по екскаватору — ковш, стріла, кабіна */}
+      <ScrollStory
+        onCta={(cta) => {
+          setRole("client");
+          if (cta && cta.type) setFilterType(cta.type);
+          scrollToApp();
+        }}
+      />
+
       {/* 3D viewer temporarily removed — revisit later */}
 
       {/* How it works — the request workflow, as a technical process line */}
-      <section id="how-it-works" style={{ padding: "48px 24px", borderBottom: "1px solid #202428" }}>
+      <section id="how-it-works" data-scene style={{ padding: "104px 24px 48px", marginTop: -56, borderBottom: "1px solid #202428" }}>
         <div style={{ maxWidth: 900, margin: "0 auto" }}>
           <SectionDivider n={2} of={5} title={t("how_it_works_label")} />
           <h2 style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif", fontSize: 24, margin: "0 0 32px" }}>
             {t("how_it_works_title")}
           </h2>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 24 }}>
+          <div className="mo-steps mo-io" style={{ display: "flex", flexWrap: "wrap", gap: 24 }}>
             {[t("step_1"), t("step_2"), t("step_3"), t("step_4"), t("step_5")].map((step, i) => (
-              <div key={i} style={{ flex: "1 1 150px", minWidth: 140 }}>
+              <div key={i} className="mo-step" style={{ "--i": i, flex: "1 1 150px", minWidth: 140 }}>
                 <div style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 12, color: "#70777D" }}>
                   {String(i + 1).padStart(2, "0")}
                 </div>
-                <div style={{ width: 20, height: 1.4, background: "#FF6A1A", margin: "8px 0 10px" }} />
+                <div className="mo-dash" style={{ width: 20, height: 1.4, background: "#FF6A1A", margin: "8px 0 10px" }} />
                 <div style={{ fontSize: 14, color: "#F4F4F1", lineHeight: 1.4 }}>{step}</div>
               </div>
             ))}
@@ -2751,14 +2763,30 @@ export default function EquipmentMarketplace() {
       </section>
 
       {/* Honest placeholder instead of mock trust signals */}
-      <div className="reveal" style={{ padding: "20px 24px", borderBottom: "1px solid #202428", textAlign: "center" }}>
+      <div data-scene style={{ padding: "22px 24px 20px", borderBottom: "1px solid #202428", textAlign: "center" }}>
+        {listings.filter((l) => l.ownerId).length > 0 && (
+          <div className="mo-stats">
+            {[
+              [listings.filter((l) => l.ownerId).length, "одиниць техніки в каталозі"],
+              [wantedItems.length, "запитів на дошці"],
+              [new Set(listings.filter((l) => l.ownerId).map((l) => l.region)).size, "міст"],
+            ].map(([n, label]) => (
+              <div key={label} className="mo-stat">
+                <b>
+                  <CountUp value={n} />
+                </b>
+                <span>{label}</span>
+              </div>
+            ))}
+          </div>
+        )}
         <span style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 12, color: "#A3A8AD", letterSpacing: "0.04em" }}>
           {t("trust_line")}
         </span>
       </div>
 
       {/* Catalog */}
-      <div ref={appSectionRef} style={{ padding: "28px 24px 8px" }}>
+      <div ref={appSectionRef} data-scene style={{ padding: "28px 24px 8px" }}>
         {role === "client" && <SectionDivider n={3} of={5} title="КАТАЛОГ ТЕХНІКИ" />}
         <h2
           style={{
@@ -3138,7 +3166,7 @@ export default function EquipmentMarketplace() {
       )}
 
       {/* Дошка запитів: хто що шукає */}
-      <div className="reveal" style={{ padding: "8px 24px 0", maxWidth: 1100, margin: "0 auto" }}>
+      <div data-scene style={{ padding: "8px 24px 0", maxWidth: 1100, margin: "0 auto" }}>
         <SectionDivider n={4} of={5} title="ДОШКА ЗАПИТІВ" />
       </div>
       <WantedBoard
@@ -3155,7 +3183,7 @@ export default function EquipmentMarketplace() {
       />
 
       {/* FAQ */}
-      <div className="reveal" style={{ padding: "8px 24px 64px", maxWidth: 640, margin: "0 auto" }}>
+      <div data-scene style={{ padding: "8px 24px 64px", maxWidth: 640, margin: "0 auto" }}>
         <SectionDivider n={5} of={5} title={t("faq_label").toUpperCase()} />
         <h2 style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif", fontSize: 22, textTransform: "none", margin: "0 0 12px" }}>
           {t("faq_title")}
@@ -3527,6 +3555,9 @@ export default function EquipmentMarketplace() {
 
       {toast && (
         <div
+          key={toast}
+          className="mo-toast"
+          role="status"
           style={{
             position: "fixed",
             bottom: 20,
@@ -3617,28 +3648,23 @@ function DispatcherPanel(props) {
             <div style={{ fontFamily: sansFont, fontSize: 12.5, fontWeight: 700, letterSpacing: "0.09em", textTransform: "uppercase", color: g.color, padding: "4px 14px 0", borderTop: `2px solid ${g.color}` }}>
               {g.title}
             </div>
-            <div style={{ display: "flex", gap: 2, overflowX: "auto" }}>
-              {g.tabs.map(([key, label, count]) => {
-                const active = view === key;
-                return (
-                  <button
-                    key={key}
-                    role="tab"
-                    aria-selected={active}
-                    onClick={() => setView(key)}
-                    style={{ background: "none", border: "none", borderBottom: `2px solid ${active ? "#FF6A1A" : "transparent"}`, color: active ? "#F4F4F1" : "#A3A8AD", fontFamily: sansFont, fontSize: 14, padding: "8px 14px", cursor: "pointer", whiteSpace: "nowrap", minHeight: 44 }}
-                  >
-                    {label}
-                    {count > 0 && (
-                      <span style={{ marginLeft: 6, background: quiet(key) ? "#2a2e32" : "#FF6A1A", color: quiet(key) ? "#F4F4F1" : "#08090A", borderRadius: 980, padding: "1px 7px", fontSize: 11, fontWeight: 600 }}>
-                        {key === "users" && unseenUsers > 0 ? "+" : ""}
-                        {count}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
+            <SlidingTabs
+              tabs={g.tabs.map(([key, label, count]) => ({ key, label, count }))}
+              value={view}
+              onChange={setView}
+              buttonStyle={(active) => ({ background: "none", border: "none", color: active ? "#F4F4F1" : "#A3A8AD", fontFamily: sansFont, fontSize: 14, padding: "8px 14px", cursor: "pointer", whiteSpace: "nowrap", minHeight: 44 })}
+              renderLabel={(tab) => (
+                <>
+                  {tab.label}
+                  {tab.count > 0 && (
+                    <span style={{ marginLeft: 6, background: quiet(tab.key) ? "#2a2e32" : "#FF6A1A", color: quiet(tab.key) ? "#F4F4F1" : "#08090A", borderRadius: 980, padding: "1px 7px", fontSize: 11, fontWeight: 600 }}>
+                      {tab.key === "users" && unseenUsers > 0 ? "+" : ""}
+                      {tab.count}
+                    </span>
+                  )}
+                </>
+              )}
+            />
           </div>
         ))}
       </div>
