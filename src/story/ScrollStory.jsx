@@ -9,7 +9,7 @@ const prefersReduced = () => typeof window !== "undefined" && !!window.matchMedi
  * ScrollStory — «залипна» сцена: прокрутка сторінки = перемотка відео, підписи змінюються за етапами.
  * props: config (див. story.config.js), onCta(stage.cta) — клік по кнопці на етапі.
  */
-export default function ScrollStory({ config = defaultStory, onCta }) {
+export default function ScrollStory({ config = defaultStory, onCta, intro }) {
   const { video, stops, stages, heightVh } = config;
   const secRef = useRef(null);
   const vidRef = useRef(null);
@@ -19,6 +19,20 @@ export default function ScrollStory({ config = defaultStory, onCta }) {
   const [ready, setReady] = useState(false);
   const reduced = useMemo(() => prefersReduced(), []);
   const last = useRef({ stage: 0, cur: 0, t: 0 });
+
+  // Шапка сайта идёт в потоке: подтягиваем сцену под неё, чтобы на нулевой прокрутке кадр был таким же, как в «залипшем» состоянии
+  useEffect(() => {
+    const hdr = typeof document !== "undefined" ? document.querySelector("header") : null;
+    const set = () => secRef.current && secRef.current.style.setProperty("--ss-hdr", `${hdr ? hdr.offsetHeight : 0}px`);
+    set();
+    const ro = hdr && typeof ResizeObserver !== "undefined" ? new ResizeObserver(set) : null;
+    if (ro) ro.observe(hdr);
+    window.addEventListener("resize", set);
+    return () => {
+      ro && ro.disconnect();
+      window.removeEventListener("resize", set);
+    };
+  }, []);
 
   useEffect(() => {
     if (reduced) return undefined;
@@ -97,12 +111,18 @@ export default function ScrollStory({ config = defaultStory, onCta }) {
             </ol>
             <div className="ss-caps" aria-live="polite">
               {stages.map((s, i) => (
-                <div key={s.id} className="ss-cap" data-on={i === stage ? "" : undefined} data-stage={s.id} aria-hidden={i === stage ? undefined : "true"}>
-                  <div className="ss-kicker">
-                    {String(i + 1).padStart(2, "0")} / {String(stages.length).padStart(2, "0")} — {s.kicker}
-                  </div>
-                  <h2 className="ss-title">{s.title}</h2>
-                  <p className="ss-text">{s.text}</p>
+                <div key={s.id} className="ss-cap" data-on={i === stage ? "" : undefined} data-stage={s.id} aria-hidden={i === stage ? undefined : "true"} inert={i === stage ? undefined : ""}>
+                  {i === 0 && intro ? (
+                    <div className="ss-intro">{intro}</div>
+                  ) : (
+                    <>
+                      <div className="ss-kicker">
+                        {String(i + 1).padStart(2, "0")} / {String(stages.length).padStart(2, "0")} — {s.kicker}
+                      </div>
+                      <h2 className="ss-title">{s.title}</h2>
+                      <p className="ss-text">{s.text}</p>
+                    </>
+                  )}
                   {s.cta && onCta && (
                     <button type="button" className="ss-cta" onClick={() => onCta(s.cta)} tabIndex={i === stage ? 0 : -1}>
                       {s.cta.label} <span aria-hidden="true">→</span>

@@ -26,8 +26,8 @@ export const defaultStory = {
     { at: 1.0, time: 12.0 },
   ],
   stages: [
-    { id: "machine", kicker: "CAT M320", title: "Колісний екскаватор", text: "Прокрутіть вниз — розгляньте його зблизька.", range: [0, 0.16] },
-    { id: "bucket", kicker: "Ковш", title: "КОВШ", text: "Розробка ґрунту", range: [0.16, 0.5] },
+    { id: "machine", kicker: "CAT M320", title: "Колісний екскаватор", text: "Прокрутіть вниз — розгляньте його зблизька.", range: [0, 0.18] },
+    { id: "bucket", kicker: "Ковш", title: "КОВШ", text: "Розробка ґрунту", range: [0.18, 0.5] },
     { id: "boom", kicker: "Стріла", title: "СТРІЛА", text: "Максимальна робоча зона", range: [0.5, 0.72] },
     { id: "cab", kicker: "Кабіна", title: "КАБІНА ОПЕРАТОРА", text: "Комфорт + контроль", range: [0.72, 1.01], cta: { label: "Підібрати техніку", type: "Екскаватор" } },
   ],

@@ -4,7 +4,6 @@ import { Plate, Label, badgeStyle, miniBtn, ErrorText, Field, primaryBtn, smallB
 import { answerFromKnowledge, FALLBACK_ANSWER, JOB_PILLS, HELPER_PILLS } from "../shared/workKnowledge.js";
 import { ClientCabinet, OwnerCabinet, NotificationsPanel, BookingForm, AvailabilityCalendar } from "./cabinets.jsx";
 import { WantedBoard, RespondForm } from "./wanted.jsx";
-import ExcavatorHero from "./hero/ExcavatorHero.jsx";
 import ScrollStory from "./story/ScrollStory.jsx";
 import { SplitWords, CountUp, SlidingTabs, ScrollProgress, SceneAura, useSpotlight, useMagnetic, useReveal, useScenes } from "./motion/index.jsx";
 import { DealsSection, EventLog, EquipmentBoard, UsersBoard, PairsBoard } from "./dispatcherDeals.jsx";
@@ -739,42 +738,6 @@ export default function EquipmentMarketplace() {
   const appSectionRef = useRef(null);
   useSpotlight(); // світло карток слідує за курсором
   useMagnetic(); // головна кнопка «тягнеться» до курсора
-  const heroRef = useRef(null);
-  const [parallax, setParallax] = useState({ x: 0, y: 0 });
-
-  useEffect(() => {
-    const el = heroRef.current;
-    if (!el) return;
-    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-
-    let rafId = null;
-    const handleMove = (e) => {
-      if (rafId) return;
-      rafId = requestAnimationFrame(() => {
-        rafId = null;
-        const rect = el.getBoundingClientRect();
-        setParallax({
-          x: (e.clientX - rect.left) / rect.width - 0.5,
-          y: (e.clientY - rect.top) / rect.height - 0.5,
-        });
-      });
-    };
-    const handleLeave = () => setParallax({ x: 0, y: 0 });
-
-    el.addEventListener("mousemove", handleMove);
-    el.addEventListener("mouseleave", handleLeave);
-    return () => {
-      el.removeEventListener("mousemove", handleMove);
-      el.removeEventListener("mouseleave", handleLeave);
-      if (rafId) cancelAnimationFrame(rafId);
-    };
-  }, []);
-
-  const parallaxStyle = (depth) => ({
-    transform: `translate(${parallax.x * depth}px, ${parallax.y * depth}px)`,
-    transition: "transform 0.2s ease-out",
-  });
-
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -795,12 +758,6 @@ export default function EquipmentMarketplace() {
     return hit.length ? hit.map((r) => r.date_to).sort().slice(-1)[0] : null;
   };
 
-  // Клік по деталі героя: показати відповідний тип техніки в каталозі
-  const handleHeroHotspot = (h) => {
-    setRole("client");
-    if (h && h.catalog && h.catalog.type) setFilterType(h.catalog.type);
-    scrollToApp();
-  };
   const filtered = useMemo(() => {
     const base = listings.filter(
       (l) =>
@@ -2605,9 +2562,16 @@ export default function EquipmentMarketplace() {
         </div>
       </header>
 
-      {/* Hero landing: інтерактивний екскаватор (src/hero). Зони підключаються до каталогу через onSelectHotspot */}
-      <ExcavatorHero sectionRef={heroRef} onSelectHotspot={handleHeroHotspot}>
-        <div className="hx-left" style={{ maxWidth: 640, margin: "0 auto", position: "relative" }}>
+      {/* Перший екран: «Техніка зблизька». Прокрутка веде камеру по екскаватору; перший етап — заголовок, пошук і кнопки */}
+      <ScrollStory
+        onCta={(cta) => {
+          setRole("client");
+          if (cta && cta.type) setFilterType(cta.type);
+          scrollToApp();
+        }}
+        intro={
+          <>
+        <div className="ss-l" style={{ maxWidth: 640, margin: "0 auto", position: "relative" }}>
           <div
             className="mo-in badge-pulse"
             style={{
@@ -2620,13 +2584,12 @@ export default function EquipmentMarketplace() {
               padding: "5px 12px",
               marginBottom: 18,
               borderRadius: 6,
-              ...parallaxStyle(6),
-            }}
+                          }}
           >
             {t("hero_badge")}
           </div>
           <div
-            className="mo-in"
+            className="mo-in ss-opt"
             onClick={() => setAiOpen(true)}
             style={{
               "--i": 1,
@@ -2652,19 +2615,18 @@ export default function EquipmentMarketplace() {
               lineHeight: 1.15,
               margin: "0 0 16px",
               textTransform: "none",
-              ...parallaxStyle(12),
-            }}
+                          }}
           >
             <SplitWords text={t("hero_title_1")} delay={0.32} offset={0} />{" "}
-            <br className="hx-br" />
+            <br className="ss-br" />
             <SplitWords text={t("hero_title_2")} delay={0.32} offset={String(t("hero_title_1")).split(/\s+/).filter(Boolean).length} />
           </h1>
-          <p className="hx-left mo-in" style={{ "--i": 3, color: "#A3A8AD", fontSize: 15.5, maxWidth: 480, margin: "0 auto 28px", minHeight: 44 }}>
+          <p className="ss-l mo-in ss-opt-m" style={{ "--i": 3, color: "#A3A8AD", fontSize: 15.5, maxWidth: 480, margin: "0 auto 28px", minHeight: 44 }}>
             {typedIntro}
             {!typedIntroDone && <span className="typewriter-cursor" />}
           </p>
           <form
-            className="mo-in hx-left"
+            className="mo-in ss-l"
             onSubmit={(e) => {
               e.preventDefault();
               const query = heroSearch.trim().toLowerCase();
@@ -2686,7 +2648,7 @@ export default function EquipmentMarketplace() {
               {t("hero_search_btn")}
             </button>
           </form>
-          <div className="mo-in hx-left" style={{ "--i": 5, display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap", marginBottom: 44 }}>
+          <div className="mo-in ss-l" style={{ "--i": 5, display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap", marginBottom: 44 }}>
             <button
               onClick={() => {
                 setRole("client");
@@ -2709,7 +2671,7 @@ export default function EquipmentMarketplace() {
               {t("hero_cta_owner")}
             </button>
           </div>
-          <div className="mo-in hx-left" style={{ "--i": 6, display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 8, marginBottom: 8 }}>
+          <div className="mo-in ss-l ss-opt" style={{ "--i": 6, display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 8, marginBottom: 8 }}>
             <button className="hero-pill" onClick={() => scrollToApp()}>
               {t("pill_catalog")}
             </button>
@@ -2728,15 +2690,8 @@ export default function EquipmentMarketplace() {
             </button>
           </div>
         </div>
-      </ExcavatorHero>
-
-      {/* «Техніка зблизька»: прокрутка веде камеру по екскаватору — ковш, стріла, кабіна */}
-      <ScrollStory
-        onCta={(cta) => {
-          setRole("client");
-          if (cta && cta.type) setFilterType(cta.type);
-          scrollToApp();
-        }}
+          </>
+        }
       />
 
       {/* 3D viewer temporarily removed — revisit later */}

@@ -1,5 +1,5 @@
 /* Сцена «Техніка зблизька». Анімуються лише transform та opacity. */
-.ss { position: relative; height: var(--ss-h, 480vh); background: transparent; }
+.ss { position: relative; height: var(--ss-h, 480vh); background: transparent; margin-top: calc(var(--ss-hdr, 0px) * -1); }
 .ss-pin { position: sticky; top: 0; height: 100vh; height: 100svh; overflow: hidden; }
 .ss-bg {
   position: absolute; inset: 0;
@@ -12,7 +12,7 @@
   position: relative; z-index: 1; height: 100%;
   display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center;
   gap: clamp(20px, 4vw, 72px);
-  padding: 104px clamp(24px, 5vw, 88px) 56px;
+  padding: calc(var(--ss-hdr, 96px) + 12px) clamp(24px, 5vw, 88px) 44px;
   max-width: 1480px; margin: 0 auto;
 }
 .ss-left { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: clamp(16px, 2.4vw, 40px); align-items: center; }
@@ -53,7 +53,7 @@
 
 /* сцена з відео */
 .ss-stage {
-  position: relative; height: min(calc(100svh - 190px), 820px); aspect-ratio: var(--ss-aspect, 0.569); border-radius: 18px; overflow: hidden;
+  position: relative; height: min(calc(100svh - var(--ss-hdr, 96px) - 92px), 820px); aspect-ratio: var(--ss-aspect, 0.569); border-radius: 18px; overflow: hidden;
   box-shadow: 0 30px 90px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.07);
   background: #0c0e10;
 }
@@ -95,3 +95,24 @@
 .ss-static .ss-cap { position: static; opacity: 1; transform: none; pointer-events: auto; transition: none; }
 .ss-static .ss-rail, .ss-static .ss-hint { display: none; }
 @media (prefers-reduced-motion: reduce) { .ss-loading, .ss-hint span { animation: none; } .ss-cap, .ss-cap[data-on], .ss-rail-btn { transition: none; } }
+
+/* ───── перший етап = головний екран сайту (заголовок, пошук, кнопки) ───── */
+.ss-intro { max-width: 640px; }
+.ss-l { margin-left: 0 !important; margin-right: auto !important; justify-content: flex-start !important; text-align: left !important; }
+.ss-br { display: none; }
+.ss-intro h1 { font-size: clamp(30px, 3vw, 46px) !important; }
+.ss-intro .mo-in { /* каскад появи керується motion.css */ }
+/* неактивні підписи не беруть фокус і не читаються: visibility вмикається з затримкою, щоб встигла зникнути анімація */
+.ss-cap:not([data-on]) { visibility: hidden; transition: opacity 320ms var(--mo-ease-in, ease-in), transform 320ms var(--mo-ease-in, ease-in), visibility 0s linear 340ms; }
+.ss-cap[data-on] { visibility: visible; }
+@media (max-width: 899px), (max-height: 760px) { .ss-opt { display: none !important; } }
+@media (max-width: 899px) {
+  .ss-opt-m { display: none !important; }
+  .ss-intro h1 { font-size: clamp(26px, 7vw, 34px) !important; margin-bottom: 12px !important; }
+  .ss-intro form { margin-bottom: 12px !important; }
+  .ss-intro > div { margin-bottom: 0 !important; }
+}
+
+.ss-intro form { max-width: 100% !important; }
+.ss-intro form input { min-width: 0; width: 100%; }
+.ss-intro form button { flex-shrink: 0; }

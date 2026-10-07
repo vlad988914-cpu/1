@@ -6,13 +6,12 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "node --test tests/hero.test.mjs tests/story.test.mjs"
+    "test": "node --test tests/story.test.mjs"
   },
   "dependencies": {
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "@supabase/supabase-js": "^2.58.0",
-    "framer-motion": "^11.18.2"
+    "@supabase/supabase-js": "^2.58.0"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.1",
