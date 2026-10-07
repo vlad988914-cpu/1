@@ -4,6 +4,7 @@ import { Plate, Label, badgeStyle, miniBtn, ErrorText, Field, primaryBtn, smallB
 import { answerFromKnowledge, FALLBACK_ANSWER, JOB_PILLS, HELPER_PILLS } from "../shared/workKnowledge.js";
 import { ClientCabinet, OwnerCabinet, NotificationsPanel, BookingForm, AvailabilityCalendar } from "./cabinets.jsx";
 import { WantedBoard, RespondForm } from "./wanted.jsx";
+import ExcavatorHero from "./hero/ExcavatorHero.jsx";
 import { DealsSection, EventLog, EquipmentBoard, UsersBoard, PairsBoard } from "./dispatcherDeals.jsx";
 import * as deals from "./services/deals.js";
 
@@ -790,7 +791,13 @@ export default function EquipmentMarketplace() {
       { threshold: 0.15 }
     );
     els.forEach((el) => io.observe(el));
-    return () => io.disconnect();
+    // Заголовок героя повністю обрізаний clip-path'ом, тож IntersectionObserver його «не бачить»:
+    // відкриваємо по таймеру (він завжди на першому екрані)
+    const wipes = [...document.querySelectorAll(".reveal-wipe:not(.is-visible)")].map((el, i) => setTimeout(() => el.classList.add("is-visible"), 220 + i * 140));
+    return () => {
+      io.disconnect();
+      wipes.forEach(clearTimeout);
+    };
   }, [role, listings.length, requests.length]);
 
   const scrollToApp = () => appSectionRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -801,6 +808,13 @@ export default function EquipmentMarketplace() {
     if (!datesChosen) return null;
     const hit = busyRanges.filter((r) => r.listing_id === l.id && deals.rangesOverlap(r.date_from, r.date_to, catFrom, catTo));
     return hit.length ? hit.map((r) => r.date_to).sort().slice(-1)[0] : null;
+  };
+
+  // Клік по деталі героя: показати відповідний тип техніки в каталозі
+  const handleHeroHotspot = (h) => {
+    setRole("client");
+    if (h && h.catalog && h.catalog.type) setFilterType(h.catalog.type);
+    scrollToApp();
   };
   const filtered = useMemo(() => {
     const base = listings.filter(
@@ -1921,28 +1935,6 @@ export default function EquipmentMarketplace() {
           flex-shrink: 0;
         }
 
-        .hero-video-drip-zone .drip {
-          position: absolute;
-          top: 30%;
-          width: 5px;
-          height: 12px;
-          border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
-          background: linear-gradient(180deg, #FFC862, #FF6A1A);
-          opacity: 0;
-          pointer-events: none;
-          box-shadow: 0 0 4px rgba(255,106,26,0.5);
-        }
-        .hero-video-drip-zone:hover .drip {
-          animation: dripFall 1.4s ease-in infinite;
-        }
-        @keyframes dripFall {
-          0% { opacity: 0; transform: translateY(0) scaleY(0.6); }
-          15% { opacity: 1; transform: translateY(0) scaleY(1); }
-          85% { opacity: 1; }
-          100% { opacity: 0; transform: translateY(160px) scaleY(1.4); }
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .hero-video-drip-zone:hover .drip { animation: none; opacity: 0; }
         }
 
         .guide-card-motion {
@@ -2611,59 +2603,9 @@ export default function EquipmentMarketplace() {
         </div>
       </header>
 
-      {/* Hero landing */}
-      <section
-        ref={heroRef}
-        style={{
-          padding: "56px 24px 40px",
-          textAlign: "center",
-          borderBottom: "1px solid #202428",
-          overflow: "hidden",
-          position: "relative",
-          background: "radial-gradient(ellipse 700px 380px at 50% -10%, rgba(255,176,32,0.16), rgba(255,90,31,0.08) 45%, transparent 70%)",
-        }}
-      >
-        <div className="hero-video-drip-zone" style={{ position: "absolute", inset: 0, zIndex: 0 }}>
-          <video
-            autoPlay
-            muted
-            loop
-            playsInline
-            src="/hero-video.mp4"
-            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
-          />
-          <span className="drip" style={{ left: "38%", animationDelay: "0s" }} />
-          <span className="drip" style={{ left: "45%", animationDelay: "0.35s" }} />
-          <span className="drip" style={{ left: "52%", animationDelay: "0.7s" }} />
-          <span className="drip" style={{ left: "58%", animationDelay: "0.2s" }} />
-          <span className="drip" style={{ left: "48%", animationDelay: "0.5s" }} />
-        </div>
-        <div
-          aria-hidden="true"
-          style={{
-            position: "absolute",
-            inset: 0,
-            background: "linear-gradient(180deg, rgba(8,9,10,0.5) 0%, rgba(8,9,10,0.68) 55%, rgba(8,9,10,0.92) 100%)",
-            zIndex: 0,
-          }}
-        />
-        {/* Blueprint grid — the one deliberate signature texture, echoing the technical-drawing icon set */}
-        <div
-          aria-hidden="true"
-          style={{
-            position: "absolute",
-            inset: 0,
-            backgroundImage:
-              "linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px)",
-            backgroundSize: "28px 28px",
-            maskImage: "radial-gradient(ellipse 60% 70% at 50% 20%, #000 0%, transparent 75%)",
-            WebkitMaskImage: "radial-gradient(ellipse 60% 70% at 50% 20%, #000 0%, transparent 75%)",
-            pointerEvents: "none",
-          }}
-        />
-        <span aria-hidden="true" style={{ position: "absolute", top: 14, left: 14, width: 14, height: 14, borderTop: "1.5px solid #48484a", borderLeft: "1.5px solid #48484a" }} />
-        <span aria-hidden="true" style={{ position: "absolute", top: 14, right: 14, width: 14, height: 14, borderTop: "1.5px solid #48484a", borderRight: "1.5px solid #48484a" }} />
-        <div style={{ maxWidth: 640, margin: "0 auto", position: "relative" }}>
+      {/* Hero landing: інтерактивний екскаватор (src/hero). Зони підключаються до каталогу через onSelectHotspot */}
+      <ExcavatorHero sectionRef={heroRef} onSelectHotspot={handleHeroHotspot}>
+        <div className="hx-left" style={{ maxWidth: 640, margin: "0 auto", position: "relative" }}>
           <div
             className="reveal badge-pulse"
             style={{
@@ -2711,16 +2653,16 @@ export default function EquipmentMarketplace() {
               ...parallaxStyle(12),
             }}
           >
-            {t("hero_title_1")}
-            <br />
+            {t("hero_title_1")}{" "}
+            <br className="hx-br" />
             {t("hero_title_2")}
           </h1>
-          <p style={{ color: "#A3A8AD", fontSize: 15.5, maxWidth: 480, margin: "0 auto 28px", minHeight: 44 }}>
+          <p className="hx-left" style={{ color: "#A3A8AD", fontSize: 15.5, maxWidth: 480, margin: "0 auto 28px", minHeight: 44 }}>
             {typedIntro}
             {!typedIntroDone && <span className="typewriter-cursor" />}
           </p>
           <form
-            className="reveal reveal-2"
+            className="reveal reveal-2 hx-left"
             onSubmit={(e) => {
               e.preventDefault();
               const query = heroSearch.trim().toLowerCase();
@@ -2742,7 +2684,7 @@ export default function EquipmentMarketplace() {
               {t("hero_search_btn")}
             </button>
           </form>
-          <div className="reveal reveal-2" style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap", marginBottom: 44 }}>
+          <div className="reveal reveal-2 hx-left" style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap", marginBottom: 44 }}>
             <button
               onClick={() => {
                 setRole("client");
@@ -2764,7 +2706,7 @@ export default function EquipmentMarketplace() {
               {t("hero_cta_owner")}
             </button>
           </div>
-          <div className="reveal reveal-2" style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 8, marginBottom: 8 }}>
+          <div className="reveal reveal-2 hx-left" style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 8, marginBottom: 8 }}>
             <button className="hero-pill" onClick={() => scrollToApp()}>
               {t("pill_catalog")}
             </button>
@@ -2783,7 +2725,7 @@ export default function EquipmentMarketplace() {
             </button>
           </div>
         </div>
-      </section>
+      </ExcavatorHero>
 
       {/* 3D viewer temporarily removed — revisit later */}
 
