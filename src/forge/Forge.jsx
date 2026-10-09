@@ -56,6 +56,7 @@ export default function HeaderForge() {
   const [on, setOn] = useState(false);
   const [geo, setGeo] = useState(null); // { w, h, ox, oy }
   const [ok, setOk] = useState(false); // достатньо місця для робітника
+  const [playing, setPlaying] = useState(false); // відео пішло — статичний кадр більше не потрібен
   const reduced = useMemo(() => reducedMotion(), []);
   const timer = useRef(0);
 
@@ -89,19 +90,15 @@ export default function HeaderForge() {
     return () => { ro && ro.disconnect(); window.removeEventListener("resize", measure); };
   }, []);
 
-  // відео: грає лише під час наведення
+  // відео крутиться завжди (без статичного кадру); при наведенні б'є енергійніше
   useEffect(() => {
     const v = vid.current;
     if (!v) return undefined;
-    if (on) {
-      clearTimeout(timer.current);
-      const p = v.play();
-      if (p && p.catch) p.catch(() => {});
-    } else {
-      timer.current = setTimeout(() => { try { v.pause(); v.currentTime = 0; } catch (e) { /* ignore */ } }, 380);
-    }
-    return () => clearTimeout(timer.current);
-  }, [on]);
+    v.playbackRate = on ? 1.5 : 0.8;
+    const p = v.play();
+    if (p && p.catch) p.catch(() => {});
+    return undefined;
+  }, [on, ok]);
 
   // шапка «підсвічується» теж: клас на header для тріщин на всю ширину
   useEffect(() => {
@@ -152,9 +149,9 @@ export default function HeaderForge() {
         role="img"
         aria-label="Робітник з відбійним молотком"
       >
-        <img src="/forge/worker.png" alt="" draggable="false" />
+        <img src="/forge/worker.png" alt="" draggable="false" style={{ opacity: playing ? 0 : 1 }} />
         {WEBM_OK && !reduced && (
-          <video ref={vid} className="forge-video" data-on={on ? "1" : "0"} muted loop playsInline preload="auto" aria-hidden="true">
+          <video ref={vid} className="forge-video" data-on={playing ? "1" : "0"} autoPlay muted loop playsInline preload="auto" aria-hidden="true" onPlaying={() => setPlaying(true)}>
             <source src="/forge/worker.webm" type="video/webm" />
           </video>
         )}
