@@ -15,6 +15,8 @@ import * as deals from "./services/deals.js";
 // прописаний як DISPATCH_API_KEY у bot/.env.
 
 // ---- i18n ----
+const LOGO_SAFARI = typeof navigator !== "undefined" && /^((?!chrome|android|crios|fxios).)*safari/i.test(navigator.userAgent);
+
 const TRANSLATIONS = {
   uk: {
     tagline: "біржа будтехніки",
@@ -2340,32 +2342,27 @@ export default function EquipmentMarketplace() {
       >
         <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
           <span
-            className="logo-flip"
-            style={{
-              fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif",
-              fontWeight: 700,
-              fontSize: 22,
-              letterSpacing: "0.02em",
-              textTransform: "none",
-            }}
+            role="img"
+            aria-label="ТЕХМАЙДАНЧИК"
+            style={{ display: "inline-block", width: "clamp(210px, 17vw, 320px)", lineHeight: 0, alignSelf: "center" }}
           >
-            <span className="logo-face logo-front">
-              {"ТЕХМАЙДАНЧИК".split("").map((ch, i) => (
-                <span
-                  key={i}
-                  className={`bounce-letter${i >= 3 ? " shimmer-logo" : ""}`}
-                  style={{ animationDelay: `${i * 0.05}s` }}
-                >
-                  {ch}
-                </span>
-              ))}
-            </span>
-            <span className="logo-face logo-back" aria-hidden="true">
-              <span className="road-track">
-                <span className="road-fill" />
-              </span>
-              <span className="tractor-icon"><IconExcavator size={20} style={{ color: "#FF6A1A" }} /></span>
-            </span>
+            {/* Chrome/Firefox: WebM з прозорістю. Safari не вміє альфу у WebM — для нього MP4 на чорному тлі + lighten. */}
+            <video
+              key={LOGO_SAFARI ? "mp4" : "webm"}
+              className="logo-video"
+              autoPlay
+              loop
+              muted
+              playsInline
+              preload="auto"
+              poster="/logo/logo-poster.png"
+              aria-hidden="true"
+              style={{ width: "100%", height: "auto", display: "block", pointerEvents: "none", mixBlendMode: LOGO_SAFARI ? "lighten" : "normal" }}
+            >
+              {LOGO_SAFARI
+                ? <source src="/logo/logo.mp4" type="video/mp4" />
+                : <source src="/logo/logo.webm" type="video/webm" />}
+            </video>
           </span>
           <Label><MorphingTagline text="біржа будтехніки" /></Label>
         </div>
