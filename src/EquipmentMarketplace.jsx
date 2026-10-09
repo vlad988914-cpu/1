@@ -15,7 +15,9 @@ import * as deals from "./services/deals.js";
 // прописаний як DISPATCH_API_KEY у bot/.env.
 
 // ---- i18n ----
-const LOGO_SAFARI = typeof navigator !== "undefined" && /^((?!chrome|android|crios|fxios).)*safari/i.test(navigator.userAgent);
+
+// Прозорий WebM працює в Chrome/Firefox/Edge; Safari не вміє альфу у WebM — там статичний логотип.
+const LOGO_ALPHA_VIDEO = typeof navigator !== "undefined" && !/^((?!chrome|android|crios|fxios|edg).)*safari/i.test(navigator.userAgent);
 
 const TRANSLATIONS = {
   uk: {
@@ -1707,6 +1709,9 @@ export default function EquipmentMarketplace() {
           64%, 90% { transform: rotateX(180deg); }
           100% { transform: rotateX(360deg); }
         }
+
+        .brand-3d { display: inline-block; width: clamp(200px, 17vw, 300px); line-height: 0; align-self: center; margin: -6px 0 -10px; }
+        .brand-3d img, .brand-3d video { width: 100%; pointer-events: none; height: auto; display: block; user-select: none; }
         .logo-flip {
           position: relative;
           display: inline-grid;
@@ -2341,28 +2346,14 @@ export default function EquipmentMarketplace() {
         }}
       >
         <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
-          <span
-            role="img"
-            aria-label="ТЕХМАЙДАНЧИК"
-            style={{ display: "inline-block", width: "clamp(210px, 17vw, 320px)", lineHeight: 0, alignSelf: "center" }}
-          >
-            {/* Chrome/Firefox: WebM з прозорістю. Safari не вміє альфу у WebM — для нього MP4 на чорному тлі + lighten. */}
-            <video
-              key={LOGO_SAFARI ? "mp4" : "webm"}
-              className="logo-video"
-              autoPlay
-              loop
-              muted
-              playsInline
-              preload="auto"
-              poster="/logo/logo-poster.png"
-              aria-hidden="true"
-              style={{ width: "100%", height: "auto", display: "block", pointerEvents: "none", mixBlendMode: LOGO_SAFARI ? "lighten" : "normal" }}
-            >
-              {LOGO_SAFARI
-                ? <source src="/logo/logo.mp4" type="video/mp4" />
-                : <source src="/logo/logo.webm" type="video/webm" />}
-            </video>
+          <span role="img" aria-label="ТЕХМАЙДАНЧИК" className="brand-3d">
+            {LOGO_ALPHA_VIDEO ? (
+              <video autoPlay loop muted playsInline preload="auto" poster="/logo/logo.png" aria-hidden="true">
+                <source src="/logo/logo.webm" type="video/webm" />
+              </video>
+            ) : (
+              <img src="/logo/logo.png" alt="" draggable="false" />
+            )}
           </span>
           <Label><MorphingTagline text="біржа будтехніки" /></Label>
         </div>
