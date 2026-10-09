@@ -4,6 +4,7 @@ import { Plate, Label, badgeStyle, miniBtn, ErrorText, Field, primaryBtn, smallB
 import { answerFromKnowledge, FALLBACK_ANSWER, JOB_PILLS, HELPER_PILLS } from "../shared/workKnowledge.js";
 import { ClientCabinet, OwnerCabinet, NotificationsPanel, BookingForm, AvailabilityCalendar } from "./cabinets.jsx";
 import { WantedBoard, RespondForm } from "./wanted.jsx";
+import HeaderForge from "./forge/Forge.jsx";
 import ScrollStory from "./story/ScrollStory.jsx";
 import { SplitWords, CountUp, SlidingTabs, ScrollProgress, SceneAura, useSpotlight, useMagnetic, useReveal, useScenes } from "./motion/index.jsx";
 import { DealsSection, EventLog, EquipmentBoard, UsersBoard, PairsBoard } from "./dispatcherDeals.jsx";
@@ -2334,8 +2335,9 @@ export default function EquipmentMarketplace() {
 
       {/* Header */}
       <header
-        className="sticky-header"
+        className={`sticky-header has-forge${scrolled ? " is-scrolled" : ""}`}
         style={{
+          "--hp": scrolled ? "12px" : "20px",
           borderBottom: "1px solid #63696D",
           padding: scrolled ? "12px 24px" : "20px 24px",
           display: "flex",
@@ -2357,6 +2359,7 @@ export default function EquipmentMarketplace() {
           </span>
           <Label><MorphingTagline text="біржа будтехніки" /></Label>
         </div>
+        <HeaderForge />
 
         <button
           onClick={() => {

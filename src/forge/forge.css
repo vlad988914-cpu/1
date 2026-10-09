@@ -1,0 +1,29 @@
+/* «Кузня» у шапці */
+.forge-art { flex: 1 1 0; min-width: 0; max-width: 340px; align-self: stretch; margin-block: calc(var(--hp, 20px) * -1); position: relative; display: none; cursor: crosshair; }
+.forge-art img, .forge-art video { position: absolute; right: 0; bottom: 0; height: 100%; width: auto; max-width: 100%; object-fit: contain; object-position: right bottom; user-select: none; }
+.forge-video { opacity: 0; transition: opacity 0.22s ease-out; pointer-events: none; }
+.forge-video[data-on="1"] { opacity: 1; }
+.forge-art img { pointer-events: none; }
+
+.sticky-header > .forge-cracks { position: absolute; left: 0; top: 0; z-index: 0; pointer-events: none; display: none; }
+
+.forge-line { stroke-dasharray: 1; stroke-dashoffset: 0.62; transition: stroke-dashoffset 0.9s cubic-bezier(0.16, 1, 0.3, 1); }
+.forge-floor { opacity: 0.55; transition: opacity 0.5s ease-out; }
+.forge-pulse { opacity: 0.55; animation: forgeBreath 4.2s ease-in-out infinite; }
+.forge-cracks[data-on="1"] .forge-line { stroke-dashoffset: 0; }
+.forge-cracks[data-on="1"] .forge-floor { opacity: 1; }
+.forge-cracks[data-on="1"] .forge-pulse { opacity: 1; animation: forgeHammer 0.34s ease-in-out infinite; }
+
+@keyframes forgeBreath { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.8; } }
+@keyframes forgeHammer { 0%, 100% { opacity: 0.72; } 40% { opacity: 1; } }
+
+/* показуємо лише там, де є місце в шапці */
+@media (min-width: 1440px) {
+  .forge-art, .sticky-header > .forge-cracks { display: block; }
+  .sticky-header.has-forge { min-height: 108px; }
+  .sticky-header.has-forge.is-scrolled { min-height: 70px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .forge-pulse { animation: none; }
+  .forge-line { transition: none; }
+}
