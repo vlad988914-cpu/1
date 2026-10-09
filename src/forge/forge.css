@@ -25,6 +25,9 @@
   .sticky-header.forge-ok { min-height: 108px; }
   .sticky-header.forge-ok.is-scrolled { min-height: 70px; }
 }
+@media (min-width: 820px) {
+  .forge-art[data-mode="abs"] { position: absolute; flex: none; margin: 0; top: 0; bottom: 0; right: clamp(150px, 15vw, 240px); width: 150px; max-width: none; z-index: 1; }
+}
 @media (prefers-reduced-motion: reduce) {
   .forge-pulse { animation: none; }
   .forge-line { transition: none; }

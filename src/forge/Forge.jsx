@@ -69,9 +69,12 @@ export default function HeaderForge() {
       if (!img) return;
       const hr = hdr.getBoundingClientRect();
       const ir = img.getBoundingClientRect();
+      // шапка перенеслась на два рядки? тоді робітник стає поверх шапки (absolute) з правого боку
+      const kids = Array.prototype.filter.call(hdr.children, (k) => k !== el && !(k.classList && k.classList.contains("forge-cracks")));
+      const wrapped = kids.length > 1 && kids.some((k) => k.offsetTop > kids[0].offsetTop + 30);
+      el.dataset.mode = wrapped ? "abs" : "flow";
       const ar = el.getBoundingClientRect();
-      // місце є, якщо шапка в один рядок (робітник на всю її висоту) і є ≥96px по ширині
-      const fits = window.innerWidth >= 820 && ar.width >= 96 && ar.height >= hr.height - 8;
+      const fits = window.innerWidth >= 820 && (wrapped || ar.width >= 96);
       setOk(fits);
       hdr.classList.toggle("forge-ok", fits);
       if (!ir.width) return;
