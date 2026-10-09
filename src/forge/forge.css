@@ -17,11 +17,13 @@
 @keyframes forgeBreath { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.8; } }
 @keyframes forgeHammer { 0%, 100% { opacity: 0.72; } 40% { opacity: 1; } }
 
-/* показуємо лише там, де є місце в шапці */
-@media (min-width: 1440px) {
-  .forge-art, .sticky-header > .forge-cracks { display: block; }
-  .sticky-header.has-forge { min-height: 108px; }
-  .sticky-header.has-forge.is-scrolled { min-height: 70px; }
+/* показуємо там, де є місце в шапці (перевіряє Forge.jsx → клас forge-ok) */
+@media (min-width: 820px) {
+  .forge-art { display: block; }
+  .forge-art[data-ok="0"] { visibility: hidden; }
+  .sticky-header > .forge-cracks { display: block; }
+  .sticky-header.forge-ok { min-height: 108px; }
+  .sticky-header.forge-ok.is-scrolled { min-height: 70px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .forge-pulse { animation: none; }

@@ -55,6 +55,7 @@ export default function HeaderForge() {
   const vid = useRef(null);
   const [on, setOn] = useState(false);
   const [geo, setGeo] = useState(null); // { w, h, ox, oy }
+  const [ok, setOk] = useState(false); // достатньо місця для робітника
   const reduced = useMemo(() => reducedMotion(), []);
   const timer = useRef(0);
 
@@ -68,6 +69,11 @@ export default function HeaderForge() {
       if (!img) return;
       const hr = hdr.getBoundingClientRect();
       const ir = img.getBoundingClientRect();
+      const ar = el.getBoundingClientRect();
+      // місце є, якщо шапка в один рядок (робітник на всю її висоту) і є ≥96px по ширині
+      const fits = window.innerWidth >= 820 && ar.width >= 96 && ar.height >= hr.height - 8;
+      setOk(fits);
+      hdr.classList.toggle("forge-ok", fits);
       if (!ir.width) return;
       setGeo({ w: hr.width, h: hr.height, ox: ir.left - hr.left + ir.width * TIP.x, oy: ir.top - hr.top + ir.height * TIP.y });
     };
@@ -106,7 +112,7 @@ export default function HeaderForge() {
 
   return (
     <>
-      {geo && (
+      {geo && ok && (
         <svg className="forge-cracks" width={geo.w} height={geo.h} viewBox={`0 0 ${geo.w} ${geo.h}`} aria-hidden="true" data-on={on ? "1" : "0"}>
           <defs>
             <radialGradient id="forgeGlow" gradientUnits="userSpaceOnUse" cx={geo.ox} cy={geo.h} r={Math.max(geo.ox, geo.w - geo.ox)}>
@@ -136,6 +142,7 @@ export default function HeaderForge() {
       <div
         ref={box}
         className="forge-art"
+        data-ok={ok ? "1" : "0"}
         onMouseEnter={() => !reduced && setOn(true)}
         onMouseLeave={() => setOn(false)}
         onTouchStart={() => !reduced && touch()}
