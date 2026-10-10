@@ -20,15 +20,23 @@
 @media (min-width: 820px) {
   .forge-art { display: block; }
   .forge-art[data-ok="0"] { visibility: hidden; }
-  .sticky-header.forge-ok { min-height: 120px; }
-  .sticky-header.forge-ok.is-scrolled { min-height: 82px; }
+  .sticky-header.forge-ok { min-height: 112px; }
+  .sticky-header.forge-ok.is-scrolled { min-height: 78px; }
+  .sticky-header.forge-compact .hdr-tagline, .sticky-header.forge-compact .hdr-how { display: none; }
 
   /* два ряди: ряд 1 = логотип + кузня + «Як це працює», ряд 2 = меню */
   .sticky-header.forge-two { min-height: 0; }
   .sticky-header.forge-two > .hdr-nav { flex: 0 0 100%; justify-content: flex-start; }
-  .sticky-header.forge-two > .forge-art { max-width: none; min-height: calc(112px + var(--hp, 20px) * 2); }
+  .sticky-header.forge-two > .forge-art { max-width: none; min-height: calc(96px + var(--hp, 20px) * 2); }
   .sticky-header.forge-two.is-scrolled > .forge-art { min-height: calc(60px + var(--hp, 12px) * 2); }
 }
 @media (prefers-reduced-motion: reduce) {
   .fw-still { animation: none; }
+}
+
+/* шапка лежит поверх сцени з яскравими кадрами: затемнене «скло», щоб текст і кнопки завжди читались */
+.sticky-header.has-forge { background: rgba(9, 10, 12, 0.66); background-blend-mode: normal; }
+@media (max-width: 700px) {
+  .sticky-header.has-forge { padding: 10px 16px !important; gap: 8px 10px !important; }
+  .sticky-header .hdr-how { display: none; }
 }

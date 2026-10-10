@@ -2357,11 +2357,12 @@ export default function EquipmentMarketplace() {
               <img src="/logo/logo.png" alt="" draggable="false" />
             )}
           </span>
-          <Label><MorphingTagline text="біржа будтехніки" /></Label>
+          <span className="hdr-tagline"><Label><MorphingTagline text="біржа будтехніки" /></Label></span>
         </div>
         <HeaderForge />
 
         <button
+          className="hdr-how"
           onClick={() => {
             const el = document.getElementById("how-it-works");
             if (el) el.scrollIntoView({ behavior: "smooth" });
@@ -2626,16 +2627,16 @@ export default function EquipmentMarketplace() {
               if (matchedType) setFilterType(matchedType);
               scrollToApp();
             }}
-            style={{ "--i": 4, display: "flex", gap: 8, maxWidth: 420, margin: "0 auto 20px" }}
+            style={{ "--i": 4, display: "flex", gap: 8, width: "100%", maxWidth: 420, margin: "0 auto 20px" }}
           >
             <input
               value={heroSearch}
               onChange={(e) => setHeroSearch(e.target.value)}
               aria-label={t("hero_search_placeholder")}
               placeholder={t("hero_search_placeholder")}
-              style={{ ...inputStyle, flex: 1 }}
+              style={{ ...inputStyle, flex: 1, minWidth: 0 }}
             />
-            <button type="submit" className="glass-cta">
+            <button type="submit" className="glass-cta" style={{ flexShrink: 0 }}>
               {t("hero_search_btn")}
             </button>
           </form>

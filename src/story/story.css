@@ -35,7 +35,7 @@
 /* підписи: один активний, решта розчиняються */
 .ss-caps { position: relative; min-height: min(520px, calc(100svh - var(--ss-hdr, 96px) - 40px)); }
 .ss-cap {
-  position: absolute; left: 0; top: 50%; width: 100%;
+  position: absolute; left: 0; top: 50%; width: 100%; box-sizing: border-box;
   opacity: 0; transform: translate3d(0, calc(-50% + 26px), 0); pointer-events: none;
   transition: opacity 320ms var(--mo-ease-in, ease-in), transform 320ms var(--mo-ease-in, ease-in);
 }

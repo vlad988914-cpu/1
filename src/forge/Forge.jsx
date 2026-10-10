@@ -26,13 +26,21 @@ export default function HeaderForge() {
     const hdr = el && el.closest("header");
     if (!hdr) return undefined;
     const measure = () => {
-      hdr.classList.remove("forge-two");
+      // 1) звичайна шапка; 2) якщо тісно — ховаємо слоган і «Як це працює» (forge-compact);
+      // 3) якщо й так тісно (вузько/залогінений профіль) — два ряди (forge-two)
+      hdr.classList.remove("forge-two", "forge-compact");
       const kids = Array.prototype.filter.call(hdr.children, (k) => k !== el);
-      const wrapped = kids.length > 1 && kids.some((k) => k.offsetTop > kids[0].offsetTop + 30);
+      const isWrapped = () => kids.length > 1 && kids.some((k) => k.offsetTop > kids[0].offsetTop + 30);
+      const slotW = () => el.getBoundingClientRect().width;
       const wide = window.innerWidth >= 820;
-      hdr.classList.toggle("forge-two", wide && (window.innerWidth < 1280 || wrapped));
-      const ar = el.getBoundingClientRect();
-      const fits = wide && ar.width >= 96;
+      if (wide && (isWrapped() || slotW() < 150)) {
+        hdr.classList.add("forge-compact");
+        if (isWrapped() || slotW() < 96) {
+          hdr.classList.remove("forge-compact");
+          hdr.classList.add("forge-two");
+        }
+      }
+      const fits = wide && slotW() >= 96 || (wide && hdr.classList.contains("forge-two"));
       setOk(fits);
       hdr.classList.toggle("forge-ok", fits);
     };
