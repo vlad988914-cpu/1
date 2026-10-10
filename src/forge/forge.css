@@ -4,34 +4,30 @@
 
 .fw-strip { position: absolute; right: 0; bottom: 0; height: 100%; aspect-ratio: 4480 / 564; user-select: none; }
 .fw-strip img, .fw-strip video { position: absolute; max-width: none; pointer-events: none; }
-.fw-still, .fw-video { left: 71.4286%; width: 28.5714%; top: 0; height: 100%; }
+.fw-still, .fw-video, .fw-idle { left: 71.4286%; width: 28.5714%; top: 0; height: 100%; }
 .fw-slab { left: 0; width: 78.125%; top: 78.01%; height: 21.28%;
   -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 12%); mask-image: linear-gradient(90deg, transparent 0, #000 12%); }
-.fw-still { transition: opacity 0.45s ease-out; animation: fwBreath 5.2s ease-in-out infinite; }
-.fw-video { opacity: 0; transition: opacity 0.45s ease-out; }
-.forge-art[data-active="1"] .fw-video { opacity: 1; transition-duration: 0.12s; }
-.forge-art[data-active="1"] .fw-still { opacity: 0; transition-duration: 0.12s; animation: none; }
+/* спокій (idle) і удар (video) — з одного ролика, поза збігається, тому перехід плавний і непомітний */
+.fw-still { transition: opacity 0.4s ease-out; }
+.fw-idle { opacity: 1; transition: opacity 0.3s ease-out; }
+.fw-video { opacity: 0; transition: opacity 0.3s ease-out; }
+.forge-art[data-active="1"] .fw-video { opacity: 1; transition-duration: 0.16s; }
+.forge-art[data-active="1"] .fw-idle { opacity: 0; transition-duration: 0.16s; }
 
 /* зона наведення: сам робітник */
 .fw-hit { position: absolute; left: 87.5%; width: 7.2%; top: 6%; height: 88%; pointer-events: auto; cursor: pointer; }
 
-@keyframes fwBreath { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.14) saturate(1.08); } }
 
 @media (min-width: 820px) {
   .forge-art { display: block; }
   .forge-art[data-ok="0"] { visibility: hidden; }
   .sticky-header.forge-ok { min-height: 112px; }
-  .sticky-header.forge-ok.is-scrolled { min-height: 78px; }
   .sticky-header.forge-compact .hdr-tagline, .sticky-header.forge-compact .hdr-how { display: none; }
 
   /* два ряди: ряд 1 = логотип + кузня + «Як це працює», ряд 2 = меню */
   .sticky-header.forge-two { min-height: 0; }
   .sticky-header.forge-two > .hdr-nav { flex: 0 0 100%; justify-content: flex-start; }
   .sticky-header.forge-two > .forge-art { max-width: none; min-height: calc(96px + var(--hp, 20px) * 2); }
-  .sticky-header.forge-two.is-scrolled > .forge-art { min-height: calc(60px + var(--hp, 12px) * 2); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .fw-still { animation: none; }
 }
 
 /* шапка лежит поверх сцени з яскравими кадрами: затемнене «скло», щоб текст і кнопки завжди читались */
@@ -39,4 +35,10 @@
 @media (max-width: 700px) {
   .sticky-header.has-forge { padding: 10px 16px !important; gap: 8px 10px !important; }
   .sticky-header .hdr-how { display: none; }
+}
+
+/* шапка завжди одного розміру: і нагорі, і при прокрутці — без стрибка та здригання */
+.sticky-header.has-forge { --hp: 16px !important; padding-top: 16px !important; padding-bottom: 16px !important; transition: none; }
+@media (max-width: 700px) {
+  .sticky-header.has-forge { --hp: 10px !important; padding-top: 10px !important; padding-bottom: 10px !important; }
 }

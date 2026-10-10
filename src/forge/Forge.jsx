@@ -7,11 +7,13 @@ import "./forge.css";
 const WEBM_OK = typeof navigator !== "undefined" && !/^((?!chrome|android|crios|fxios|edg).)*safari/i.test(navigator.userAgent);
 const reducedMotion = () => typeof window !== "undefined" && window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 const LOOP_LEN = 78 / 24;   // тривалість циклу, с
-const FADE_FROM = LOOP_LEN - 0.55; // з цього моменту циклу кадр «спокійний» (кувалда піднята) — можна плавно повертатись до стоп-кадру
+const FADE_FROM = LOOP_LEN - 0.4; // кінець циклу: поза = «кувалда піднята», та сама, що в спокої — можна непомітно переходити в спокій
 
 export default function HeaderForge() {
   const box = useRef(null);
   const vid = useRef(null);
+  const idleV = useRef(null);
+  const [live, setLive] = useState(false); // спокійне відео пішло — постер не потрібен
   const [ok, setOk] = useState(false);
   const [active, setActive] = useState(false);
   const hovering = useRef(false);
@@ -51,6 +53,16 @@ export default function HeaderForge() {
     return () => { ro && ro.disconnect(); window.removeEventListener("resize", measure); cancelAnimationFrame(raf.current); };
   }, []);
 
+  // спокій: ледь помітний рух (те саме відео, поза та сама, що на початку/кінці удару) — без жодних стрибків
+  useEffect(() => {
+    const v = idleV.current;
+    if (!v || !ok || !animated) return undefined;
+    v.playbackRate = 0.5;
+    const p = v.play();
+    if (p && p.catch) p.catch(() => {});
+    return undefined;
+  }, [ok, animated]);
+
   const start = () => {
     const v = vid.current;
     if (!v || !animated) return;
@@ -71,7 +83,7 @@ export default function HeaderForge() {
       if (hovering.current) return;
       if (v.currentTime >= FADE_FROM || performance.now() - t0 > 4200) {
         setActive(false);
-        setTimeout(() => { if (!hovering.current && vid.current) { vid.current.pause(); vid.current.currentTime = 0; } }, 600);
+        setTimeout(() => { if (!hovering.current && vid.current) { vid.current.pause(); vid.current.currentTime = 0; } }, 700);
         return;
       }
       raf.current = requestAnimationFrame(tick);
@@ -90,11 +102,16 @@ export default function HeaderForge() {
   return (
     <div ref={box} className="forge-art" data-ok={ok ? "1" : "0"} data-active={active ? "1" : "0"} role="img" aria-label="Робітник з кувалдою на плиті">
       <div className="fw-strip">
-        <img className="fw-still" src="/forge/strip-still.webp" alt="" draggable="false" />
+        <img className="fw-still" src="/forge/strip-still.webp" alt="" draggable="false" style={{ opacity: live ? 0 : 1 }} />
         {animated && (
-          <video ref={vid} className="fw-video" muted loop playsInline preload="auto" aria-hidden="true">
-            <source src="/forge/strip-hit.webm" type="video/webm" />
-          </video>
+          <>
+            <video ref={idleV} className="fw-idle" muted loop playsInline preload="auto" aria-hidden="true" onPlaying={() => setLive(true)}>
+              <source src="/forge/strip-idle.webm" type="video/webm" />
+            </video>
+            <video ref={vid} className="fw-video" muted loop playsInline preload="auto" aria-hidden="true">
+              <source src="/forge/strip-hit.webm" type="video/webm" />
+            </video>
+          </>
         )}
         <img className="fw-slab" src="/forge/strip-slab.webp" alt="" draggable="false" />
         <div className="fw-hit" onMouseEnter={enter} onMouseLeave={leave} onTouchStart={touch} />
