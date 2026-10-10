@@ -2829,7 +2829,7 @@ export default function EquipmentMarketplace() {
 
       {/* Filters (client view) */}
       {role === "client" && (
-        <div style={{ padding: "0 24px 8px", display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+        <div className="cat-filters" style={{ padding: "0 24px 8px", display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
           <span style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 12.5, color: "#A3A8AD" }}>Коли потрібно:</span>
           <input
             type="date"
@@ -3139,7 +3139,7 @@ export default function EquipmentMarketplace() {
       </div>
 
       {/* Footer */}
-      <footer style={{ borderTop: "1px solid #202428", padding: "32px 24px", marginTop: 8 }}>
+      <footer className="site-footer" style={{ borderTop: "1px solid #202428", padding: "32px 24px", marginTop: 8 }}>
         <div
           style={{
             maxWidth: 1000,

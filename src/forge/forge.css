@@ -42,3 +42,15 @@
 @media (max-width: 700px) {
   .sticky-header.has-forge { --hp: 10px !important; padding-top: 10px !important; padding-bottom: 10px !important; }
 }
+
+/* ===== мобільна версія ===== */
+@media (max-width: 700px) {
+  .sticky-header .hdr-tagline { display: none; }
+  .cat-filters { padding: 0 16px 8px !important; gap: 8px !important; }
+  .cat-filters > span:first-child { flex: 0 0 100%; }
+  .cat-filters > input[type="date"] { flex: 1 1 0; min-width: 0; width: 0; }
+  .cat-filters > span:nth-child(3) { display: none; }
+  .cat-filters > select, .cat-filters > input:not([type="date"]) { flex: 1 1 140px; min-width: 0; }
+  .site-footer { padding-bottom: 190px !important; }
+  .site-footer a, .site-footer div { overflow-wrap: anywhere; }
+}
