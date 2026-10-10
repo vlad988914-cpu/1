@@ -1,161 +1,143 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import "./forge.css";
 
-// «Кузня» у шапці: робітник з перфоратором + тріщини з лавою на всю ширину панелі.
-// Спокій: нерухомий кадр і тріщини тихо дихають. Наведення: ролик «б'є», тріщини розповзаються до країв.
+// «Кузня» у шапці: робітник з відбійним молотком + лава на всю довжину панелі до надпису.
+// Ролик-вступ (раз): тріщини → удар → лава розплескується вліво по всій плиті й доходить до логотипу.
+// Далі — безкінечний цикл «лава кипить, робітник б'є». Наведення: яскравіше й швидше.
 
-const TIP = { x: 0.28, y: 0.895 }; // де наконечник перфоратора на кадрі (частки ширини/висоти)
 const WEBM_OK = typeof navigator !== "undefined" && !/^((?!chrome|android|crios|fxios|edg).)*safari/i.test(navigator.userAgent);
 const reducedMotion = () => typeof window !== "undefined" && window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-function rng(seed) {
-  let s = seed >>> 0;
-  return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296);
-}
+// геометрія смуги (джерельні пікселі ролика 3168 px завширшки; оригінальне відео займає праві 1168)
+const SRC_W = 3168, EXT = 2000;
+const T_SEAM = (143 - 49) / 24; // с вступу, коли фронт лави виходить за лівий край оригіналу
+const T_RUN = 2.2;              // с, за які фронт пробігає продовження (EXT)
 
-// Ламані тріщини від точки (ox, oy) в обидва боки до країв панелі
-export function buildCracks(width, height, ox, oy, seed = 7) {
-  const r = rng(seed);
-  const yMin = height - 30, yMax = height - 3;
-  const clampY = (y) => Math.max(yMin, Math.min(yMax, y));
-  const paths = [];
-  const maxDist = Math.max(ox, width - ox, 1);
-  const walk = (dir) => {
-    let x = ox, y = oy;
-    const pts = [[x, y]];
-    const branchAt = [];
-    while (dir > 0 ? x < width + 20 : x > -20) {
-      x += dir * (10 + r() * 26);
-      y = clampY(y + (r() - 0.5) * 9);
-      pts.push([x, y]);
-      if (r() < 0.2) branchAt.push([x, y]);
-    }
-    paths.push({ d: "M" + pts.map((p) => p[0].toFixed(1) + " " + p[1].toFixed(1)).join(" L"), at: 0, main: true });
-    branchAt.forEach(([bx, by]) => {
-      const up = r() < 0.5;
-      const len = 18 + r() * 44;
-      const n = 2 + Math.floor(r() * 3);
-      let px = bx, py = by;
-      const bp = [[px, py]];
-      for (let i = 0; i < n; i++) {
-        px += dir * (len / n) * (0.6 + r() * 0.8);
-        py = clampY(py + (up ? -1 : 1) * (3 + r() * 6));
-        bp.push([px, py]);
-      }
-      paths.push({ d: "M" + bp.map((p) => p[0].toFixed(1) + " " + p[1].toFixed(1)).join(" L"), at: Math.abs(bx - ox) / maxDist, main: false });
-    });
-  };
-  walk(-1);
-  walk(1);
-  return paths;
+// коли фронт лави доходить до центру логотипу (с від початку вступу)
+function hitTime(hdr, vid) {
+  const logo = hdr.querySelector(".brand-3d");
+  if (!logo || !vid) return T_SEAM + T_RUN;
+  const vr = vid.getBoundingClientRect();
+  const lr = logo.getBoundingClientRect();
+  const k = vr.width / SRC_W;                       // css px на джерельний піксель
+  const seamX = vr.left + EXT * k;                  // де закінчується оригінал і починається продовження
+  const dist = (seamX - (lr.left + lr.width * 0.5)) / k; // джерельні px від шва до центру логотипу
+  const r = Math.max(0, Math.min(1, dist / EXT));
+  const u = (-1 + Math.sqrt(1 + 3.84 * r)) / 1.2;
+  return T_SEAM + u * T_RUN;
 }
 
 export default function HeaderForge() {
   const box = useRef(null);
-  const vid = useRef(null);
+  const vA = useRef(null);
+  const vB = useRef(null);
   const [on, setOn] = useState(false);
-  const [geo, setGeo] = useState(null); // { w, h, ox, oy }
-  const [ok, setOk] = useState(false); // достатньо місця для робітника
-  const [playing, setPlaying] = useState(false); // відео пішло — статичний кадр більше не потрібен
+  const [ok, setOk] = useState(false);          // достатньо місця
+  const [started, setStarted] = useState(false); // вступ пішов — постер не потрібен
+  const [idle, setIdle] = useState(false);       // перейшли до циклу
+  const hit = useRef(false);
   const reduced = useMemo(() => reducedMotion(), []);
+  const animated = WEBM_OK && !reduced;
   const timer = useRef(0);
 
-  // розміри панелі та позиція наконечника
+  // чи вміщається робітник; якщо шапка перенеслась на два рядки — ставимо його поверх (abs)
   useEffect(() => {
     const el = box.current;
     const hdr = el && el.closest("header");
     if (!hdr) return undefined;
     const measure = () => {
-      const img = el.querySelector("img");
-      if (!img) return;
-      const hr = hdr.getBoundingClientRect();
-      const ir = img.getBoundingClientRect();
-      // шапка перенеслась на два рядки? тоді робітник стає поверх шапки (absolute) з правого боку
-      const kids = Array.prototype.filter.call(hdr.children, (k) => k !== el && !(k.classList && k.classList.contains("forge-cracks")));
+      const kids = Array.prototype.filter.call(hdr.children, (k) => k !== el);
       const wrapped = kids.length > 1 && kids.some((k) => k.offsetTop > kids[0].offsetTop + 30);
       el.dataset.mode = wrapped ? "abs" : "flow";
+      if (wrapped) {
+        // шапка у два рядки: смуга лише в першому ряду, щоб не лягати під кнопки другого
+        const first = kids.filter((k) => k.offsetTop <= kids[0].offsetTop + 30);
+        const rowBottom = Math.max.apply(null, first.map((k) => k.offsetTop + k.offsetHeight));
+        el.style.height = rowBottom + 4 + "px";
+      } else {
+        el.style.height = "";
+      }
       const ar = el.getBoundingClientRect();
       const fits = window.innerWidth >= 820 && (wrapped || ar.width >= 96);
       setOk(fits);
       hdr.classList.toggle("forge-ok", fits);
-      if (!ir.width) return;
-      setGeo({ w: hr.width, h: hr.height, ox: ir.left - hr.left + ir.width * TIP.x, oy: ir.top - hr.top + ir.height * TIP.y });
     };
     measure();
     const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(measure) : null;
     if (ro) { ro.observe(hdr); ro.observe(el); }
     window.addEventListener("resize", measure);
-    const img = el.querySelector("img");
-    if (img && !img.complete) img.addEventListener("load", measure, { once: true });
     return () => { ro && ro.disconnect(); window.removeEventListener("resize", measure); };
   }, []);
 
-  // відео крутиться завжди (без статичного кадру); при наведенні б'є енергійніше
+  // без анімації (Safari / reduced motion): лава вже «дійшла» — тепле світіння на логотипі без вспишки
   useEffect(() => {
-    const v = vid.current;
-    if (!v) return undefined;
-    v.playbackRate = on ? 1.5 : 0.8;
-    const p = v.play();
+    const hdr = box.current && box.current.closest("header");
+    if (!hdr) return undefined;
+    if (ok && !animated) hdr.classList.add("lava-still");
+    return () => hdr.classList.remove("lava-still");
+  }, [ok, animated]);
+
+  // вступ: запускаємо, коли панель видима
+  useEffect(() => {
+    const a = vA.current;
+    if (!a || !ok || !animated) return undefined;
+    const p = a.play();
     if (p && p.catch) p.catch(() => {});
     return undefined;
-  }, [on, ok]);
+  }, [ok, animated]);
 
-  // шапка «підсвічується» теж: клас на header для тріщин на всю ширину
+  const onTime = () => {
+    const a = vA.current;
+    const hdr = box.current && box.current.closest("header");
+    if (!a || !hdr || hit.current) return;
+    if (a.currentTime >= hitTime(hdr, a) - 0.1) {
+      hit.current = true;
+      hdr.classList.add("lava-hit");
+    }
+  };
+
+  const onEnded = () => {
+    const b = vB.current;
+    if (!b) return;
+    b.currentTime = 0;
+    const p = b.play();
+    const go = () => setIdle(true);
+    if (p && p.then) p.then(go).catch(go); else go();
+  };
+
+  // наведення: швидше й яскравіше
   useEffect(() => {
     const hdr = box.current && box.current.closest("header");
     if (hdr) hdr.classList.toggle("forge-on", on);
-  }, [on]);
+    if (vB.current) vB.current.playbackRate = on ? 1.35 : 1;
+  }, [on, idle]);
 
-  const cracks = useMemo(() => (geo ? buildCracks(geo.w, geo.h, geo.ox, geo.oy) : []), [geo && Math.round(geo.w), geo && Math.round(geo.h), geo && Math.round(geo.ox), geo && Math.round(geo.oy)]);
-
-  const touch = () => { setOn(true); clearTimeout(touch.t); touch.t = setTimeout(() => setOn(false), 5000); };
+  const touch = () => { setOn(true); clearTimeout(timer.current); timer.current = setTimeout(() => setOn(false), 5000); };
 
   return (
-    <>
-      {geo && ok && (
-        <svg className="forge-cracks" width={geo.w} height={geo.h} viewBox={`0 0 ${geo.w} ${geo.h}`} aria-hidden="true" data-on={on ? "1" : "0"}>
-          <defs>
-            <radialGradient id="forgeGlow" gradientUnits="userSpaceOnUse" cx={geo.ox} cy={geo.h} r={Math.max(geo.ox, geo.w - geo.ox)}>
-              <stop offset="0" stopColor="#FF6A1A" stopOpacity="0.55" />
-              <stop offset="0.35" stopColor="#FF6A1A" stopOpacity="0.2" />
-              <stop offset="1" stopColor="#FF6A1A" stopOpacity="0.05" />
-            </radialGradient>
-            <linearGradient id="forgeFadeV" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#000" /><stop offset="0.7" stopColor="#fff" /><stop offset="1" stopColor="#fff" /></linearGradient>
-            <mask id="forgeFloorMask" maskUnits="userSpaceOnUse" x="0" y={geo.h - 46} width={geo.w} height="46"><rect x="0" y={geo.h - 46} width={geo.w} height="46" fill="url(#forgeFadeV)" /></mask>
-            <filter id="forgeBlur" x="-5%" y="-100%" width="110%" height="300%"><feGaussianBlur stdDeviation="3.2" /></filter>
-          </defs>
-          <rect className="forge-floor" x="0" y={geo.h - 46} width={geo.w} height="46" fill="url(#forgeGlow)" mask="url(#forgeFloorMask)" />
-          <g className="forge-pulse">
-            <g filter="url(#forgeBlur)" stroke="#FF6A1A" strokeWidth="5" fill="none" strokeLinejoin="round" strokeLinecap="round">
-              {cracks.map((c, i) => <path key={"g" + i} className="forge-line" d={c.d} pathLength="1" style={{ transitionDelay: `${Math.round(c.at * 650)}ms` }} />)}
-            </g>
-            <g stroke="#FFB81C" strokeWidth={1.3} fill="none" strokeLinejoin="round" strokeLinecap="round">
-              {cracks.map((c, i) => <path key={"c" + i} className="forge-line" d={c.d} pathLength="1" style={{ transitionDelay: `${Math.round(c.at * 650)}ms`, strokeWidth: c.main ? 1.4 : 0.9 }} />)}
-            </g>
-            <g stroke="#FFF1CC" strokeWidth="0.55" fill="none" opacity="0.85" strokeLinecap="round">
-              {cracks.filter((c) => c.main).map((c, i) => <path key={"h" + i} className="forge-line" d={c.d} pathLength="1" style={{ transitionDelay: `${Math.round(c.at * 650)}ms` }} />)}
-            </g>
-          </g>
-        </svg>
-      )}
-
-      <div
-        ref={box}
-        className="forge-art"
-        data-ok={ok ? "1" : "0"}
-        onMouseEnter={() => !reduced && setOn(true)}
-        onMouseLeave={() => setOn(false)}
-        onTouchStart={() => !reduced && touch()}
-        role="img"
-        aria-label="Робітник з відбійним молотком"
-      >
-        <img src="/forge/worker.png" alt="" draggable="false" style={{ opacity: playing ? 0 : 1 }} />
-        {WEBM_OK && !reduced && (
-          <video ref={vid} className="forge-video" data-on={playing ? "1" : "0"} autoPlay muted loop playsInline preload="auto" aria-hidden="true" onPlaying={() => setPlaying(true)}>
-            <source src="/forge/worker.webm" type="video/webm" />
+    <div
+      ref={box}
+      className="forge-art"
+      data-ok={ok ? "1" : "0"}
+      data-idle={idle ? "1" : "0"}
+      onMouseEnter={() => !reduced && setOn(true)}
+      onMouseLeave={() => setOn(false)}
+      onTouchStart={() => !reduced && touch()}
+      role="img"
+      aria-label="Робітник з відбійним молотком і розплавлена лава"
+    >
+      <img className="forge-poster" src="/forge/strip.webp" alt="" draggable="false" style={{ opacity: started ? 0 : 1 }} />
+      {animated && (
+        <>
+          <video ref={vB} className="forge-video forge-loop" data-on={idle ? "1" : "0"} muted loop playsInline preload="auto" aria-hidden="true">
+            <source src="/forge/strip-loop.webm" type="video/webm" />
           </video>
-        )}
-      </div>
-    </>
+          <video ref={vA} className="forge-video forge-intro" data-on={started && !idle ? "1" : "0"} muted playsInline preload="auto" aria-hidden="true"
+            onPlaying={() => setStarted(true)} onTimeUpdate={onTime} onEnded={onEnded}>
+            <source src="/forge/strip-intro.webm" type="video/webm" />
+          </video>
+        </>
+      )}
+    </div>
   );
 }

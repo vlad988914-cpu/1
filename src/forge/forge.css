@@ -1,34 +1,57 @@
-/* «Кузня» у шапці */
-.forge-art { flex: 1 1 0; min-width: 0; max-width: 340px; align-self: stretch; margin-block: calc(var(--hp, 20px) * -1); position: relative; display: none; cursor: crosshair; }
-.forge-art img, .forge-art video { position: absolute; right: 0; bottom: 0; height: 100%; width: auto; max-width: 100%; object-fit: contain; object-position: right bottom; user-select: none; }
-.forge-video { opacity: 0; transition: opacity 0.22s ease-out; pointer-events: none; }
+/* «Кузня» у шапці: слот під робітника; широка смуга лави виходить із нього вліво до логотипу */
+.forge-art { flex: 1 1 0; min-width: 0; max-width: 340px; align-self: stretch; margin-block: calc(var(--hp, 20px) * -1); position: relative; display: none; }
+.sticky-header > .forge-art { z-index: 0; }
+
+/* смуга: висота = висота шапки, права грань виступає на 6.25 % ширини (хвостик плити за робітником) */
+.forge-art img, .forge-art video {
+  position: absolute; right: 0; bottom: 0; height: 100%; width: auto; max-width: none;
+  transform: translateX(6.25%);
+  user-select: none;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 11%);
+  mask-image: linear-gradient(90deg, transparent 0, #000 11%);
+}
+.forge-poster { transition: opacity 0.3s ease-out; }
+.forge-video { opacity: 0; transition: opacity 0.12s linear, filter 0.45s ease-out; }
 .forge-video[data-on="1"] { opacity: 1; }
-.forge-art img { pointer-events: none; }
 
-.sticky-header > .forge-cracks { position: absolute; left: 0; top: 0; z-index: 0; pointer-events: none; display: none; }
+/* наведення: лава яскравішає */
+.sticky-header.forge-on .forge-video, .sticky-header.forge-on .forge-poster { filter: brightness(1.28) saturate(1.15); }
+.forge-poster { transition: opacity 0.3s ease-out, filter 0.45s ease-out; }
 
-.forge-line { stroke-dasharray: 1; stroke-dashoffset: 0.62; transition: stroke-dashoffset 0.9s cubic-bezier(0.16, 1, 0.3, 1); }
-.forge-floor { opacity: 0.55; transition: opacity 0.5s ease-out; }
-.forge-pulse { opacity: 0.55; animation: forgeBreath 4.2s ease-in-out infinite; }
-.forge-cracks[data-on="1"] .forge-line { stroke-dashoffset: 0; }
-.forge-cracks[data-on="1"] .forge-floor { opacity: 1; }
-.forge-cracks[data-on="1"] .forge-pulse { opacity: 1; animation: forgeHammer 0.34s ease-in-out infinite; }
+/* реакція логотипу, коли лава дійшла до надпису */
+.sticky-header .brand-3d { position: relative; }
+.sticky-header .brand-3d::after {
+  content: ""; position: absolute; left: -8%; right: -8%; bottom: -4px; height: 52%;
+  background: radial-gradient(ellipse at 50% 100%, rgba(255, 168, 60, 0.9) 0%, rgba(255, 98, 20, 0.4) 42%, rgba(255, 98, 20, 0) 72%);
+  opacity: 0; pointer-events: none; z-index: 2;
+}
+.sticky-header.lava-hit .brand-3d { animation: logoHit 2.4s cubic-bezier(0.16, 1, 0.3, 1) forwards, logoHeat 4.6s ease-in-out 2.4s infinite; }
+.sticky-header.lava-hit .brand-3d::after { animation: logoGlowHit 2.4s cubic-bezier(0.16, 1, 0.3, 1) forwards, logoGlowHeat 4.6s ease-in-out 2.4s infinite; }
+.sticky-header.lava-still .brand-3d { filter: brightness(1.06) drop-shadow(0 0 9px rgba(255, 106, 26, 0.4)); }
+.sticky-header.lava-still .brand-3d::after { opacity: 0.35; }
+.sticky-header.lava-hit.forge-on .brand-3d { filter: brightness(1.18) drop-shadow(0 0 16px rgba(255, 130, 40, 0.75)); }
 
-@keyframes forgeBreath { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.8; } }
-@keyframes forgeHammer { 0%, 100% { opacity: 0.72; } 40% { opacity: 1; } }
+@keyframes logoHit {
+  0% { filter: brightness(1) drop-shadow(0 0 0 rgba(255, 106, 26, 0)); }
+  16% { filter: brightness(1.6) drop-shadow(0 0 20px rgba(255, 150, 50, 0.95)) drop-shadow(0 4px 34px rgba(255, 90, 20, 0.85)); }
+  100% { filter: brightness(1.07) drop-shadow(0 0 10px rgba(255, 106, 26, 0.45)); }
+}
+@keyframes logoHeat {
+  0%, 100% { filter: brightness(1.05) drop-shadow(0 0 8px rgba(255, 106, 26, 0.35)); }
+  50% { filter: brightness(1.12) drop-shadow(0 0 14px rgba(255, 106, 26, 0.6)); }
+}
+@keyframes logoGlowHit { 0% { opacity: 0; } 16% { opacity: 1; } 100% { opacity: 0.42; } }
+@keyframes logoGlowHeat { 0%, 100% { opacity: 0.32; } 50% { opacity: 0.55; } }
 
-/* показуємо там, де є місце в шапці (перевіряє Forge.jsx → клас forge-ok) */
 @media (min-width: 820px) {
   .forge-art { display: block; }
   .forge-art[data-ok="0"] { visibility: hidden; }
-  .sticky-header > .forge-cracks { display: block; }
-  .sticky-header.forge-ok { min-height: 108px; }
-  .sticky-header.forge-ok.is-scrolled { min-height: 70px; }
+  .sticky-header.forge-ok { min-height: 120px; }
+  .sticky-header.forge-ok.is-scrolled { min-height: 82px; }
 }
 @media (min-width: 820px) {
-  .forge-art[data-mode="abs"] { position: absolute; flex: none; margin: 0; top: 0; bottom: 0; right: clamp(150px, 15vw, 240px); width: 150px; max-width: none; z-index: 1; }
+  .forge-art[data-mode="abs"] { position: absolute; flex: none; margin: 0; top: 0; bottom: auto; right: clamp(150px, 15vw, 240px); width: 150px; max-width: none; z-index: 0; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .forge-pulse { animation: none; }
-  .forge-line { transition: none; }
+  .sticky-header.lava-hit .brand-3d, .sticky-header.lava-hit .brand-3d::after { animation: none; }
 }
