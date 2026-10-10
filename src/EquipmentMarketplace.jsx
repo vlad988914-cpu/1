@@ -2381,7 +2381,7 @@ export default function EquipmentMarketplace() {
           {t("how_it_works_title")}
         </button>
 
-        <div style={{ display: "flex", alignItems: "center", gap: "10px 12px", flexWrap: "wrap", maxWidth: "100%" }}>
+        <div className="hdr-nav" style={{ display: "flex", alignItems: "center", gap: "10px 12px", flexWrap: "wrap", maxWidth: "100%" }}>
           <div
             style={{
               position: "relative",

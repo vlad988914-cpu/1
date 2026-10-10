@@ -46,19 +46,15 @@ export default function HeaderForge() {
     const hdr = el && el.closest("header");
     if (!hdr) return undefined;
     const measure = () => {
+      // вузькі екрани (ноутбук 1920 з масштабом 175 % = ~1100 px): шапка в два ряди —
+      // зверху логотип + кузня (лава до надпису), знизу меню. Те саме, якщо шапка переноситься сама.
+      hdr.classList.remove("forge-two");
       const kids = Array.prototype.filter.call(hdr.children, (k) => k !== el);
       const wrapped = kids.length > 1 && kids.some((k) => k.offsetTop > kids[0].offsetTop + 30);
-      el.dataset.mode = wrapped ? "abs" : "flow";
-      if (wrapped) {
-        // шапка у два рядки: смуга лише в першому ряду, щоб не лягати під кнопки другого
-        const first = kids.filter((k) => k.offsetTop <= kids[0].offsetTop + 30);
-        const rowBottom = Math.max.apply(null, first.map((k) => k.offsetTop + k.offsetHeight));
-        el.style.height = rowBottom + 4 + "px";
-      } else {
-        el.style.height = "";
-      }
+      const wide = window.innerWidth >= 820;
+      hdr.classList.toggle("forge-two", wide && (window.innerWidth < 1280 || wrapped));
       const ar = el.getBoundingClientRect();
-      const fits = window.innerWidth >= 820 && (wrapped || ar.width >= 96);
+      const fits = wide && ar.width >= 96;
       setOk(fits);
       hdr.classList.toggle("forge-ok", fits);
     };

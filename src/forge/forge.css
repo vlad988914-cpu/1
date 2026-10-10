@@ -48,9 +48,12 @@
   .forge-art[data-ok="0"] { visibility: hidden; }
   .sticky-header.forge-ok { min-height: 120px; }
   .sticky-header.forge-ok.is-scrolled { min-height: 82px; }
-}
-@media (min-width: 820px) {
-  .forge-art[data-mode="abs"] { position: absolute; flex: none; margin: 0; top: 0; bottom: auto; right: clamp(150px, 15vw, 240px); width: 150px; max-width: none; z-index: 0; }
+
+  /* два ряди: ряд 1 = логотип + кузня + «Як це працює», ряд 2 = меню */
+  .sticky-header.forge-two { min-height: 0; }
+  .sticky-header.forge-two > .hdr-nav { flex: 0 0 100%; justify-content: flex-start; }
+  .sticky-header.forge-two > .forge-art { max-width: none; min-height: calc(112px + var(--hp, 20px) * 2); }
+  .sticky-header.forge-two.is-scrolled > .forge-art { min-height: calc(60px + var(--hp, 12px) * 2); }
 }
 @media (prefers-reduced-motion: reduce) {
   .sticky-header.lava-hit .brand-3d, .sticky-header.lava-hit .brand-3d::after { animation: none; }
