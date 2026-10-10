@@ -1,0 +1,96 @@
+import { useEffect, useMemo, useRef, useState } from "react";
+import "./forge.css";
+
+// Рабочий с кувалдой у шапки. Покой: нерухомий кадр. Наведення на робітника: б'є кувалдою (відео, цикл).
+// Плита під ним тягнеться вліво до логотипу.
+
+const WEBM_OK = typeof navigator !== "undefined" && !/^((?!chrome|android|crios|fxios|edg).)*safari/i.test(navigator.userAgent);
+const reducedMotion = () => typeof window !== "undefined" && window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const LOOP_LEN = 78 / 24;   // тривалість циклу, с
+const FADE_FROM = LOOP_LEN - 0.55; // з цього моменту циклу кадр «спокійний» (кувалда піднята) — можна плавно повертатись до стоп-кадру
+
+export default function HeaderForge() {
+  const box = useRef(null);
+  const vid = useRef(null);
+  const [ok, setOk] = useState(false);
+  const [active, setActive] = useState(false);
+  const hovering = useRef(false);
+  const raf = useRef(0);
+  const touchT = useRef(0);
+  const reduced = useMemo(() => reducedMotion(), []);
+  const animated = WEBM_OK && !reduced;
+
+  // чи вміщається; вузькі екрани (~1100 px) і перенос шапки → два ряди (кузня в першому)
+  useEffect(() => {
+    const el = box.current;
+    const hdr = el && el.closest("header");
+    if (!hdr) return undefined;
+    const measure = () => {
+      hdr.classList.remove("forge-two");
+      const kids = Array.prototype.filter.call(hdr.children, (k) => k !== el);
+      const wrapped = kids.length > 1 && kids.some((k) => k.offsetTop > kids[0].offsetTop + 30);
+      const wide = window.innerWidth >= 820;
+      hdr.classList.toggle("forge-two", wide && (window.innerWidth < 1280 || wrapped));
+      const ar = el.getBoundingClientRect();
+      const fits = wide && ar.width >= 96;
+      setOk(fits);
+      hdr.classList.toggle("forge-ok", fits);
+    };
+    measure();
+    const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(measure) : null;
+    if (ro) { ro.observe(hdr); ro.observe(el); }
+    window.addEventListener("resize", measure);
+    return () => { ro && ro.disconnect(); window.removeEventListener("resize", measure); cancelAnimationFrame(raf.current); };
+  }, []);
+
+  const start = () => {
+    const v = vid.current;
+    if (!v || !animated) return;
+    cancelAnimationFrame(raf.current);
+    if (!active) { v.currentTime = 0; }
+    const p = v.play();
+    if (p && p.catch) p.catch(() => {});
+    setActive(true);
+  };
+
+  // відпустили: дочекаємось спокійної пози й плавно повернемось до стоп-кадру
+  const stop = () => {
+    const v = vid.current;
+    if (!v) return;
+    cancelAnimationFrame(raf.current);
+    const t0 = performance.now();
+    const tick = () => {
+      if (hovering.current) return;
+      if (v.currentTime >= FADE_FROM || performance.now() - t0 > 4200) {
+        setActive(false);
+        setTimeout(() => { if (!hovering.current && vid.current) { vid.current.pause(); vid.current.currentTime = 0; } }, 600);
+        return;
+      }
+      raf.current = requestAnimationFrame(tick);
+    };
+    tick();
+  };
+
+  const enter = () => { hovering.current = true; start(); };
+  const leave = () => { hovering.current = false; stop(); };
+  const touch = () => {
+    hovering.current = true; start();
+    clearTimeout(touchT.current);
+    touchT.current = setTimeout(() => { hovering.current = false; stop(); }, 4500);
+  };
+
+  return (
+    <div ref={box} className="forge-art" data-ok={ok ? "1" : "0"} data-active={active ? "1" : "0"} role="img" aria-label="Робітник з кувалдою на плиті">
+      <div className="fw-strip">
+        <img className="fw-still" src="/forge/strip-still.webp" alt="" draggable="false" />
+        {animated && (
+          <video ref={vid} className="fw-video" muted loop playsInline preload="auto" aria-hidden="true">
+            <source src="/forge/strip-hit.webm" type="video/webm" />
+          </video>
+        )}
+        <img className="fw-slab" src="/forge/strip-slab.webp" alt="" draggable="false" />
+        <div className="fw-hit" onMouseEnter={enter} onMouseLeave={leave} onTouchStart={touch} />
+      </div>
+    </div>
+  );
+}
