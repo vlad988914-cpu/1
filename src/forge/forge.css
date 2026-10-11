@@ -84,3 +84,16 @@
   .sticky-header .hdr-nav > button:last-child { padding: 8px 8px !important; font-size: 10.5px !important; }
 }
 @media (max-width: 819px) { .fw-hit { left: 78%; width: 20%; top: 0; height: 100%; } }
+
+/* поля дат: на iOS порожній <input type="date"> без підпису — показуємо «Від / До» */
+.cat-filters .dt { position: relative; display: inline-block; }
+.cat-filters .dt-ph { display: none; }
+@supports (-webkit-touch-callout: none) {
+  .cat-filters .dt-ph { display: block; position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #70777D; font: 13px/1 -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif; pointer-events: none; z-index: 1; }
+}
+@media (max-width: 700px) {
+  .cat-filters > .dt { flex: 1 1 0; min-width: 0; }
+  .cat-filters > .dt > input[type="date"] { width: 100%; box-sizing: border-box; min-height: 40px; }
+  .cat-filters > span:nth-child(3) { display: none; }
+}
+@media (max-width: 819px) { .sticky-header.has-forge { background: rgba(9, 10, 12, 0.93); } }

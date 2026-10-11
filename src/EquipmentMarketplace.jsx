@@ -748,13 +748,15 @@ export default function EquipmentMarketplace() {
     const onScroll = () => {
       const y = window.scrollY;
       setScrolled(y > 40);
+      const maxY = document.documentElement.scrollHeight - window.innerHeight;
+      if (y < 0 || y > maxY) { last = y; return; } // «резинка» iOS на краях не рахується напрямком
       // телефон: шапка не перекриває екран — ховається при прокрутці вниз, з'являється при прокрутці вгору
       const h = document.querySelector(".sticky-header");
       if (h && window.innerWidth < 820) {
         const d = y - last;
         if (d > 0) { down += d; up = 0; } else if (d < 0) { up -= d; down = 0; }
         if (down > 14 && y > 120) h.classList.add("hdr-away");
-        else if (up > 48 || y <= 120) h.classList.remove("hdr-away");
+        else if (up > 110 || y <= 120) h.classList.remove("hdr-away");
       }
       last = y;
     };
@@ -2844,6 +2846,7 @@ export default function EquipmentMarketplace() {
       {role === "client" && (
         <div className="cat-filters" style={{ padding: "0 24px 8px", display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
           <span style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 12.5, color: "#A3A8AD" }}>Коли потрібно:</span>
+          <label className="dt"><span className="dt-ph" aria-hidden="true">{catFrom ? "" : "Від"}</span>
           <input
             type="date"
             aria-label="Потрібно з"
@@ -2854,9 +2857,10 @@ export default function EquipmentMarketplace() {
               if (catTo && e.target.value && catTo < e.target.value) setCatTo(e.target.value);
             }}
             style={selectStyle}
-          />
+          /></label>
           <span style={{ color: "#70777D" }}>—</span>
-          <input type="date" aria-label="Потрібно по" min={catFrom || new Date().toLocaleDateString("sv-SE")} value={catTo} onChange={(e) => setCatTo(e.target.value)} style={selectStyle} />
+          <label className="dt"><span className="dt-ph" aria-hidden="true">{catTo ? "" : "До"}</span>
+          <input type="date" aria-label="Потрібно по" min={catFrom || new Date().toLocaleDateString("sv-SE")} value={catTo} onChange={(e) => setCatTo(e.target.value)} style={selectStyle} /></label>
           {(catFrom || catTo) && (
             <button onClick={() => { setCatFrom(""); setCatTo(""); }} aria-label="Скинути дати" style={{ ...selectStyle, cursor: "pointer", color: "#A3A8AD" }}>
               ✕ Скинути

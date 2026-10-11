@@ -6,6 +6,11 @@ import { easeOutExpo } from "../motion/tokens.js";
 
 const prefersReduced = () => typeof window !== "undefined" && !!window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+// Телефон: Safari/iOS погано перемотує <video> за currentTime (кадри відстають і «стрибають»),
+// тому на вузьких екранах сцена малюється покадрово на canvas з готових webp-кадрів (12 к/с, між кадрами — плавне змішування).
+const FR = { count: 145, fps: 12, w: 400, h: 702, src: (i) => `/story/f/f_${String(i + 1).padStart(3, "0")}.webp` };
+const isFrameMode = () => typeof window !== "undefined" && window.innerWidth < 900;
+
 /** Число параметра «набігає» щоразу, коли етап стає активним (reduced-motion — одразу кінцеве значення). */
 function SpecValue({ value, decimals = 0, active }) {
   const [v, setV] = useState(0);
@@ -45,6 +50,10 @@ export default function ScrollStory({ config = defaultStory, onCta, intro }) {
   const { video, stops, stages, heightVh } = config;
   const secRef = useRef(null);
   const vidRef = useRef(null);
+  const cvRef = useRef(null);
+  const imgs = useRef([]);
+  const drawn = useRef(-1);
+  const frameMode = useMemo(() => isFrameMode(), []);
   const fillRef = useRef(null);
   const [stage, setStage] = useState(0);
   const [failed, setFailed] = useState(false);
@@ -66,6 +75,49 @@ export default function ScrollStory({ config = defaultStory, onCta, intro }) {
     };
   }, []);
 
+  const drawAt = useCallback((tSec) => {
+    const cv = cvRef.current;
+    if (!cv) return;
+    const f = Math.min(FR.count - 1, Math.max(0, tSec * FR.fps));
+    if (Math.abs(f - drawn.current) < 0.02) return;
+    const pick = (i) => {
+      for (let d = 0; d < FR.count; d++) {
+        for (const j of [i - d, i + d]) {
+          const im = imgs.current[j];
+          if (j >= 0 && j < FR.count && im && im.complete && im.naturalWidth) return im;
+        }
+      }
+      return null;
+    };
+    const i0 = Math.floor(f);
+    const a = f - i0;
+    const A = pick(i0);
+    if (!A) return;
+    drawn.current = f;
+    const ctx = cv.getContext("2d");
+    ctx.globalAlpha = 1;
+    ctx.drawImage(A, 0, 0, FR.w, FR.h);
+    if (a > 0.04 && i0 + 1 < FR.count) {
+      const B = pick(i0 + 1);
+      if (B && B !== A) { ctx.globalAlpha = a; ctx.drawImage(B, 0, 0, FR.w, FR.h); ctx.globalAlpha = 1; }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!frameMode || reduced) return undefined;
+    let dead = false;
+    const list = [];
+    for (let i = 0; i < FR.count; i++) {
+      const im = new Image();
+      im.decoding = "async";
+      im.onload = () => { if (!dead) { if (i === 0) setReady(true); drawn.current = -1; drawAt(last.current.cur); } };
+      im.src = FR.src(i);
+      list.push(im);
+    }
+    imgs.current = list;
+    return () => { dead = true; list.forEach((im) => { im.onload = null; }); };
+  }, [frameMode, reduced, drawAt]);
+
   useEffect(() => {
     if (reduced) return undefined;
     let raf = 0;
@@ -80,8 +132,11 @@ export default function ScrollStory({ config = defaultStory, onCta, intro }) {
       const dt = last.current.t ? now - last.current.t : 16;
       last.current.t = now;
       last.current.cur = follow(last.current.cur, target, dt);
-      const v = vidRef.current;
-      if (v && v.readyState >= 2 && Math.abs(v.currentTime - last.current.cur) > 0.012) v.currentTime = last.current.cur;
+      if (frameMode) drawAt(last.current.cur);
+      else {
+        const v = vidRef.current;
+        if (v && v.readyState >= 2 && Math.abs(v.currentTime - last.current.cur) > 0.012) v.currentTime = last.current.cur;
+      }
       if (fillRef.current) fillRef.current.style.transform = `scaleY(${p.toFixed(4)})`;
       const idx = stageAt(p, stages);
       if (idx !== last.current.stage) {
@@ -109,7 +164,7 @@ export default function ScrollStory({ config = defaultStory, onCta, intro }) {
       io.disconnect();
       stop();
     };
-  }, [reduced, stops, stages]);
+  }, [reduced, stops, stages, frameMode, drawAt]);
 
   const go = useCallback(
     (i) => {
@@ -168,7 +223,9 @@ export default function ScrollStory({ config = defaultStory, onCta, intro }) {
             </div>
           </div>
           <div className="ss-stage" style={{ "--ss-aspect": video.aspect }}>
-            {failed ? (
+            {frameMode && !reduced ? (
+              <canvas ref={cvRef} className="ss-media" width={FR.w} height={FR.h} role="img" aria-label="Колісний екскаватор CAT M320: огляд зблизька" style={{ background: `#0c0e10 url(${video.poster}) 50% 42% / cover no-repeat` }} />
+            ) : failed || (frameMode && reduced) ? (
               <img className="ss-media" src={video.poster} alt="Колісний екскаватор CAT M320" />
             ) : (
               <video
