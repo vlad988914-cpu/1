@@ -3,7 +3,7 @@
 .sticky-header > .forge-art { z-index: 0; }
 
 .fw-strip { position: absolute; right: 0; bottom: 0; height: 100%; aspect-ratio: 4480 / 564; user-select: none; }
-.fw-strip img, .fw-strip video { position: absolute; max-width: none; pointer-events: none; }
+.fw-strip img, .fw-strip video, .fw-strip canvas { position: absolute; max-width: none; pointer-events: none; }
 .fw-still, .fw-video, .fw-idle { left: 71.4286%; width: 28.5714%; top: 0; height: 100%; }
 .fw-slab { left: 0; width: 78.125%; top: 78.01%; height: 21.28%;
   -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 12%); mask-image: linear-gradient(90deg, transparent 0, #000 12%); }
@@ -55,8 +55,8 @@
   .site-footer a, .site-footer div { overflow-wrap: anywhere; }
 }
 
-/* Safari / iPhone: mp4 на чорному тлі + mix-blend-mode: screen замість прозорого WebM */
-.fw-screen .fw-idle, .fw-screen .fw-video { mix-blend-mode: screen; }
+/* Safari / iPhone: приховані mp4-джерела, картинку малює canvas з вирізаним чорним (див. KeyedVideo) */
+.fw-strip .fw-vsrc { width: 2px; height: 2px; left: 0; top: 0; opacity: 0.01; }
 
 /* ===== телефон / планшет (<820px): компактна шапка, робітник у першому ряду, шапка ховається при прокрутці вниз ===== */
 @media (max-width: 819px) {
@@ -70,14 +70,14 @@
   .sticky-header > .forge-art { display: block; flex: 1 1 0; min-width: 120px; max-width: none; height: 58px; align-self: center; margin-block: 0; z-index: 0; }
   .forge-art[data-ok="0"] { visibility: hidden; }
 
-  .sticky-header .hdr-nav { flex: 0 0 100% !important; flex-wrap: nowrap !important; gap: 8px !important; }
-  .sticky-header .hdr-nav > div:first-child { flex: 1 1 0; min-width: 0; width: auto !important; padding: 4px !important; }
-  .sticky-header .hdr-nav > div:first-child button { padding: 8px 6px !important; font-size: 11.5px !important; letter-spacing: 0 !important; gap: 4px !important; line-height: 1.15; }
+  .sticky-header .hdr-nav { flex: 0 0 100% !important; flex-wrap: wrap !important; gap: 8px !important; }
+  .sticky-header .hdr-nav > div:first-child { flex: 1 1 100%; min-width: 0; width: auto !important; padding: 4px !important; }
+  .sticky-header .hdr-nav > div:first-child button { padding: 9px 6px !important; font-size: 12px !important; letter-spacing: 0 !important; gap: 5px !important; line-height: 1.1; white-space: nowrap; min-width: 0; }
   .sticky-header .hdr-nav > div:first-child button span { width: 5px !important; height: 5px !important; }
-  .sticky-header .hdr-nav > div:nth-child(2) { gap: 2px !important; flex: 0 0 auto; }
-  .sticky-header .hdr-nav > div:nth-child(2) button { padding: 7px 7px !important; font-size: 10px !important; gap: 0 !important; }
+  .sticky-header .hdr-nav > div:nth-child(2) { gap: 3px !important; flex: 0 0 auto; }
+  .sticky-header .hdr-nav > div:nth-child(2) button { padding: 8px 9px !important; font-size: 11px !important; gap: 0 !important; }
   .sticky-header .hdr-nav > div:nth-child(2) button > span { display: none; }
-  .sticky-header .hdr-nav > button:last-child { flex: 0 0 auto; padding: 8px 10px !important; font-size: 11px !important; white-space: nowrap; }
+  .sticky-header .hdr-nav > button:last-child { flex: 1 1 auto; padding: 9px 10px !important; font-size: 12px !important; white-space: nowrap; text-align: center; justify-content: center; }
 }
 @media (max-width: 380px) {
   .sticky-header .brand-3d { width: 128px !important; }

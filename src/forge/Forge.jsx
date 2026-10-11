@@ -9,6 +9,47 @@ const reducedMotion = () => typeof window !== "undefined" && window.matchMedia &
 const LOOP_LEN = 78 / 24;   // тривалість циклу, с
 const FADE_FROM = LOOP_LEN - 0.4; // кінець циклу: поза = «кувалда піднята», та сама, що в спокої — можна непомітно переходити в спокій
 
+
+// Safari / iPhone не вміє прозоре відео: граємо mp4 на чорному тлі (невидиме) і «вирізаємо» чорне на canvas
+// (та сама формула, що й для WebM: alpha = max(rgb)/0.16, колір без премультиплікації).
+function KeyedVideo({ vref, className, src, onPlaying }) {
+  const cv = useRef(null);
+  useEffect(() => {
+    const v = vref.current, c = cv.current;
+    if (!v || !c) return undefined;
+    const ctx = c.getContext("2d", { willReadFrequently: true });
+    let raf = 0, last = -1, dead = false;
+    const draw = () => {
+      if (dead) return;
+      if (v.readyState >= 2 && v.videoWidth && v.currentTime !== last && !document.hidden) {
+        last = v.currentTime;
+        if (c.width !== v.videoWidth) { c.width = v.videoWidth; c.height = v.videoHeight; }
+        ctx.drawImage(v, 0, 0);
+        const im = ctx.getImageData(0, 0, c.width, c.height), d = im.data;
+        for (let i = 0; i < d.length; i += 4) {
+          const r = d[i], g = d[i + 1], b = d[i + 2];
+          const m = r > g ? (r > b ? r : b) : (g > b ? g : b);
+          if (m >= 41) { d[i + 3] = 255; }
+          else if (m < 6) { d[i + 3] = 0; }
+          else { const k = 41 / m; d[i + 3] = m * 6.2195; d[i] = r * k; d[i + 1] = g * k; d[i + 2] = b * k; }
+        }
+        ctx.putImageData(im, 0, 0);
+      }
+      raf = requestAnimationFrame(draw);
+    };
+    raf = requestAnimationFrame(draw);
+    return () => { dead = true; cancelAnimationFrame(raf); };
+  }, [vref]);
+  return (
+    <>
+      <video ref={vref} className="fw-vsrc" muted loop playsInline preload="auto" aria-hidden="true" onPlaying={onPlaying}>
+        <source src={src} type="video/mp4" />
+      </video>
+      <canvas ref={cv} className={className} aria-hidden="true" />
+    </>
+  );
+}
+
 export default function HeaderForge() {
   const box = useRef(null);
   const vid = useRef(null);
@@ -103,16 +144,22 @@ export default function HeaderForge() {
 
   return (
     <div ref={box} className="forge-art" data-ok={ok ? "1" : "0"} data-active={active ? "1" : "0"} role="img" aria-label="Робітник з кувалдою на плиті">
-      <div className={"fw-strip" + (WEBM_OK ? "" : " fw-screen")}>
+      <div className="fw-strip">
         <img className="fw-still" src="/forge/strip-still.webp" alt="" draggable="false" style={{ opacity: live ? 0 : 1 }} />
-        {animated && (
+        {animated && WEBM_OK && (
           <>
             <video ref={idleV} className="fw-idle" muted loop playsInline preload="auto" aria-hidden="true" onPlaying={() => setLive(true)}>
-              {WEBM_OK ? <source src="/forge/strip-idle.webm" type="video/webm" /> : <source src="/forge/strip-idle.mp4" type="video/mp4" />}
+              <source src="/forge/strip-idle.webm" type="video/webm" />
             </video>
             <video ref={vid} className="fw-video" muted loop playsInline preload="auto" aria-hidden="true">
-              {WEBM_OK ? <source src="/forge/strip-hit.webm" type="video/webm" /> : <source src="/forge/strip-hit.mp4" type="video/mp4" />}
+              <source src="/forge/strip-hit.webm" type="video/webm" />
             </video>
+          </>
+        )}
+        {animated && !WEBM_OK && (
+          <>
+            <KeyedVideo vref={idleV} className="fw-idle" src="/forge/strip-idle.mp4" onPlaying={() => setLive(true)} />
+            <KeyedVideo vref={vid} className="fw-video" src="/forge/strip-hit.mp4" />
           </>
         )}
         <img className="fw-slab" src="/forge/strip-slab.webp" alt="" draggable="false" />
