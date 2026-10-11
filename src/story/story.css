@@ -145,3 +145,10 @@
 @media (max-height: 700px) { .ss-spec-row:nth-child(n+3), .ss-note { display: none; } .ss-specs { margin-top: 14px; } .ss-spec-main b { font-size: clamp(36px, 8vh, 56px); } }
 @media (max-width: 899px) { .ss-spec-row:nth-child(n+3), .ss-note { display: none; } .ss-specs { margin-top: 12px; } .ss-spec-main { padding-bottom: 8px; } .ss-spec-main b { font-size: 44px; } }
 @media (prefers-reduced-motion: reduce) { .ss-spec { animation: none; } }
+
+/* телефон: компактніша скляна картка, щоб екскаватор лишався видно */
+@media (max-width: 899px) {
+  .ss-cap { padding: 14px 18px 16px; }
+  .ss-cap > *:last-child, .ss-intro > *:last-child { margin-bottom: 0 !important; }
+  .ss-caps-col { bottom: 132px; }
+}

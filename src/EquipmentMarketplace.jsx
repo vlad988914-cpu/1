@@ -744,7 +744,20 @@ export default function EquipmentMarketplace() {
   useSpotlight(); // світло карток слідує за курсором
   useMagnetic(); // головна кнопка «тягнеться» до курсора
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 40);
+    let last = window.scrollY, down = 0, up = 0;
+    const onScroll = () => {
+      const y = window.scrollY;
+      setScrolled(y > 40);
+      // телефон: шапка не перекриває екран — ховається при прокрутці вниз, з'являється при прокрутці вгору
+      const h = document.querySelector(".sticky-header");
+      if (h && window.innerWidth < 820) {
+        const d = y - last;
+        if (d > 0) { down += d; up = 0; } else if (d < 0) { up -= d; down = 0; }
+        if (down > 14 && y > 120) h.classList.add("hdr-away");
+        else if (up > 48 || y <= 120) h.classList.remove("hdr-away");
+      }
+      last = y;
+    };
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);

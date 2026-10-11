@@ -20,7 +20,7 @@ export default function HeaderForge() {
   const raf = useRef(0);
   const touchT = useRef(0);
   const reduced = useMemo(() => reducedMotion(), []);
-  const animated = WEBM_OK && !reduced;
+  const animated = !reduced; // Chrome/Firefox/Edge: WebM з альфою; Safari/iPhone: mp4 + mix-blend-mode: screen (чорний фон «гаситься»)
 
   // чи вміщається; вузькі екрани (~1100 px) і перенос шапки → два ряди (кузня в першому)
   useEffect(() => {
@@ -43,8 +43,10 @@ export default function HeaderForge() {
         }
       }
       const fits = wide && slotW() >= 96 || (wide && hdr.classList.contains("forge-two"));
-      setOk(fits);
+      const mobile = window.innerWidth < 820;
+      setOk(fits || mobile);
       hdr.classList.toggle("forge-ok", fits);
+      hdr.classList.toggle("forge-mobile", mobile);
     };
     measure();
     const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(measure) : null;
@@ -101,15 +103,15 @@ export default function HeaderForge() {
 
   return (
     <div ref={box} className="forge-art" data-ok={ok ? "1" : "0"} data-active={active ? "1" : "0"} role="img" aria-label="Робітник з кувалдою на плиті">
-      <div className="fw-strip">
+      <div className={"fw-strip" + (WEBM_OK ? "" : " fw-screen")}>
         <img className="fw-still" src="/forge/strip-still.webp" alt="" draggable="false" style={{ opacity: live ? 0 : 1 }} />
         {animated && (
           <>
             <video ref={idleV} className="fw-idle" muted loop playsInline preload="auto" aria-hidden="true" onPlaying={() => setLive(true)}>
-              <source src="/forge/strip-idle.webm" type="video/webm" />
+              {WEBM_OK ? <source src="/forge/strip-idle.webm" type="video/webm" /> : <source src="/forge/strip-idle.mp4" type="video/mp4" />}
             </video>
             <video ref={vid} className="fw-video" muted loop playsInline preload="auto" aria-hidden="true">
-              <source src="/forge/strip-hit.webm" type="video/webm" />
+              {WEBM_OK ? <source src="/forge/strip-hit.webm" type="video/webm" /> : <source src="/forge/strip-hit.mp4" type="video/mp4" />}
             </video>
           </>
         )}
