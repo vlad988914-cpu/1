@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { supabase } from "./supabaseClient";
 import { Plate, Label, badgeStyle, miniBtn, ErrorText, Field, primaryBtn, smallBtn, selectStyle, inputStyle, Modal, RoleTag } from "./ui.jsx";
 import { answerFromKnowledge, FALLBACK_ANSWER, JOB_PILLS, HELPER_PILLS } from "../shared/workKnowledge.js";
@@ -657,6 +658,52 @@ const carouselArrowStyle = (side) => ({
 
 // ---- Small UI atoms ----
 // ---- Main App ----
+// ---- Відео-превʼю техніки: при наведенні на фото зʼявляється вікно з відео ----
+const LISTING_VIDEOS = [{ key: "catm320", src: "/videos/cat-m320.mp4", poster: "/videos/cat-m320.jpg" }];
+const _norm = (s) => String(s || "").toLowerCase().replace(/[мсат]/g, (c) => ({ "м": "m", "с": "c", "а": "a", "т": "t" }[c])).replace(/[^a-z0-9]/g, "");
+export function listingVideo(l) {
+  const v = l && l.specs && l.specs._video;
+  if (v) return { src: v, poster: l.specs._poster || (l.photos && l.photos[0]) || undefined };
+  const n = _norm(l && l.brand);
+  return LISTING_VIDEOS.find((x) => n.includes(x.key)) || null;
+}
+function VideoPeek({ video, children }) {
+  const [pos, setPos] = useState(null);
+  const ref = useRef(null);
+  const timer = useRef(null);
+  useEffect(() => () => clearTimeout(timer.current), []);
+  if (!video) return children;
+  const canHover = typeof window !== "undefined" && window.matchMedia && window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+  const W = 340, H = 170;
+  const show = () => {
+    if (!canHover) return;
+    clearTimeout(timer.current);
+    timer.current = setTimeout(() => {
+      const r = ref.current && ref.current.getBoundingClientRect();
+      if (!r) return;
+      const card = ref.current.closest("[data-listing-card], article, .listing-card") || ref.current;
+      const cr = card.getBoundingClientRect();
+      let x, y;
+      if (cr.right + 14 + W <= window.innerWidth - 8) { x = cr.right + 14; y = r.top - 20; }            // справа від картки
+      else if (cr.left - 14 - W >= 8) { x = cr.left - 14 - W; y = r.top - 20; }                         // зліва
+      else { x = Math.max(8, Math.min(r.right - W, window.innerWidth - W - 8)); y = r.bottom + 10; }   // під фото
+      y = Math.max(8, Math.min(y, window.innerHeight - H - 40));
+      setPos({ x, y });
+    }, 140);
+  };
+  const hide = () => { clearTimeout(timer.current); setPos(null); };
+  return (
+    <span ref={ref} onMouseEnter={show} onMouseLeave={hide} style={{ display: "inline-block", cursor: canHover ? "zoom-in" : undefined }}>
+      {children}
+      {pos && typeof document !== "undefined" && createPortal(
+        <div className="video-peek" style={{ position: "fixed", left: pos.x, top: pos.y, width: W, zIndex: 9999, pointerEvents: "none", background: "#0B0D0F", border: "1px solid #3a3f44", borderRadius: 14, overflow: "hidden", boxShadow: "0 18px 50px rgba(0,0,0,.6)" }}>
+          <video src={video.src} poster={video.poster} autoPlay muted loop playsInline preload="auto" style={{ display: "block", width: W, height: H, objectFit: "cover", background: "#000" }} />
+          <div style={{ padding: "6px 12px", fontSize: 11.5, color: "#A3A8AD", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>Відео техніки</div>
+        </div>, document.body)}
+    </span>
+  );
+}
+
 export default function EquipmentMarketplace() {
   const [role, setRole] = useState("client"); // client | owner
   const [lang, setLang] = useState("uk"); // uk | ru | en
@@ -3030,9 +3077,10 @@ export default function EquipmentMarketplace() {
                   {l.brand}
                 </div>
               </div>
+              <VideoPeek video={listingVideo(l)}>
               {l.photos && l.photos.length > 0 ? (
-                <div style={{ position: "relative" }}>
-                  <img src={l.photos[0]} alt={l.brand} style={{ width: 44, height: 44, objectFit: "cover", border: "1px solid #63696D" }} />
+                <div style={{ position: "relative", marginTop: 26 }}>
+                  <img src={l.photos[0]} alt={l.brand} style={{ width: 52, height: 52, objectFit: "cover", border: "1px solid #63696D", borderRadius: 6, display: "block" }} />
                   {l.photos.length > 1 && (
                     <span style={{ position: "absolute", bottom: -4, right: -4, fontSize: 9.5, fontWeight: 600, background: "#08090A", color: "#F4F4F1", border: "1px solid #63696D", borderRadius: 980, padding: "1px 5px" }}>
                       +{l.photos.length - 1}
@@ -3040,12 +3088,13 @@ export default function EquipmentMarketplace() {
                   )}
                 </div>
               ) : (
-                <div className="icon-tilt" style={{ color: "#FF6A1A", filter: "drop-shadow(0 2px 3px rgba(0,0,0,0.4))" }}><EquipmentIcon type={l.type} size={46} /></div>
+                <div className="icon-tilt" style={{ marginTop: 26, color: "#FF6A1A", filter: "drop-shadow(0 2px 3px rgba(0,0,0,0.4))" }}><EquipmentIcon type={l.type} size={46} /></div>
               )}
+              </VideoPeek>
             </div>
 
             <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 4 }}>
-              {Object.entries(l.specs).filter(([, v]) => v && v !== "—").map(([k, v]) => (
+              {Object.entries(l.specs).filter(([k, v]) => v && v !== "—" && !k.startsWith("_")).map(([k, v]) => (
                 <div key={k} style={{ display: "flex", justifyContent: "space-between", fontSize: 12.5, fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", color: "#F4F4F1" }}>
                   <span style={{ color: "#A3A8AD" }}>{k}</span>
                   <span>{v}</span>
@@ -3066,7 +3115,7 @@ export default function EquipmentMarketplace() {
                     color: "transparent",
                   }}
                 >
-                  {l.price} ₴<span style={{ fontSize: 12, color: "#A3A8AD", WebkitTextFillColor: "#A3A8AD" }}>/{l.unit}</span>
+                  {l.price > 0 ? (<>{l.price} ₴<span style={{ fontSize: 12, color: "#A3A8AD", WebkitTextFillColor: "#A3A8AD" }}>/{l.unit}</span></>) : "Договірна"}
                 </div>
                 <div style={{ fontSize: 11, color: "#A3A8AD" }}>
                   {l.region} · {l.owner}
@@ -3244,6 +3293,9 @@ export default function EquipmentMarketplace() {
             <div>
               <RoleTag kind="lease" />
             </div>
+            {listingVideo(detailListing) && (
+              <video src={listingVideo(detailListing).src} poster={listingVideo(detailListing).poster} controls muted loop playsInline preload="metadata" style={{ width: "100%", borderRadius: 12, background: "#000", display: "block" }} />
+            )}
             <div style={{ display: "flex", justifyContent: "center", padding: "20px 0", background: "#191C1F", borderRadius: 12 }}>
               {detailListing.photos && detailListing.photos.length > 0 ? (
                 <img
@@ -3309,7 +3361,7 @@ export default function EquipmentMarketplace() {
             <div style={{ borderTop: "1px solid #202428", borderBottom: "1px solid #202428", padding: "12px 0" }}>
               <Label>Параметри</Label>
               <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 8 }}>
-                {[["Тип", tType(detailListing.type, lang)], ["Регіон", detailListing.region], ...Object.entries(detailListing.specs).filter(([, v]) => v && v !== "—")].map(([k, v]) => (
+                {[["Тип", tType(detailListing.type, lang)], ["Регіон", detailListing.region], ...Object.entries(detailListing.specs).filter(([k, v]) => v && v !== "—" && !k.startsWith("_"))].map(([k, v]) => (
                   <div key={k} style={{ display: "flex", justifyContent: "space-between", gap: 12, fontSize: 13 }}>
                     <span style={{ color: "#A3A8AD" }}>{k}</span>
                     <span style={{ textAlign: "right" }}>{v}</span>
@@ -3329,7 +3381,7 @@ export default function EquipmentMarketplace() {
                 color: "transparent",
               }}
             >
-              {detailListing.price} ₴<span style={{ fontSize: 14, color: "#A3A8AD", WebkitTextFillColor: "#A3A8AD" }}>/{detailListing.unit}</span>
+              {detailListing.price > 0 ? (<>{detailListing.price} ₴<span style={{ fontSize: 14, color: "#A3A8AD", WebkitTextFillColor: "#A3A8AD" }}>/{detailListing.unit}</span></>) : "Договірна"}
             </div>
 
             <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13 }}>
@@ -4645,7 +4697,7 @@ function AiAssistant({ user, onPrefillRequest, onViewListing, listings, t, open,
                     <div style={{ minWidth: 0 }}>
                       <div style={{ fontSize: 13, fontWeight: 600, color: "#F4F4F1" }}>{m.matchedListing.brand}</div>
                       <div style={{ fontSize: 11, color: "#A3A8AD" }}>
-                        {m.matchedListing.region} · {m.matchedListing.price} ₴/{m.matchedListing.unit}
+                        {m.matchedListing.region} · {m.matchedListing.price > 0 ? `${m.matchedListing.price} ₴/${m.matchedListing.unit}` : "договірна"}
                       </div>
                     </div>
                   </div>
@@ -4672,7 +4724,7 @@ function AiAssistant({ user, onPrefillRequest, onViewListing, listings, t, open,
                         <div style={{ minWidth: 0 }}>
                           <div style={{ fontSize: 12, fontWeight: 600, color: "#F4F4F1" }}>{l.type} · {l.brand}</div>
                           <div style={{ fontSize: 10.5, color: "#A3A8AD" }}>
-                            {l.region} · {l.price} ₴/{l.unit}
+                            {l.region} · {l.price > 0 ? `${l.price} ₴/${l.unit}` : "договірна"}
                           </div>
                         </div>
                       </div>
@@ -4946,7 +4998,7 @@ function AddListingForm({ onSubmit, user, lang }) {
 
   const submit = async (e) => {
     e.preventDefault();
-    if (!form.brand || !form.price || !form.owner || submitting) return;
+    if (!form.brand || !form.owner || submitting) return; // порожня ціна = «договірна»
     setSubmitting(true);
     try {
       const ok = await onSubmit({
@@ -5031,7 +5083,7 @@ function AddListingForm({ onSubmit, user, lang }) {
       </Field>
       <div style={{ display: "flex", gap: 10 }}>
         <Field label="Ціна" style={{ flex: 1 }}>
-          <input type="number" value={form.price} onChange={set("price")} placeholder="1450" style={inputStyle} />
+          <input type="number" value={form.price} onChange={set("price")} placeholder="Порожньо = договірна" style={inputStyle} />
         </Field>
         <Field label="Одиниця" style={{ width: 100 }}>
           <select value={form.unit} onChange={set("unit")} style={inputStyle}>
