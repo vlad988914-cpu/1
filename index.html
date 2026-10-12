@@ -2,7 +2,7 @@
 <html lang="uk" translate="no">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <!-- Сайт має власний перемикач мов (UK/RU/EN). Автопереклад браузера переписує DOM
          і ламає інтерфейс (застарілі картки, зіпсовані заголовки), тому вимикаємо його. -->
     <meta name="google" content="notranslate" />
@@ -30,6 +30,12 @@
       ]}
     </script>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="ТехМайданчик" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
     <!-- перший екран: постер сцени (перший кадр відео) вантажиться першим -->
     <link rel="preload" as="image" href="/story/poster.jpg" fetchpriority="high" />
   </head>

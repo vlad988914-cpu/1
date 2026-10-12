@@ -97,3 +97,8 @@
   .cat-filters > span:nth-child(3) { display: none; }
 }
 @media (max-width: 819px) { .sticky-header.has-forge { background: rgba(9, 10, 12, 0.93); } }
+
+/* застосунок на головному екрані: безпечні зони (виріз, home-індикатор) */
+.sticky-cta { padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px)) !important; }
+@media (max-width: 680px) { .ai-fab { bottom: calc(108px + env(safe-area-inset-bottom, 0px)) !important; } }
+@media (display-mode: standalone) { .sticky-header.has-forge { padding-top: calc(8px + env(safe-area-inset-top, 0px)) !important; } body { overscroll-behavior-y: none; } }

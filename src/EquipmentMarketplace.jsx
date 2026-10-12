@@ -83,6 +83,7 @@ const TRANSLATIONS = {
     busy_btn: "Зайнято",
     busy_until: "Зайнято до",
     catalog_empty: "Нічого не знайдено за цими фільтрами.",
+    catalog_soon: "Каталог поповнюється. Залиште заявку — диспетчер підбере техніку під вашу роботу.",
     faq_label: "Часті запитання",
     faq_title: "Перш ніж почати",
     footer_desc: "Біржа оренди будівельної техніки. Клієнти і власники технiки знаходять одне одного напряму.",
@@ -168,6 +169,7 @@ const TRANSLATIONS = {
     busy_btn: "Занято",
     busy_until: "Занято до",
     catalog_empty: "Ничего не найдено по этим фильтрам.",
+    catalog_soon: "Каталог пополняется. Оставьте заявку — диспетчер подберёт технику под вашу работу.",
     faq_label: "Частые вопросы",
     faq_title: "Прежде чем начать",
     footer_desc: "Биржа аренды строительной техники. Клиенты и владельцы техники находят друг друга напрямую.",
@@ -253,6 +255,7 @@ const TRANSLATIONS = {
     busy_btn: "Busy",
     busy_until: "Busy until",
     catalog_empty: "Nothing found for these filters.",
+    catalog_soon: "The catalog is growing. Leave a request and the dispatcher will find equipment for your job.",
     faq_label: "Frequently asked questions",
     faq_title: "Before you start",
     footer_desc: "Construction equipment rental exchange. Clients and equipment owners find each other directly.",
@@ -831,7 +834,7 @@ export default function EquipmentMarketplace() {
           setListings(data.map(mapListingRow));
           setListingsFromDb(true);
         } else {
-          setListings(seedListings); // база порожня — показуємо демо-приклади
+          setListings([]); // база порожня — каталог порожній (демо-картки не показуємо)
         }
       });
   }, []);
@@ -840,7 +843,7 @@ export default function EquipmentMarketplace() {
     if (!supabase) return;
     const { data, error } = await supabase.from("listings").select("*").order("created_at", { ascending: false });
     if (error || !data) return;
-    setListings(data.length ? data.map(mapListingRow) : seedListings);
+    setListings(data.map(mapListingRow));
     setListingsFromDb(data.length > 0);
   };
 
@@ -3123,7 +3126,7 @@ export default function EquipmentMarketplace() {
         {!listingsReady && [0, 1, 2].map((i) => <div key={i} className="skeleton" style={{ height: 150 }} aria-hidden="true" />)}
         {listingsReady && filtered.length === 0 && (
           <div style={{ color: "#A3A8AD", fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 13 }}>
-            {t("catalog_empty")}
+            {listings.length === 0 ? t("catalog_soon") : t("catalog_empty")}
           </div>
         )}
       </div>

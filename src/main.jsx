@@ -7,3 +7,8 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     <EquipmentMarketplace />
   </React.StrictMode>
 );
+
+// PWA: сервіс-воркер лише в продакшені (у dev заважає гарячому перезавантаженню)
+if (import.meta.env.PROD && "serviceWorker" in navigator) {
+  window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));
+}
