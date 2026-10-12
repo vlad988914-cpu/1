@@ -658,6 +658,41 @@ const carouselArrowStyle = (side) => ({
 
 // ---- Small UI atoms ----
 // ---- Main App ----
+// ---- Рейтинг до 5 зірок (реальні оцінки клієнтів; без оцінок — чесний напис) ----
+function Stars({ value = 0, size = 14, onPick, mine = 0 }) {
+  const [hover, setHover] = useState(0);
+  const shown = hover || mine || value;
+  const star = (i) => {
+    const fill = Math.max(0, Math.min(1, shown - (i - 1)));
+    const sty = { width: size, height: size, display: "inline-block", position: "relative", fontSize: size, lineHeight: 1, color: "#3a3f44" };
+    return (
+      <span key={i} style={sty} aria-hidden="true">
+        ★
+        <span style={{ position: "absolute", left: 0, top: 0, width: `${fill * 100}%`, overflow: "hidden", color: hover || mine ? "#FF6A1A" : "#FFB81C", whiteSpace: "nowrap" }}>★</span>
+      </span>
+    );
+  };
+  if (!onPick) return <span style={{ display: "inline-flex", gap: 1 }}>{[1, 2, 3, 4, 5].map(star)}</span>;
+  return (
+    <span style={{ display: "inline-flex", gap: 2 }} onMouseLeave={() => setHover(0)}>
+      {[1, 2, 3, 4, 5].map((i) => (
+        <button key={i} type="button" aria-label={`${i} з 5`} onMouseEnter={() => setHover(i)} onClick={() => onPick(i)}
+          style={{ background: "none", border: "none", padding: 2, cursor: "pointer", minWidth: 32, minHeight: 32, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+          {React.cloneElement(star(i), { key: undefined })}
+        </button>
+      ))}
+    </span>
+  );
+}
+function RatingLine({ stat, size = 13 }) {
+  const font = "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+  if (!stat || !stat.count) {
+    return <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11.5, color: "#7d8387", fontFamily: font }}><Stars value={0} size={size} />Ще без оцінок</span>;
+  }
+  const avg = stat.sum / stat.count;
+  return <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, color: "#D5D8DA", fontFamily: font }}><Stars value={avg} size={size} /><b style={{ fontWeight: 600 }}>{avg.toFixed(1)}</b><span style={{ color: "#A3A8AD" }}>({stat.count})</span></span>;
+}
+
 // ---- Відео-превʼю техніки: при наведенні на фото зʼявляється вікно з відео ----
 const LISTING_VIDEOS = [{ key: "catm320", src: "/videos/cat-m320.mp4", poster: "/videos/cat-m320.jpg" }];
 const _norm = (s) => String(s || "").toLowerCase().replace(/[мсат]/g, (c) => ({ "м": "m", "с": "c", "а": "a", "т": "t" }[c])).replace(/[^a-z0-9]/g, "");
@@ -892,6 +927,30 @@ export default function EquipmentMarketplace() {
     if (error || !data) return;
     setListings(data.map(mapListingRow));
     setListingsFromDb(data.length > 0);
+  };
+
+  // Рейтинги: { [listingId]: { sum, count, mine } }. Таблиці ще може не бути — тоді просто без оцінок.
+  const [ratings, setRatings] = useState({});
+  const loadRatings = async () => {
+    if (!supabase) return;
+    const { data, error } = await supabase.from("listing_ratings").select("listing_id, user_id, stars");
+    if (error || !data) return;
+    const m = {};
+    for (const r of data) {
+      const e = (m[r.listing_id] = m[r.listing_id] || { sum: 0, count: 0, mine: 0 });
+      e.sum += r.stars; e.count += 1;
+      if (user && r.user_id === user.id) e.mine = r.stars;
+    }
+    setRatings(m);
+  };
+  useEffect(() => { if (listings.length) loadRatings(); }, [listings.length, user && user.id]); // eslint-disable-line
+  const handleRate = async (l, stars) => {
+    if (!user || !user.id) { setShowAuthForm(true); flashToast("Щоб поставити оцінку, увійдіть або зареєструйтесь"); return; }
+    if (l.ownerId && l.ownerId === user.id) { flashToast("Власник не може оцінювати власну техніку"); return; }
+    const { error } = await supabase.from("listing_ratings").upsert({ listing_id: l.id, user_id: user.id, stars }, { onConflict: "listing_id,user_id" });
+    if (error) { flashToast("Не вдалося зберегти оцінку. Спробуйте пізніше"); return; }
+    flashToast("Дякуємо за оцінку!");
+    loadRatings();
   };
 
   // Додавати техніку можуть лише власники (і диспетчер) — перевіряє також база (RLS)
@@ -3076,6 +3135,7 @@ export default function EquipmentMarketplace() {
                 <div style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif", fontSize: 18, fontWeight: 600, marginTop: 2 }}>
                   {l.brand}
                 </div>
+                <div style={{ marginTop: 4 }}><RatingLine stat={ratings[l.id]} /></div>
               </div>
               <VideoPeek video={listingVideo(l)}>
               {l.photos && l.photos.length > 0 ? (
@@ -3290,8 +3350,15 @@ export default function EquipmentMarketplace() {
       {detailListing && (
         <Modal onClose={() => setDetailListing(null)} title={detailListing.brand} wide>
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            <div>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
               <RoleTag kind="lease" />
+              <RatingLine stat={ratings[detailListing.id]} size={16} />
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", fontSize: 13, color: "#A3A8AD", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+              <span>{user && user.id && detailListing.ownerId === user.id ? "Це ваша техніка" : "Ваша оцінка:"}</span>
+              {!(user && user.id && detailListing.ownerId === user.id) && (
+                <Stars value={0} size={20} mine={(ratings[detailListing.id] && ratings[detailListing.id].mine) || 0} onPick={(n) => handleRate(detailListing, n)} />
+              )}
             </div>
             {listingVideo(detailListing) && (
               <video src={listingVideo(detailListing).src} poster={listingVideo(detailListing).poster} controls muted loop playsInline preload="metadata" style={{ width: "100%", borderRadius: 12, background: "#000", display: "block" }} />
