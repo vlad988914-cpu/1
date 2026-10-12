@@ -1,5 +1,5 @@
 /* ТехМайданчик — сервіс-воркер: швидкий старт і офлайн-заглушка. API (Supabase, /api) і відео не кешуємо. */
-const V = "tm-v1";
+const V = "tm-v2";
 const SHELL = ["/", "/offline.html", "/favicon.svg", "/icon-192.png"];
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(V).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));
@@ -15,7 +15,8 @@ self.addEventListener("fetch", (e) => {
   if (/\.(mp4|webm|mov)$/i.test(u.pathname)) return; // відео не кешуємо (великі, Range-запити)
   if (r.mode === "navigate") {
     // сторінка: спершу мережа (завжди свіжа версія), без мережі — кеш або офлайн-заглушка
-    e.respondWith(fetch(r).then((res) => { const cp = res.clone(); caches.open(V).then((c) => c.put("/", cp)); return res; }).catch(() => caches.match("/").then((m) => m || caches.match("/offline.html"))));
+    const key = u.pathname.startsWith("/orenda/") ? u.pathname : "/"; // SEO-сторінки кешуються окремо, SPA — під "/"
+    e.respondWith(fetch(r).then((res) => { if (res.ok) { const cp = res.clone(); caches.open(V).then((c) => c.put(key, cp)); } return res; }).catch(() => caches.match(key).then((m) => m || caches.match("/offline.html"))));
     return;
   }
   // статика: з кешу миттєво, у фоні оновлюємо
