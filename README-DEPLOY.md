@@ -80,3 +80,6 @@
 ## SEO-сторінки (/orenda/...)
 Статичні сторінки лежать у `public/orenda/` і генеруються скриптом `scripts/gen-seo-pages.mjs` (25 сторінок + sitemap.xml).
 Після покупки домену: `SITE_URL=https://ваш-домен.ua node scripts/gen-seo-pages.mjs`, потім замініть адресу в index.html і robots.txt.
+
+## Google Search Console
+Файл підтвердження `public/googleca5bbc4ac9690da6.html` не видаляти. Після деплою: Search Console → «Підтвердити», потім Sitemaps → `sitemap.xml`.
