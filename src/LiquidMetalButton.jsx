@@ -5,7 +5,7 @@ import { liquidMetalFragmentShader, ShaderMount } from "@paper-design/shaders";
 const EASE = "all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)";
 const SANS = "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif";
 
-export default function LiquidMetalButton({ label, onClick, icon = null, type = "button", color = "#E9E4DC", height = 46, style, ariaLabel }) {
+export default function LiquidMetalButton({ label, onClick, icon = null, type = "button", color = "#E9E4DC", height = 46, style, ariaLabel, video = "/videos/btn-chevron.mp4", poster = "/videos/btn-chevron.jpg" }) {
   const [hover, setHover] = useState(false);
   const [press, setPress] = useState(false);
   const [ripples, setRipples] = useState([]);
@@ -16,6 +16,8 @@ export default function LiquidMetalButton({ label, onClick, icon = null, type = 
   const measure = useRef(null);
   const rid = useRef(0);
   const reduce = useRef(false);
+  const vidRef = useRef(null);
+  const canHover = useRef(false);
 
   useLayoutEffect(() => {
     if (measure.current) setW(Math.ceil(measure.current.getBoundingClientRect().width) + 44 + (icon ? 24 : 0));
@@ -23,6 +25,7 @@ export default function LiquidMetalButton({ label, onClick, icon = null, type = 
 
   useEffect(() => {
     reduce.current = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    canHover.current = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
     if (!shaderRef.current) return;
     try {
       mount.current = new ShaderMount(
@@ -36,6 +39,14 @@ export default function LiquidMetalButton({ label, onClick, icon = null, type = 
     return () => { try { mount.current && mount.current.destroy && mount.current.destroy(); } catch (e) {} mount.current = null; };
   }, []);
 
+  const vid = (on) => {
+    const v = vidRef.current;
+    if (!v || !canHover.current || reduce.current) return;
+    if (on) {
+      if (!v.getAttribute("src")) { v.src = v.canPlayType("video/mp4; codecs=avc1.42E01E") ? video : video.replace(/\.mp4$/, ".webm"); v.load(); }
+      const pr = v.play(); if (pr && pr.catch) pr.catch(() => {});
+    } else v.pause();
+  };
   const speed = (v) => { if (!reduce.current) mount.current && mount.current.setSpeed && mount.current.setSpeed(v); };
   const click = (e) => {
     speed(2.4);
@@ -62,7 +73,11 @@ export default function LiquidMetalButton({ label, onClick, icon = null, type = 
         <span ref={shaderRef} className="lm-shader" style={{ display: "block", position: "relative", width: "100%", height: "100%", borderRadius: 100, overflow: "hidden" }} />
       </span>
       <span style={{ position: "absolute", inset: 2, borderRadius: 100, background: "linear-gradient(180deg,#202020 0%,#000 100%)", pointerEvents: "none", transform: press ? "translateY(1px) scale(.98)" : "none", transition: "transform .2s" }} />
-      <span style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, color, fontFamily: SANS, fontSize: 14, fontWeight: 600, whiteSpace: "nowrap", textShadow: "0 1px 2px rgba(0,0,0,.5)", pointerEvents: "none" }}>
+      <span aria-hidden="true" style={{ position: "absolute", inset: 2, borderRadius: 100, overflow: "hidden", pointerEvents: "none", opacity: hover && canHover.current && !reduce.current ? 1 : 0, transition: "opacity .45s ease" }}>
+        <video ref={vidRef} muted loop playsInline preload="none" poster={poster} style={{ width: "100%", height: "100%", objectFit: "cover", opacity: 0.5, filter: "saturate(.9) brightness(.8)" }} />
+        <span style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse at 50% 50%, rgba(0,0,0,.55) 0%, rgba(0,0,0,.25) 70%), linear-gradient(180deg, rgba(0,0,0,.25), rgba(0,0,0,.35))" }} />
+      </span>
+      <span style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, color, fontFamily: SANS, fontSize: 14, fontWeight: 600, whiteSpace: "nowrap", textShadow: "0 1px 2px rgba(0,0,0,.9), 0 0 10px rgba(0,0,0,.75)", pointerEvents: "none" }}>
         {icon}{label}
       </span>
       <button
@@ -70,8 +85,8 @@ export default function LiquidMetalButton({ label, onClick, icon = null, type = 
         type={type}
         aria-label={ariaLabel || label}
         onClick={click}
-        onMouseEnter={() => { setHover(true); speed(1); }}
-        onMouseLeave={() => { setHover(false); setPress(false); speed(0.6); }}
+        onMouseEnter={() => { setHover(true); speed(1); vid(true); }}
+        onMouseLeave={() => { setHover(false); setPress(false); speed(0.6); vid(false); }}
         onMouseDown={() => setPress(true)}
         onMouseUp={() => setPress(false)}
         onTouchStart={() => setPress(true)}
