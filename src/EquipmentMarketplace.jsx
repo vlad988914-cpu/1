@@ -9,7 +9,6 @@ import HeaderForge from "./forge/Forge.jsx";
 import ScrollStory from "./story/ScrollStory.jsx";
 import KineticGrid from "./KineticGrid.jsx";
 import ScrambleText from "./ScrambleText.jsx";
-import SlideButton from "./SlideButton.jsx";
 import { SplitWords, CountUp, SlidingTabs, ScrollProgress, SceneAura, useSpotlight, useMagnetic, useReveal, useScenes } from "./motion/index.jsx";
 import { DealsSection, EventLog, EquipmentBoard, UsersBoard, PairsBoard } from "./dispatcherDeals.jsx";
 import * as deals from "./services/deals.js";
@@ -2767,24 +2766,32 @@ export default function EquipmentMarketplace() {
               placeholder={t("hero_search_placeholder")}
               style={{ ...inputStyle, flex: 1, minWidth: 0 }}
             />
-            <SlideButton type="submit" small label={t("hero_search_btn")} style={{ flexShrink: 0 }} />
+            <button type="submit" className="glass-cta" style={{ flexShrink: 0 }}>
+              {t("hero_search_btn")}
+            </button>
           </form>
           <div className="mo-in ss-l" style={{ "--i": 5, display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap", marginBottom: 44 }}>
-            <SlideButton
-              label={t("hero_cta_client")}
-              icon={<IconExcavator size={16} />}
+            <button
               onClick={() => {
                 setRole("client");
                 setAiOpen(true);
               }}
-            />
-            <SlideButton
-              label={t("hero_cta_owner")}
+              className="glass-cta"
+              data-magnetic
+              style={{ display: "inline-flex", alignItems: "center", gap: 8 }}
+            >
+              <IconExcavator size={16} />
+              {t("hero_cta_client")}
+            </button>
+            <button
               onClick={() => {
                 setRole("owner");
                 openAddListing();
               }}
-            />
+              style={smallBtn}
+            >
+              {t("hero_cta_owner")}
+            </button>
           </div>
           <div className="mo-in ss-l ss-opt-p" style={{ "--i": 6, display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 8, marginBottom: 8 }}>
             <button className="hero-pill" onClick={() => scrollToApp()}>
