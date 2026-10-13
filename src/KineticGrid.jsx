@@ -6,7 +6,7 @@ const CELL = 55, RADIUS = 260, MAX_WARP = 24, DOT = 28, LERP = 0.08;
 const lerp = (a, b, t) => a + (b - a) * t;
 
 const BRAND = [255, 106, 26];
-export default function KineticGrid({ accent = BRAND, style }) {
+export default function KineticGrid({ accent = BRAND, fixed = false, dim = 1, style }) {
   const ref = useRef(null);
 
   useEffect(() => {
@@ -23,7 +23,7 @@ export default function KineticGrid({ accent = BRAND, style }) {
 
     const resize = () => {
       dpr = Math.min(window.devicePixelRatio || 1, 2);
-      w = parent.clientWidth; h = parent.clientHeight;
+      w = fixed ? window.innerWidth : parent.clientWidth; h = fixed ? window.innerHeight : parent.clientHeight;
       canvas.width = w * dpr; canvas.height = h * dpr;
       canvas.style.width = w + "px"; canvas.style.height = h + "px";
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -51,7 +51,7 @@ export default function KineticGrid({ accent = BRAND, style }) {
       ctx.clearRect(0, 0, w, h);
       const [r, g, b] = accent;
       ctx.lineWidth = 1;
-      ctx.strokeStyle = `rgba(${r},${g},${b},0.11)`;
+      ctx.strokeStyle = `rgba(${r},${g},${b},${0.11 * dim})`;
       ctx.beginPath();
       for (let x = 0; x <= w + CELL; x += CELL) {
         for (let y = 0; y <= h; y += 12) {
@@ -72,7 +72,7 @@ export default function KineticGrid({ accent = BRAND, style }) {
           const k = d < RADIUS ? (1 - d / RADIUS) * mouse.a : 0;
           if (k <= 0.02) continue;
           const [px, py] = warp(x, y);
-          ctx.fillStyle = `rgba(${r},${g},${b},${0.12 + k * 0.55})`;
+          ctx.fillStyle = `rgba(${r},${g},${b},${(0.12 + k * 0.55) * dim})`;
           ctx.beginPath(); ctx.arc(px, py, 1 + k * 1.4, 0, 6.2832); ctx.fill();
         }
       }
@@ -115,25 +115,25 @@ export default function KineticGrid({ accent = BRAND, style }) {
 
     resize(); draw();
     const ro = new ResizeObserver(() => { resize(); draw(); });
-    ro.observe(parent);
+    if (fixed) window.addEventListener("resize", resize); else ro.observe(parent);
     const io = new IntersectionObserver(([en]) => { visible = en.isIntersecting; if (visible) kick(); });
-    io.observe(parent);
+    if (!fixed) io.observe(parent);
     if (fine && !reduce) {
       window.addEventListener("mousemove", onMove, { passive: true });
       window.addEventListener("click", onClick, { passive: true });
     }
     return () => {
-      cancelAnimationFrame(raf); ro.disconnect(); io.disconnect();
+      cancelAnimationFrame(raf); window.removeEventListener("resize", resize); ro.disconnect(); io.disconnect();
       window.removeEventListener("mousemove", onMove);
       window.removeEventListener("click", onClick);
     };
-  }, [accent]);
+  }, [accent, fixed, dim]);
 
   return (
     <canvas
       ref={ref}
       aria-hidden="true"
-      style={{ position: "absolute", inset: 0, zIndex: 0, pointerEvents: "none", ...style }}
+      style={{ position: fixed ? "fixed" : "absolute", inset: 0, zIndex: fixed ? -1 : 0, pointerEvents: "none", ...style }}
     />
   );
 }

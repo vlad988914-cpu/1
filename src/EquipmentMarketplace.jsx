@@ -8,6 +8,7 @@ import { WantedBoard, RespondForm } from "./wanted.jsx";
 import HeaderForge from "./forge/Forge.jsx";
 import ScrollStory from "./story/ScrollStory.jsx";
 import KineticGrid from "./KineticGrid.jsx";
+import LiquidMetalButton from "./LiquidMetalButton.jsx";
 import { SplitWords, CountUp, SlidingTabs, ScrollProgress, SceneAura, useSpotlight, useMagnetic, useReveal, useScenes } from "./motion/index.jsx";
 import { DealsSection, EventLog, EquipmentBoard, UsersBoard, PairsBoard } from "./dispatcherDeals.jsx";
 import * as deals from "./services/deals.js";
@@ -1767,6 +1768,7 @@ export default function EquipmentMarketplace() {
       }}
     >
       <FontLink />
+      <KineticGrid fixed dim={0.55} />
       <ScrollProgress />
       <SceneAura />
       <style>{`
@@ -2103,6 +2105,8 @@ export default function EquipmentMarketplace() {
 
         /* Frosted glass CTA — layered gradients + blur + gradient-masked border,
            in the site's own orange/yellow palette */
+        .lm-shader canvas { width:100% !important; height:100% !important; display:block !important; position:absolute !important; top:0; left:0; border-radius:100px !important; }
+        @keyframes lm-ripple { 0%{transform:translate(-50%,-50%) scale(0);opacity:.6} 100%{transform:translate(-50%,-50%) scale(4);opacity:0} }
         .glass-cta {
           position: relative;
           border-radius: 999px;
@@ -2761,32 +2765,25 @@ export default function EquipmentMarketplace() {
               placeholder={t("hero_search_placeholder")}
               style={{ ...inputStyle, flex: 1, minWidth: 0 }}
             />
-            <button type="submit" className="glass-cta" style={{ flexShrink: 0 }}>
-              {t("hero_search_btn")}
-            </button>
+            <LiquidMetalButton type="submit" label={t("hero_search_btn")} height={42} color="#FF8A3D" style={{ flexShrink: 0 }} />
           </form>
           <div className="mo-in ss-l" style={{ "--i": 5, display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap", marginBottom: 44 }}>
-            <button
+            <LiquidMetalButton
+              label={t("hero_cta_client")}
+              icon={<IconExcavator size={16} />}
+              color="#FF8A3D"
               onClick={() => {
                 setRole("client");
                 setAiOpen(true);
               }}
-              className="glass-cta"
-              data-magnetic
-              style={{ display: "inline-flex", alignItems: "center", gap: 8 }}
-            >
-              <IconExcavator size={16} />
-              {t("hero_cta_client")}
-            </button>
-            <button
+            />
+            <LiquidMetalButton
+              label={t("hero_cta_owner")}
               onClick={() => {
                 setRole("owner");
                 openAddListing();
               }}
-              style={smallBtn}
-            >
-              {t("hero_cta_owner")}
-            </button>
+            />
           </div>
           <div className="mo-in ss-l ss-opt-p" style={{ "--i": 6, display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 8, marginBottom: 8 }}>
             <button className="hero-pill" onClick={() => scrollToApp()}>
@@ -3243,9 +3240,8 @@ export default function EquipmentMarketplace() {
       )}
 
       {/* Дошка запитів + FAQ на кінетичній сітці */}
-      <div style={{ position: "relative", overflow: "hidden" }}>
-      <KineticGrid />
-      <div style={{ position: "relative", zIndex: 1 }}>
+      <div>
+      <div>
       {/* Дошка запитів: хто що шукає */}
       <div data-scene style={{ padding: "8px 24px 0", maxWidth: 1100, margin: "0 auto" }}>
         <SectionDivider n={4} of={5} title="ДОШКА ЗАПИТІВ" />
