@@ -8,7 +8,6 @@ import { WantedBoard, RespondForm } from "./wanted.jsx";
 import HeaderForge from "./forge/Forge.jsx";
 import ScrollStory from "./story/ScrollStory.jsx";
 import KineticGrid from "./KineticGrid.jsx";
-import LiquidMetalButton from "./LiquidMetalButton.jsx";
 import ScrambleText from "./ScrambleText.jsx";
 import { SplitWords, CountUp, SlidingTabs, ScrollProgress, SceneAura, useSpotlight, useMagnetic, useReveal, useScenes } from "./motion/index.jsx";
 import { DealsSection, EventLog, EquipmentBoard, UsersBoard, PairsBoard } from "./dispatcherDeals.jsx";
@@ -2109,6 +2108,48 @@ export default function EquipmentMarketplace() {
            in the site's own orange/yellow palette */
         .lm-shader canvas { width:100% !important; height:100% !important; display:block !important; position:absolute !important; top:0; left:0; border-radius:100px !important; }
         @keyframes lm-ripple { 0%{transform:translate(-50%,-50%) scale(0);opacity:.6} 100%{transform:translate(-50%,-50%) scale(4);opacity:0} }
+        .btn-press {
+          position: relative;
+          display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+          border: 1px solid rgba(120,40,0,0.55);
+          border-radius: 999px;
+          cursor: pointer;
+          padding: 12px 28px;
+          min-height: 46px;
+          color: #2B1405;
+          font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif;
+          font-size: 16px; font-weight: 500; letter-spacing: 0.005em; text-transform: none;
+          text-shadow: 0 1px 0 rgba(255,200,140,0.55);
+          background:
+            radial-gradient(120% 140% at 50% -20%, rgba(255,214,160,0.55) 0%, rgba(255,214,160,0) 55%),
+            linear-gradient(180deg, #FF9B3E 0%, #FF7A1F 52%, #F2610F 100%);
+          box-shadow:
+            inset 0 1px 0 rgba(255,236,205,0.85),
+            inset 0 -3px 5px rgba(150,50,0,0.35),
+            0 1px 0 rgba(255,150,60,0.5),
+            0 6px 0 #B44708,
+            0 12px 20px rgba(0,0,0,0.45);
+          transform: translateY(0);
+          transition: transform .09s ease-out, box-shadow .09s ease-out, filter .2s ease;
+          -webkit-tap-highlight-color: transparent;
+          user-select: none;
+        }
+        .btn-press:hover { filter: brightness(1.07) saturate(1.05); }
+        button.btn-press:not(:disabled):active {
+          transform: translateY(5px);
+          filter: brightness(.95);
+          background:
+            radial-gradient(120% 140% at 50% 120%, rgba(255,170,90,0.35) 0%, rgba(255,170,90,0) 60%),
+            linear-gradient(180deg, #F2670F 0%, #FF7A1F 55%, #FF8D32 100%);
+          box-shadow:
+            inset 0 3px 7px rgba(110,35,0,0.65),
+            inset 0 -1px 0 rgba(255,200,140,0.35),
+            0 1px 0 #B44708,
+            0 3px 6px rgba(0,0,0,0.4);
+        }
+        .btn-press:focus-visible { outline: 2px solid #FFB81C; outline-offset: 3px; }
+        .btn-press.btn-sm { padding: 9px 22px; min-height: 42px; font-size: 15px; }
+        @media (prefers-reduced-motion: reduce) { .btn-press { transition: none; } }
         .glass-cta {
           position: relative;
           border-radius: 999px;
@@ -2767,25 +2808,28 @@ export default function EquipmentMarketplace() {
               placeholder={t("hero_search_placeholder")}
               style={{ ...inputStyle, flex: 1, minWidth: 0 }}
             />
-            <LiquidMetalButton type="submit" label={t("hero_search_btn")} height={42} color="#FF8A3D" style={{ flexShrink: 0 }} />
+            <button type="submit" className="btn-press btn-sm" style={{ flexShrink: 0 }}>{t("hero_search_btn")}</button>
           </form>
           <div className="mo-in ss-l" style={{ "--i": 5, display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap", marginBottom: 44 }}>
-            <LiquidMetalButton
-              label={t("hero_cta_client")}
-              icon={<IconExcavator size={16} />}
-              color="#FF8A3D"
+            <button
+              className="btn-press"
               onClick={() => {
                 setRole("client");
                 setAiOpen(true);
               }}
-            />
-            <LiquidMetalButton
-              label={t("hero_cta_owner")}
+            >
+              <IconExcavator size={18} />
+              {t("hero_cta_client")}
+            </button>
+            <button
+              className="btn-press"
               onClick={() => {
                 setRole("owner");
                 openAddListing();
               }}
-            />
+            >
+              {t("hero_cta_owner")}
+            </button>
           </div>
           <div className="mo-in ss-l ss-opt-p" style={{ "--i": 6, display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 8, marginBottom: 8 }}>
             <button className="hero-pill" onClick={() => scrollToApp()}>
