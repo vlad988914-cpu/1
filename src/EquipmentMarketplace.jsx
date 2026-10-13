@@ -9,6 +9,7 @@ import HeaderForge from "./forge/Forge.jsx";
 import ScrollStory from "./story/ScrollStory.jsx";
 import KineticGrid from "./KineticGrid.jsx";
 import LiquidMetalButton from "./LiquidMetalButton.jsx";
+import ScrambleText from "./ScrambleText.jsx";
 import { SplitWords, CountUp, SlidingTabs, ScrollProgress, SceneAura, useSpotlight, useMagnetic, useReveal, useScenes } from "./motion/index.jsx";
 import { DealsSection, EventLog, EquipmentBoard, UsersBoard, PairsBoard } from "./dispatcherDeals.jsx";
 import * as deals from "./services/deals.js";
@@ -773,6 +774,7 @@ export default function EquipmentMarketplace() {
   const [dealsData, setDealsData] = useState({ offers: [], bookings: [], events: [] }); // для диспетчера
   const [dispatchUsers, setDispatchUsers] = useState([]); // усі зареєстровані користувачі (для диспетчера)
   const [bookingListing, setBookingListing] = useState(null); // техніка, яку клієнт зараз бронює
+  const loginBtnRef = useRef(null);
   const [wantedItems, setWantedItems] = useState([]); // публічна «Дошка запитів»
   const [wantedLoaded, setWantedLoaded] = useState(false);
   const [respondingWanted, setRespondingWanted] = useState(null); // запит, на який власник пише відгук
@@ -2676,8 +2678,8 @@ export default function EquipmentMarketplace() {
               </span>
             </button>
           ) : (
-            <button onClick={() => setShowAuthForm(true)} style={{ ...smallBtn, borderColor: "#FF6A1A", color: "#FF6A1A" }}>
-              {t("nav_login")}
+            <button ref={loginBtnRef} onClick={() => setShowAuthForm(true)} style={{ ...smallBtn, borderColor: "#FF6A1A", color: "#FF6A1A" }}>
+              <ScrambleText text={t("nav_login")} hoverRef={loginBtnRef} />
             </button>
           )}
         </div>
