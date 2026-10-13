@@ -2772,7 +2772,7 @@ export default function EquipmentMarketplace() {
           <div className="mo-in ss-l" style={{ "--i": 5, display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap", marginBottom: 44 }}>
             <SlideButton
               label={t("hero_cta_client")}
-              icon={<IconExcavator size={18} />}
+              icon={<IconExcavator size={16} />}
               onClick={() => {
                 setRole("client");
                 setAiOpen(true);
