@@ -7,6 +7,7 @@ import { ClientCabinet, OwnerCabinet, NotificationsPanel, BookingForm, Availabil
 import { WantedBoard, RespondForm } from "./wanted.jsx";
 import HeaderForge from "./forge/Forge.jsx";
 import ScrollStory from "./story/ScrollStory.jsx";
+import KineticGrid from "./KineticGrid.jsx";
 import { SplitWords, CountUp, SlidingTabs, ScrollProgress, SceneAura, useSpotlight, useMagnetic, useReveal, useScenes } from "./motion/index.jsx";
 import { DealsSection, EventLog, EquipmentBoard, UsersBoard, PairsBoard } from "./dispatcherDeals.jsx";
 import * as deals from "./services/deals.js";
@@ -3241,6 +3242,10 @@ export default function EquipmentMarketplace() {
       </div>
       )}
 
+      {/* Дошка запитів + FAQ на кінетичній сітці */}
+      <div style={{ position: "relative", overflow: "hidden" }}>
+      <KineticGrid />
+      <div style={{ position: "relative", zIndex: 1 }}>
       {/* Дошка запитів: хто що шукає */}
       <div data-scene style={{ padding: "8px 24px 0", maxWidth: 1100, margin: "0 auto" }}>
         <SectionDivider n={4} of={5} title="ДОШКА ЗАПИТІВ" />
@@ -3265,6 +3270,8 @@ export default function EquipmentMarketplace() {
           {t("faq_title")}
         </h2>
         <FaqAccordion items={t("faq_items")} />
+      </div>
+      </div>
       </div>
 
       {/* Footer */}
