@@ -1,3 +1,3 @@
 User-agent: *
 Allow: /
-Sitemap: https://1-eosin-chi-26.vercel.app/sitemap.xml
+Sitemap: https://www.tehmaydan.com/sitemap.xml

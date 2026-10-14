@@ -4,7 +4,7 @@ import { mkdirSync, writeFileSync, rmSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const SITE = (process.env.SITE_URL || "https://1-eosin-chi-26.vercel.app").replace(/\/$/, "");
+const SITE = (process.env.SITE_URL || "https://www.tehmaydan.com").replace(/\/$/, "");
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "public");
 const PHONE = "+380981319725", PHONE_FMT = "+380 98 131 97 25", EMAIL = "demolis@ukr.net";
 

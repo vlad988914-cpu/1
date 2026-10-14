@@ -83,3 +83,9 @@
 
 ## Google Search Console
 Файл підтвердження `public/googleca5bbc4ac9690da6.html` не видаляти. Після деплою: Search Console → «Підтвердити», потім Sitemaps → `sitemap.xml`.
+
+## Домен tehmaydan.com (ОНОВЛЕНО)
+- Основна адреса сайту: https://www.tehmaydan.com (tehmaydan.com перенаправляє на www). Старий *.vercel.app продовжує працювати.
+- Усі canonical/og/sitemap/robots/JSON-LD вже на новому домені. Якщо зміните основну адресу — запустіть: SITE_URL=https://нова-адреса node scripts/gen-seo-pages.mjs і замініть адресу в index.html та public/robots.txt.
+- Supabase → Authentication → URL Configuration: Site URL = https://www.tehmaydan.com ; Redirect URLs: https://www.tehmaydan.com/** , https://tehmaydan.com/** , https://1-eosin-chi-26.vercel.app/**
+- Search Console: додати нову властивість https://www.tehmaydan.com (підтвердження — той самий файл googleca5bbc4ac9690da6.html у корені), відправити sitemap.xml.
