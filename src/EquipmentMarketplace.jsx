@@ -8,6 +8,7 @@ import { WantedBoard, RespondForm } from "./wanted.jsx";
 import HeaderForge from "./forge/Forge.jsx";
 import ScrollStory from "./story/ScrollStory.jsx";
 import KineticGrid from "./KineticGrid.jsx";
+import { WEBM_ALPHA_OK } from "./env.js";
 import ScrambleText from "./ScrambleText.jsx";
 import { SplitWords, CountUp, SlidingTabs, ScrollProgress, SceneAura, useSpotlight, useMagnetic, useReveal, useScenes } from "./motion/index.jsx";
 import { DealsSection, EventLog, EquipmentBoard, UsersBoard, PairsBoard } from "./dispatcherDeals.jsx";
@@ -21,7 +22,7 @@ import * as deals from "./services/deals.js";
 // ---- i18n ----
 
 // Прозорий WebM працює в Chrome/Firefox/Edge; Safari не вміє альфу у WebM — там статичний логотип.
-const LOGO_ALPHA_VIDEO = typeof navigator !== "undefined" && !/^((?!chrome|android|crios|fxios|edg).)*safari/i.test(navigator.userAgent);
+const LOGO_ALPHA_VIDEO = WEBM_ALPHA_OK;
 
 const TRANSLATIONS = {
   uk: {

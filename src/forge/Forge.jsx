@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import "./forge.css";
+import { WEBM_ALPHA_OK } from "../env.js";
 
 // Рабочий с кувалдой у шапки. Покой: нерухомий кадр. Наведення на робітника: б'є кувалдою (відео, цикл).
 // Плита під ним тягнеться вліво до логотипу.
 
-const WEBM_OK = typeof navigator !== "undefined" && !/^((?!chrome|android|crios|fxios|edg).)*safari/i.test(navigator.userAgent);
+const WEBM_OK = WEBM_ALPHA_OK;
 const reducedMotion = () => typeof window !== "undefined" && window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 const LOOP_LEN = 78 / 24;   // тривалість циклу, с
 const FADE_FROM = LOOP_LEN - 0.4; // кінець циклу: поза = «кувалда піднята», та сама, що в спокої — можна непомітно переходити в спокій
