@@ -6,6 +6,7 @@ import { answerFromKnowledge, FALLBACK_ANSWER, JOB_PILLS, HELPER_PILLS } from ".
 import { ClientCabinet, OwnerCabinet, NotificationsPanel, BookingForm, AvailabilityCalendar } from "./cabinets.jsx";
 import { WantedBoard, RespondForm } from "./wanted.jsx";
 import { ListingReviews } from "./reviews.jsx";
+import { GROUPS as MODEL_GROUPS } from "../shared/models-data.js";
 import HeaderForge from "./forge/Forge.jsx";
 import ScrollStory from "./story/ScrollStory.jsx";
 import KineticGrid from "./KineticGrid.jsx";
@@ -652,8 +653,6 @@ const CAT_UI = {
   ru: { all: "Вся техника", go: "Перейти в категорию", none: "Пока нет", n: (c) => (c === 1 ? "1 объявление" : `${c} объявл.`), reset: "Показать всю технику" },
   en: { all: "All equipment", go: "Open category", none: "None yet", n: (c) => (c === 1 ? "1 listing" : `${c} listings`), reset: "Show all equipment" },
 };
-// Фото техніки (вирізані зображення з наданого користувачем каталогу) для карток категорій і оголошень без власних фото
-const PHOTO_BY_TYPE = { "Екскаватор": "/cat/excavator.webp", "Навантажувач": "/cat/loader.webp", "Бульдозер": "/cat/bulldozer.webp", "Каток": "/cat/roller.webp", "Грейдер": "/cat/grader.webp", "Самоскид": "/cat/dumper.webp" };
 const isNewListing = (l) => !!(l && l.createdAt && Date.now() - new Date(l.createdAt).getTime() < 14 * 86400000);
 
 const MODEL_PAGES = { "Екскаватор": "ekskavatory", "Міні-екскаватор": "mini-ekskavatory", "Кран": "avtokrany", "Каток": "katky", "Навантажувач": "navantazhuvachi" };
@@ -678,8 +677,8 @@ function CategoryCatalog({ listings, filterType, onPick, lang, t }) {
           const c = counts[ty] || 0;
           return (
             <button key={ty} type="button" className="cat-card" data-on={filterType === ty ? "1" : "0"} data-empty={c ? "0" : "1"} onClick={() => { if (MODEL_PAGES[ty]) { window.location.href = `/katalog/${MODEL_PAGES[ty]}/`; } else onPick(ty); }} aria-pressed={filterType === ty}>
-              <span className="cat-ico" data-img={ILLUSTRATED_ICONS[ty] || PHOTO_BY_TYPE[ty] ? "1" : "0"} data-photo={PHOTO_BY_TYPE[ty] ? "1" : "0"}>
-                {PHOTO_BY_TYPE[ty] ? <img src={PHOTO_BY_TYPE[ty]} alt="" draggable="false" loading="lazy" /> : ILLUSTRATED_ICONS[ty] ? <img src={ILLUSTRATED_ICONS[ty]} alt="" draggable="false" /> : (() => { const Ic = ICONS_BY_TYPE[ty] || IconExcavator; return <Ic size={58} />; })()}
+              <span className="cat-ico" data-img={ILLUSTRATED_ICONS[ty] ? "1" : "0"}>
+                {ILLUSTRATED_ICONS[ty] ? <img src={ILLUSTRATED_ICONS[ty]} alt="" draggable="false" /> : (() => { const Ic = ICONS_BY_TYPE[ty] || IconExcavator; return <Ic size={58} />; })()}
               </span>
               <span className="cat-name">{tType(ty, lang)}</span>
               <span className="cat-desc">{(CAT_COPY[ty] && CAT_COPY[ty][lang]) || ""}</span>
@@ -690,6 +689,135 @@ function CategoryCatalog({ listings, filterType, onPick, lang, t }) {
         })}
       </div>
     </div>
+  );
+}
+
+// ---- Каталог моделей: сторінка моделі (характеристики, що вміє, календар, бронь, рейтинг, відгуки) ----
+const ALL_MODELS = MODEL_GROUPS.flatMap((g) => g.models.map((m) => ({ ...m, group: g })));
+const findModel = (id) => ALL_MODELS.find((m) => m.id === id) || null;
+const modelMatchesListing = (m, l) => {
+  const a = _norm(l && l.brand), b = _norm(m.name);
+  return a.length >= 5 && (b.includes(a) || a.includes(b));
+};
+const CAN_KEYS = /глибина|виліт|висота|вантажопідйомн|зусилля|об'єм|ківш|стріла|навантаження|ширина вальця|відцентрова/i;
+
+function ModelPage({ model, listings, user, ratings, busyRanges, selectedId, onSelect, onClose, onRate, onBook, onRequest, onSignIn, reviews, onReviewSubmit, onReviewDelete }) {
+  const g = model.group;
+  const FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif";
+  const info = EQUIPMENT_INFO[g.type];
+  const sel = listings.find((l) => l.id === selectedId) || listings[0] || null;
+  const stat = listings.reduce((a, l) => { const r = ratings[l.id]; return r ? { sum: a.sum + r.sum, count: a.count + r.count } : a; }, { sum: 0, count: 0 });
+  const tiles = model.specs.filter(([k]) => CAN_KEYS.test(k)).slice(0, 4);
+  const isOwn = !!(user && sel && sel.ownerId && sel.ownerId === user.id);
+  const isDisp = !!(user && user.role === "dispatcher");
+  const bookRef = useRef(null);
+  const h2 = { fontFamily: FONT, fontSize: 20, fontWeight: 700, margin: 0 };
+  return (
+    <PageShell onClose={onClose} title={model.name} crumb={`${g.name} · ${model.brand}`}>
+      <div className="lp-hero" style={{ minHeight: 190 }}>
+        <div style={{ textAlign: "center", padding: 18 }}>
+          <div style={{ color: "#FF6A1A", display: "flex", justifyContent: "center" }}><EquipmentIcon type={g.type} size={96} /></div>
+        </div>
+      </div>
+      <div>
+        <Label>{model.brand} · {model.kind}</Label>
+        <h1 style={{ fontFamily: FONT, textTransform: "none", fontSize: 30, fontWeight: 700, margin: "4px 0 8px" }}>{model.name}</h1>
+        <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
+          <RatingLine stat={stat} size={16} />
+          {listings.some(isNewListing) && <span className="lp-badge-new">НОВЕ</span>}
+          <span style={{ fontFamily: FONT, fontSize: 13, color: listings.length ? "#6fae6f" : "#A3A8AD" }}>
+            {listings.length ? `Оголошень у каталозі: ${listings.length}` : "Оголошень цієї моделі поки немає"}
+          </span>
+        </div>
+        <div className="mk" style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 12 }}>
+          {model.key.map((k) => <span key={k} style={{ fontFamily: FONT, fontSize: 13, padding: "4px 12px", border: "1px solid #2f3439", borderRadius: 980, color: "#FFB81C", background: "#1A1D20" }}>{k}</span>)}
+        </div>
+      </div>
+
+      <section style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        <h2 style={h2}>Що може ця техніка</h2>
+        {info && <p style={{ margin: 0, fontFamily: FONT, fontSize: 14.5, lineHeight: 1.6, color: "#D9DCDF" }}>{info.definition}</p>}
+        {info && <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>{info.uses.map((u) => <span key={u} style={{ fontFamily: FONT, fontSize: 13, padding: "5px 12px", border: "1px solid #3a3f44", borderRadius: 980 }}>{u}</span>)}</div>}
+        {tiles.length > 0 && (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 10, marginTop: 4 }}>
+            {tiles.map(([k, v]) => (
+              <div key={k} style={{ border: "1px solid #202428", borderRadius: 14, padding: "12px 14px", background: "#101214" }}>
+                <div style={{ fontFamily: FONT, fontSize: 12, color: "#A3A8AD" }}>{k}</div>
+                <div style={{ fontFamily: FONT, fontSize: 17, fontWeight: 700, marginTop: 4 }}>{v.split(" (")[0]}</div>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <h2 style={h2}>Характеристики</h2>
+        <div style={{ border: "1px solid #202428", borderRadius: 16, background: "#101214", padding: "4px 16px" }}>
+          {model.specs.map(([k, v], i) => (
+            <div key={k} style={{ display: "flex", justifyContent: "space-between", gap: 16, padding: "10px 0", borderTop: i ? "1px solid #202428" : "none", fontFamily: FONT, fontSize: 14.5 }}>
+              <span style={{ color: "#A3A8AD" }}>{k}</span>
+              <span style={{ textAlign: "right" }}>{v}</span>
+            </div>
+          ))}
+        </div>
+        {model.note && <div style={{ fontFamily: FONT, fontSize: 12.5, color: "#A3A8AD" }}>{model.note}</div>}
+        <div style={{ fontFamily: FONT, fontSize: 12.5, color: "#70777D" }}>
+          За даними виробника, залежить від комплектації. Джерело: <a href={model.src} target="_blank" rel="noopener nofollow" style={{ color: "#FFB81C" }}>сторінка виробника</a>.
+        </div>
+      </section>
+
+      <section ref={bookRef} id="booking" style={{ display: "flex", flexDirection: "column", gap: 12, scrollMarginTop: 80 }}>
+        <h2 style={h2}>Календар і бронювання</h2>
+        {!sel ? (
+          <div style={{ border: "1px solid #3a3f44", borderRadius: 14, padding: 16, fontFamily: FONT, fontSize: 14, color: "#D9DCDF", lineHeight: 1.55 }}>
+            Вільних оголошень цієї моделі зараз немає. Залиште заявку — диспетчер підбере таку або схожу техніку й повідомить вас, а власники зможуть відгукнутися на «Дошці оголошень».
+          </div>
+        ) : (
+          <>
+            {listings.length > 1 && (
+              <div className="lp-dur">
+                {listings.map((l) => (
+                  <button type="button" key={l.id} data-on={sel.id === l.id ? "1" : "0"} onClick={() => onSelect(l.id)}>{l.owner} · {l.region}</button>
+                ))}
+              </div>
+            )}
+            <div style={{ border: "1px solid #202428", borderRadius: 16, padding: 14, background: "#101214", display: "flex", flexDirection: "column", gap: 10 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap", fontFamily: FONT }}>
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: 16 }}>{sel.brand}</div>
+                  <div style={{ fontSize: 12.5, color: "#A3A8AD" }}>{sel.owner} · {sel.region}{sel.available ? "" : " · зараз недоступна"}</div>
+                </div>
+                <div style={{ fontWeight: 700, fontSize: 20, color: "#FFB81C" }}>{sel.price > 0 ? `${sel.price} ₴/${sel.unit}` : "Договірна"}</div>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", fontFamily: FONT, fontSize: 13, color: "#A3A8AD" }}>
+                <RatingLine stat={ratings[sel.id]} />
+                {!isOwn && <><span>Ваша оцінка:</span><Stars value={0} size={20} mine={(ratings[sel.id] && ratings[sel.id].mine) || 0} onPick={(n) => onRate(sel, n)} /></>}
+              </div>
+            </div>
+            {(!user || isOwn || isDisp) && <AvailabilityCalendar ranges={busyRanges.filter((r) => r.listing_id === sel.id)} months={3} />}
+            {!user ? (
+              <button type="button" onClick={() => onSignIn("Щоб забронювати техніку, увійдіть або зареєструйтесь — це 1 хвилина")} style={{ ...primaryBtn, width: "100%", minHeight: 48 }}>Увійти, щоб забронювати</button>
+            ) : isOwn || isDisp ? (
+              <div style={{ fontFamily: FONT, fontSize: 13, color: "#A3A8AD" }}>{isOwn ? "Це ваша техніка." : "Диспетчер оформлює бронь у «Панелі диспетчера»."}</div>
+            ) : (
+              <BookingForm key={sel.id} listing={sel} busyRanges={busyRanges} onSubmit={(d) => onBook(sel, d)} />
+            )}
+          </>
+        )}
+      </section>
+
+      {sel && (
+        <div style={{ paddingTop: 8, borderTop: "1px solid #202428" }}>
+          <ListingReviews items={reviews.items} available={reviews.ok} user={user} isOwnerOfListing={isOwn} onSubmit={onReviewSubmit} onDelete={onReviewDelete} onSignIn={() => onSignIn("Щоб залишити відгук, увійдіть або зареєструйтесь")} />
+        </div>
+      )}
+
+      <div className="lp-sticky">
+        <div className="lp-price">{sel && sel.price > 0 ? `${sel.price} ₴` : model.name}{sel && sel.price > 0 && <small>за {sel.unit}</small>}</div>
+        {sel && <button type="button" onClick={() => bookRef.current && bookRef.current.scrollIntoView({ behavior: "smooth", block: "start" })} style={{ ...smallBtn, flex: "0 0 auto", marginLeft: "auto", minHeight: 48 }}>Дати</button>}
+        <button type="button" onClick={onRequest} style={{ ...primaryBtn, minHeight: 48, marginLeft: sel ? 0 : "auto" }}>Залишити заявку</button>
+      </div>
+    </PageShell>
   );
 }
 
@@ -914,23 +1042,34 @@ export default function EquipmentMarketplace() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [showRequestForm, setShowRequestForm] = useState(false);
   const [detailListing, setDetailListing] = useState(null);
+  const [modelId, setModelId] = useState(null); // відкрита сторінка моделі з каталогу
+  const [modelSel, setModelSel] = useState(null);
   const [detailPhotoIndex, setDetailPhotoIndex] = useState(0);
+  const openModel = (id) => {
+    setModelId(id);
+    setModelSel(null);
+    try { history.pushState({ model: id }, "", `?model=${encodeURIComponent(id)}`); } catch {}
+  };
   const openDetail = (l) => {
+    const mm = ALL_MODELS.find((m) => modelMatchesListing(m, l));
+    if (mm) { openModel(mm.id); setModelSel(l.id); return; }
     setDetailListing(l);
     setDetailPhotoIndex(0);
     try { history.pushState({ tech: l.id }, "", `?tech=${encodeURIComponent(l.id)}`); } catch {}
   };
   const dropListingPage = () => {
     setDetailListing(null);
-    try { if (new URLSearchParams(window.location.search).has("tech")) history.replaceState({}, "", window.location.pathname); } catch {}
+    setModelId(null);
+    try { const q = new URLSearchParams(window.location.search); if (q.has("tech") || q.has("model")) history.replaceState({}, "", window.location.pathname); } catch {}
   };
   // Закриття сторінки техніки: якщо відкрили через адресу ?tech=… — повертаємось «назад», інакше просто закриваємо
   const closeListingPage = useCallback(() => {
     let has = false;
-    try { has = new URLSearchParams(window.location.search).has("tech"); } catch {}
-    if (has && window.history.state && window.history.state.tech !== undefined) window.history.back();
+    try { const q = new URLSearchParams(window.location.search); has = q.has("tech") || q.has("model"); } catch {}
+    if (has && window.history.state && (window.history.state.tech !== undefined || window.history.state.model !== undefined)) window.history.back();
     else {
       setDetailListing(null);
+      setModelId(null);
       try { if (has) history.replaceState({}, "", window.location.pathname); } catch {}
     }
   }, []);
@@ -959,6 +1098,8 @@ export default function EquipmentMarketplace() {
   // це наступний крок. Поки що заявки видно в Supabase Table Editor і в Telegram.
   const [toast, setToast] = useState(null);
   const [user, setUser] = useState(null);
+  const [authReady, setAuthReady] = useState(!supabase);
+  const reqModelRef = useRef(null);
   const [showAuthForm, setShowAuthForm] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [aiPrefill, setAiPrefill] = useState(null);
@@ -1139,8 +1280,9 @@ export default function EquipmentMarketplace() {
   // ---- Сторінка техніки: адреса ?tech=<id>, кнопка «назад» браузера, відгуки ----
   useEffect(() => {
     const onPop = () => {
-      let id = null;
-      try { id = new URLSearchParams(window.location.search).get("tech"); } catch {}
+      let id = null, mid = null;
+      try { const q = new URLSearchParams(window.location.search); id = q.get("tech"); mid = q.get("model"); } catch {}
+      setModelId(mid && findModel(mid) ? mid : null);
       if (!id) { setDetailListing(null); return; }
       const l = listings.find((x) => String(x.id) === id);
       if (l) { setDetailListing(l); setDetailPhotoIndex(0); }
@@ -1148,8 +1290,22 @@ export default function EquipmentMarketplace() {
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
   }, [listings]);
-  const deepLinkDone = useRef(false);
   useEffect(() => {
+    if (!authReady || !reqModelRef.current) return;
+    const mm = findModel(reqModelRef.current);
+    reqModelRef.current = null;
+    if (mm) openRequestForm({ type: mm.group.type, comment: `Модель: ${mm.name}`, fromModel: true });
+  }, [authReady]); // eslint-disable-line
+  const deepLinkDone = useRef(false);
+  const modelDeepDone = useRef(false);
+  useEffect(() => {
+    let mid = null, wantReq = false;
+    try { const q = new URLSearchParams(window.location.search); mid = q.get("model"); wantReq = q.get("request") === "1"; } catch {}
+    if (mid && findModel(mid) && !modelDeepDone.current) {
+      modelDeepDone.current = true;
+      setModelId(mid);
+      if (wantReq) reqModelRef.current = mid;
+    }
     if (deepLinkDone.current || !listings.length) return;
     let id = null;
     try { id = new URLSearchParams(window.location.search).get("tech"); } catch {}
@@ -1166,20 +1322,23 @@ export default function EquipmentMarketplace() {
     if (error) { setListingReviews({ items: [], ok: false }); return; } // таблицю ще не створено — просто без відгуків
     setListingReviews({ items: data || [], ok: true });
   };
-  useEffect(() => { if (detailListing) loadReviews(detailListing.id); }, [detailListing && detailListing.id]); // eslint-disable-line
+  const modelListings = useMemo(() => { const m = modelId && findModel(modelId); return m ? listings.filter((l) => modelMatchesListing(m, l)) : []; }, [modelId, listings]);
+  const modelSelected = modelListings.find((l) => l.id === modelSel) || modelListings[0] || null;
+  const reviewTarget = modelId ? modelSelected : detailListing;
+  useEffect(() => { if (reviewTarget) loadReviews(reviewTarget.id); else setListingReviews({ items: [], ok: true }); }, [reviewTarget && reviewTarget.id]); // eslint-disable-line
   const submitReview = async (body) => {
     if (!user || !user.id) { setShowAuthForm(true); return false; }
-    const { error } = await supabase.from("listing_reviews").upsert({ listing_id: detailListing.id, user_id: user.id, author_name: user.name || "Клієнт", body }, { onConflict: "listing_id,user_id" });
+    const { error } = await supabase.from("listing_reviews").upsert({ listing_id: reviewTarget.id, user_id: user.id, author_name: user.name || "Клієнт", body }, { onConflict: "listing_id,user_id" });
     if (error) { flashToast("Не вдалося зберегти відгук. Спробуйте пізніше"); return false; }
     flashToast("Дякуємо за відгук!");
-    loadReviews(detailListing.id);
+    loadReviews(reviewTarget.id);
     return true;
   };
   const deleteReview = async () => {
-    if (!user || !detailListing) return;
-    const { error } = await supabase.from("listing_reviews").delete().eq("listing_id", detailListing.id).eq("user_id", user.id);
+    if (!user || !reviewTarget) return;
+    const { error } = await supabase.from("listing_reviews").delete().eq("listing_id", reviewTarget.id).eq("user_id", user.id);
     if (error) { flashToast("Не вдалося видалити відгук"); return; }
-    loadReviews(detailListing.id);
+    loadReviews(reviewTarget.id);
   };
 
   // Додавати техніку можуть лише власники (і диспетчер) — перевіряє також база (RLS)
@@ -1526,7 +1685,7 @@ export default function EquipmentMarketplace() {
         });
       }
     };
-    supabase.auth.getSession().then(({ data }) => loadProfile(data.session));
+    supabase.auth.getSession().then(async ({ data }) => { await loadProfile(data.session); if (active) setAuthReady(true); });
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
       setTimeout(() => loadProfile(session), 0);
     });
@@ -1696,8 +1855,8 @@ export default function EquipmentMarketplace() {
     }
     setBookingListing(l);
   };
-  const handleBook = async ({ dateFrom, dateTo, withOperator, comment }) => {
-    const l = bookingListing;
+  const handleBook = async ({ dateFrom, dateTo, withOperator, comment }, listingArg) => {
+    const l = listingArg || bookingListing;
     const res = await deals.requestListing(l.id, dateFrom, dateTo, comment, withOperator);
     if (!res.ok) {
       flashToast(res.reason === "busy" && res.busy_until ? `Ці дати зайняті до ${deals.fmtDate(res.busy_until)}` : deals.reasonText(res));
@@ -3351,15 +3510,15 @@ export default function EquipmentMarketplace() {
             </button>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
               <div>
-                <div style={{ marginBottom: 6, display: "flex", gap: 8, alignItems: "center" }}>
+                <div style={{ marginBottom: 6 }}>
                   <RoleTag kind="lease" />
-                  {isNewListing(l) && <span className="lp-badge-new">НОВЕ</span>}
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 3 }}>
                   <span className={l.available ? "status-dot-available" : ""} style={{ width: 6, height: 6, borderRadius: "50%", background: l.available ? "#5FA876" : "#70777D", display: "inline-block" }} />
                   <span style={{ fontSize: 10.5, color: "#70777D", fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif" }}>
                     {l.available ? t("status_available") : t("status_busy")}
                   </span>
+                  {isNewListing(l) && <span className="lp-badge-new" style={{ marginLeft: 8, padding: "2px 8px", fontSize: 10 }}>НОВЕ</span>}
                 </div>
                 {datesChosen && l.available && (
                   <div style={{ fontSize: 11.5, fontWeight: 600, marginBottom: 4, color: busyOnChosen(l) ? "#c96b5a" : "#5FA876" }}>
@@ -3383,11 +3542,7 @@ export default function EquipmentMarketplace() {
                   )}
                 </div>
               ) : (
-                PHOTO_BY_TYPE[l.type] ? (
-                <img src={PHOTO_BY_TYPE[l.type]} alt="" loading="lazy" style={{ marginTop: 22, width: 92, height: 60, objectFit: "contain", filter: "drop-shadow(0 6px 6px rgba(0,0,0,.5))" }} />
-              ) : (
                 <div className="icon-tilt" style={{ marginTop: 26, color: "#FF6A1A", filter: "drop-shadow(0 2px 3px rgba(0,0,0,0.4))" }}><EquipmentIcon type={l.type} size={46} /></div>
-              )
               )}
               </VideoPeek>
             </div>
@@ -3592,6 +3747,25 @@ export default function EquipmentMarketplace() {
         </div>
       </footer>
 
+      {modelId && findModel(modelId) && (
+        <ModelPage
+          model={findModel(modelId)}
+          listings={modelListings}
+          user={user}
+          ratings={ratings}
+          busyRanges={busyRanges}
+          selectedId={modelSelected && modelSelected.id}
+          onSelect={setModelSel}
+          onClose={closeListingPage}
+          onRate={handleRate}
+          onBook={(l, d) => handleBook(d, l)}
+          onRequest={() => { const mm = findModel(modelId); openRequestForm({ type: mm.group.type, comment: `Модель: ${mm.name}`, fromModel: true }); }}
+          onSignIn={(msg) => { setShowAuthForm(true); flashToast(msg); }}
+          reviews={listingReviews}
+          onReviewSubmit={submitReview}
+          onReviewDelete={deleteReview}
+        />
+      )}
       {detailListing && (
         <PageShell onClose={closeListingPage} title={detailListing.brand} crumb={`${tType(detailListing.type, lang)} · ${detailListing.region}`}>
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -3612,8 +3786,6 @@ export default function EquipmentMarketplace() {
               {isNewListing(detailListing) && <span className="lp-badge-new card-new">НОВЕ</span>}
               {detailListing.photos && detailListing.photos.length > 0 ? (
                 <img className="lp-photo" src={detailListing.photos[detailPhotoIndex] || detailListing.photos[0]} alt={detailListing.brand} />
-              ) : PHOTO_BY_TYPE[detailListing.type] ? (
-                <img className="lp-cut" src={PHOTO_BY_TYPE[detailListing.type]} alt={tType(detailListing.type, lang)} />
               ) : (
                 <div style={{ color: "#FF6A1A" }}><EquipmentIcon type={detailListing.type} size={110} /></div>
               )}
@@ -5504,7 +5676,7 @@ function RequestForm({ onSubmit, user, initial, t, lang }) {
   return (
     <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
       <DraftBanner draft={draft} />
-      {initial && (
+      {initial && !initial.fromModel && (
         <div style={{ fontSize: 12, color: "#FF6A1A", fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif" }}>
           ✨ Заповнено помічником — перевірте і додайте контакт
         </div>

@@ -3,7 +3,7 @@
 import { mkdirSync, writeFileSync, rmSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { GROUPS } from "./models-data.mjs";
+import { GROUPS } from "../shared/models-data.js";
 
 const SITE = (process.env.SITE_URL || "https://www.tehmaydan.com").replace(/\/$/, "");
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "public");
@@ -51,7 +51,7 @@ h1{font-size:clamp(28px,5vw,44px);line-height:1.15;margin:16px 0}h2{font-size:24
 .box{background:#101214;border:1px solid #202428;border-radius:16px;padding:20px 22px;margin:24px 0}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;padding:0;list-style:none}.grid a{display:block;padding:12px 16px;border:1px solid #202428;border-radius:12px;text-decoration:none;color:#F4F4F1}.grid a:hover{border-color:#FF6A1A}
 .models{list-style:none;padding:0;margin:20px 0}.mrow{border:1px solid #202428;border-radius:16px;background:#101214;margin:10px 0}.mrow summary{list-style:none;display:grid;grid-template-columns:1fr;gap:6px;padding:16px 18px}.mrow summary::-webkit-details-marker{display:none}
 .mrow .mn{font-weight:800;font-size:18px;color:#F4F4F1}.mrow .mb{color:#A3A8AD;font-size:13px}.mrow .mk{display:flex;flex-wrap:wrap;gap:6px}.mrow .mk i{font-style:normal;font-size:13px;background:#1A1D20;border:1px solid #2A2F34;border-radius:980px;padding:3px 10px;color:#FFB81C}
-.mrow .mm{color:#FF6A1A;font-size:13px}.mrow[open] .mm{display:none}.mrow table{width:calc(100% - 36px);margin:0 18px 8px;border-collapse:collapse}.mrow td{padding:8px 0;border-top:1px solid #202428;vertical-align:top;font-size:15px}.mrow td:first-child{color:#A3A8AD;width:48%;padding-right:12px}.mrow .ms{padding:4px 18px 16px;font-size:13px;color:#A3A8AD}
+.mrow .mm{color:#FF6A1A;font-size:13px}.mrow[open] .mm{display:none}.mrow table{width:calc(100% - 36px);margin:0 18px 8px;border-collapse:collapse}.mrow td{padding:8px 0;border-top:1px solid #202428;vertical-align:top;font-size:15px}.mrow td:first-child{color:#A3A8AD;width:48%;padding-right:12px}.mrow .mact{padding:4px 18px 18px;margin:0;display:flex;gap:10px;flex-wrap:wrap}.mrow .ms{padding:4px 18px 16px;font-size:13px;color:#A3A8AD}
 @media(min-width:700px){.mrow summary{grid-template-columns:minmax(200px,1.1fr) 1.6fr auto;align-items:center}}
 footer{border-top:1px solid #202428;margin-top:56px;padding:28px 0 48px;color:#A3A8AD;font-size:14px}details{border-top:1px solid #202428;padding:12px 0}summary{cursor:pointer;font-weight:600}`;
 
@@ -110,7 +110,7 @@ for (const c of CATS) {
 rmSync(join(ROOT, "katalog"), { recursive: true, force: true });
 const DISC = "Характеристики наведено за даними виробника (посилання біля кожної моделі) і залежать від комплектації та ринку. Параметри, яких немає на сторінці виробника, не наводяться.";
 const modelRows = (g) => `<ul class="models">${g.models.map((m) => `<li><details class="mrow" id="${m.id}"><summary><span><span class="mn">${esc(m.name)}</span><br><span class="mb">${esc(m.brand)} · ${esc(m.kind)}</span></span><span class="mk">${m.key.map((k) => `<i>${esc(k)}</i>`).join("")}</span><span class="mm">Усі характеристики ▾</span></summary>
-<table>${m.specs.map(([a, b]) => `<tr><td>${esc(a)}</td><td>${esc(b)}</td></tr>`).join("")}</table>${m.note ? `<p class="ms">${esc(m.note)}</p>` : ""}<p class="ms">Джерело: <a href="${m.src}" rel="noopener nofollow" target="_blank">сторінка виробника</a></p></details></li>`).join("")}</ul>`;
+<table>${m.specs.map(([a, b]) => `<tr><td>${esc(a)}</td><td>${esc(b)}</td></tr>`).join("")}</table>${m.note ? `<p class="ms">${esc(m.note)}</p>` : ""}<p class="ms">Джерело: <a href="${m.src}" rel="noopener nofollow" target="_blank">сторінка виробника</a></p><p class="mact"><a class="btn" href="/?model=${m.id}">Дати, бронювання й відгуки</a> <a class="btn o" href="/?model=${m.id}&amp;request=1">Залишити заявку</a></p></details></li>`).join("")}</ul>`;
 for (const g of GROUPS) {
   const path = `/katalog/${g.slug}/`;
   const body = `<p>${esc(g.intro)}</p>${cta("Залишити заявку на " + g.name.toLowerCase())}<p><a href="/?type=${encodeURIComponent(g.type)}">Переглянути оголошення цієї техніки на ТехМайданчику →</a></p>${modelRows(g)}<p class="ms">${esc(DISC)}</p>
