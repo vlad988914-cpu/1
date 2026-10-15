@@ -117,7 +117,7 @@ const modelRows = (g) => `<ul class="models">${g.models.map((m) => `<li><details
 for (const g of GROUPS) {
   const path = `/katalog/${g.slug}/`;
   FROM = path;
-  const body = `${cta("Залишити заявку на " + g.name.toLowerCase())}
+  const body = `
 <h2>Оголошення власників</h2><div id="owners" data-type="${esc(g.type)}" data-from="${path}"><p class="ms">Завантажуємо оголошення…</p></div>
 ${g.models.length ? `<h2>Моделі та характеристики</h2>${modelRows(g)}` : ""}
 <h2>Інші категорії</h2><ul class="grid">${GROUPS.filter((x) => x !== g).map((x) => `<li><a href="/katalog/${x.slug}/">${x.name}</a></li>`).join("")}</ul>
