@@ -51,7 +51,7 @@ h1{font-size:clamp(28px,5vw,44px);line-height:1.15;margin:16px 0}h2{font-size:24
 .box{background:#101214;border:1px solid #202428;border-radius:16px;padding:20px 22px;margin:24px 0}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;padding:0;list-style:none}.grid a{display:block;padding:12px 16px;border:1px solid #202428;border-radius:12px;text-decoration:none;color:#F4F4F1}.grid a:hover{border-color:#FF6A1A}
 .models{list-style:none;padding:0;margin:20px 0}.mrow{border:1px solid #202428;border-radius:16px;background:#101214;margin:10px 0}.mrow summary{list-style:none;display:grid;grid-template-columns:1fr;gap:6px;padding:16px 18px}.mrow summary::-webkit-details-marker{display:none}
 .mrow .mn{font-weight:800;font-size:18px;color:#F4F4F1}.mrow .mb{color:#A3A8AD;font-size:13px}.mrow .mk{display:flex;flex-wrap:wrap;gap:6px}.mrow .mk i{font-style:normal;font-size:13px;background:#1A1D20;border:1px solid #2A2F34;border-radius:980px;padding:3px 10px;color:#FFB81C}
-.mrow .mm{color:#FF6A1A;font-size:13px}.mrow[open] .mm{display:none}.mrow table{width:calc(100% - 36px);margin:0 18px 8px;border-collapse:collapse}.mrow td{padding:8px 0;border-top:1px solid #202428;vertical-align:top;font-size:15px}.mrow td:first-child{color:#A3A8AD;width:48%;padding-right:12px}.mrow .mact{padding:4px 18px 18px;margin:0;display:flex;gap:10px;flex-wrap:wrap}.mrow .ms{padding:4px 18px 16px;font-size:13px;color:#A3A8AD}
+.mrow .mm{color:#FF6A1A;font-size:13px}.mrow[open] .mm{display:none}.mrow table{width:calc(100% - 36px);margin:0 18px 8px;border-collapse:collapse}.mrow td{padding:8px 0;border-top:1px solid #202428;vertical-align:top;font-size:15px}.mrow td:first-child{color:#A3A8AD;width:48%;padding-right:12px}.orow{display:grid;grid-template-columns:1fr auto;gap:6px 14px;align-items:center;padding:14px 18px;border:1px solid #202428;border-radius:16px;background:#101214;margin:10px 0;text-decoration:none;color:#F4F4F1}.orow:hover{border-color:#FF6A1A}.orow .mb{color:#A3A8AD;font-size:13px}.orow .op{font-weight:800;color:#FFB81C}.orow .mm{grid-column:1/-1;color:#FF6A1A;font-size:13px}.nw{font-style:normal;font-size:10px;font-weight:800;letter-spacing:.08em;color:#1a0f05;background:linear-gradient(135deg,#FFB81C,#FF6A1A);border-radius:980px;padding:2px 8px}.avail{color:#6fae6f;font-size:13px}.mrow .mact{padding:4px 18px 18px;margin:0;display:flex;gap:10px;flex-wrap:wrap}.mrow .ms{padding:4px 18px 16px;font-size:13px;color:#A3A8AD}
 @media(min-width:700px){.mrow summary{grid-template-columns:minmax(200px,1.1fr) 1.6fr auto;align-items:center}}
 footer{border-top:1px solid #202428;margin-top:56px;padding:28px 0 48px;color:#A3A8AD;font-size:14px}details{border-top:1px solid #202428;padding:12px 0}summary{cursor:pointer;font-weight:600}`;
 
@@ -108,18 +108,38 @@ for (const c of CATS) {
 }
 // каталог моделей
 rmSync(join(ROOT, "katalog"), { recursive: true, force: true });
+const SB_URL = process.env.VITE_SUPABASE_URL || "https://jsyjqudermvbylaweuqj.supabase.co";
+const SB_KEY = process.env.VITE_SUPABASE_ANON_KEY || "sb_publishable_ShJs7HgeVml_QbQO5pvb1g_yCaWV8ai";
 const DISC = "Характеристики наведено за даними виробника (посилання біля кожної моделі) і залежать від комплектації та ринку. Параметри, яких немає на сторінці виробника, не наводяться.";
-const modelRows = (g) => `<ul class="models">${g.models.map((m) => `<li><details class="mrow" id="${m.id}"><summary><span><span class="mn">${esc(m.name)}</span><br><span class="mb">${esc(m.brand)} · ${esc(m.kind)}</span></span><span class="mk">${m.key.map((k) => `<i>${esc(k)}</i>`).join("")}</span><span class="mm">Усі характеристики ▾</span></summary>
-<table>${m.specs.map(([a, b]) => `<tr><td>${esc(a)}</td><td>${esc(b)}</td></tr>`).join("")}</table>${m.note ? `<p class="ms">${esc(m.note)}</p>` : ""}<p class="ms">Джерело: <a href="${m.src}" rel="noopener nofollow" target="_blank">сторінка виробника</a></p><p class="mact"><a class="btn" href="/?model=${m.id}">Дати, бронювання й відгуки</a> <a class="btn o" href="/?model=${m.id}&amp;request=1">Залишити заявку</a></p></details></li>`).join("")}</ul>`;
+let FROM = "";
+const modelRows = (g) => `<ul class="models">${g.models.map((m) => `<li><details class="mrow" id="${m.id}"><summary><span><span class="mn">${esc(m.name)}</span><br><span class="mb">${esc(m.brand)} · ${esc(m.kind)}</span></span><span class="mk">${m.key.map((k) => `<i>${esc(k)}</i>`).join("")}</span><span class="mm">Усі характеристики ▾</span><span class="avail" data-avail="${m.id}"></span></summary>
+<table>${m.specs.map(([a, b]) => `<tr><td>${esc(a)}</td><td>${esc(b)}</td></tr>`).join("")}</table>${m.note ? `<p class="ms">${esc(m.note)}</p>` : ""}<p class="ms">Джерело: <a href="${m.src}" rel="noopener nofollow" target="_blank">сторінка виробника</a></p><p class="mact"><a class="btn" href="/?model=${m.id}&amp;from=${FROM}">Дати, бронювання й відгуки</a> <a class="btn o" href="/?model=${m.id}&amp;request=1&amp;from=${FROM}">Залишити заявку</a></p></details></li>`).join("")}</ul>`;
 for (const g of GROUPS) {
   const path = `/katalog/${g.slug}/`;
-  const body = `<p>${esc(g.intro)}</p>${cta("Залишити заявку на " + g.name.toLowerCase())}<p><a href="/?type=${encodeURIComponent(g.type)}">Переглянути оголошення цієї техніки на ТехМайданчику →</a></p>${modelRows(g)}<p class="ms">${esc(DISC)}</p>
-<h2>Інші категорії</h2><ul class="grid">${GROUPS.filter((x) => x !== g).map((x) => `<li><a href="/katalog/${x.slug}/">${x.name}</a></li>`).join("")}</ul>`;
-  const ld = { "@type": "ItemList", name: g.name, itemListElement: g.models.map((m, i) => ({ "@type": "ListItem", position: i + 1, name: m.name, url: `${SITE}${path}#${m.id}` })) };
-  write(path, page({ path, title: `${g.name}: моделі та характеристики — ТехМайданчик`.slice(0, 70), desc: `${g.name}: ${g.models.map((m) => m.name).join(", ")}. Повні характеристики за даними виробників і посилання на джерела.`.slice(0, 160), h1: g.h1, body, crumbs: [["Головна", "/"], ["Каталог техніки", "/katalog/"], [g.name, path]], ld: [ld] }));
+  FROM = path;
+  const body = `<p>${esc(g.intro)}</p>${cta("Залишити заявку на " + g.name.toLowerCase())}
+<h2>Оголошення власників</h2><div id="owners" data-type="${esc(g.type)}" data-from="${path}"><p class="ms">Завантажуємо оголошення…</p></div>
+${g.models.length ? `<h2>Моделі та характеристики</h2>${modelRows(g)}` : ""}<p class="ms">${esc(DISC)}</p>
+<h2>Інші категорії</h2><ul class="grid">${GROUPS.filter((x) => x !== g).map((x) => `<li><a href="/katalog/${x.slug}/">${x.name}</a></li>`).join("")}</ul>
+<script>(function(){var U=${JSON.stringify(SB_URL)},K=${JSON.stringify(SB_KEY)},M=${JSON.stringify(g.models.map((m) => ({ id: m.id, n: m.name })))};
+var map={"м":"m","с":"c","а":"a","т":"t"};function nm(s){return String(s||"").toLowerCase().replace(/[мсат]/g,function(c){return map[c]}).replace(/[^a-z0-9]/g,"")}
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+var box=document.getElementById("owners"),type=box.dataset.type,from=box.dataset.from;
+function modelFor(b){var a=nm(b);if(a.length<5)return null;for(var i=0;i<M.length;i++){var x=nm(M[i].n);if(x.indexOf(a)>-1||a.indexOf(x)>-1)return M[i].id}return null}
+fetch(U+"/rest/v1/listings?select=id,brand,region,price,unit,available,created_at&type=eq."+encodeURIComponent(type)+"&order=created_at.desc",{headers:{apikey:K,Authorization:"Bearer "+K}}).then(function(r){return r.json()}).then(function(rows){
+if(!Array.isArray(rows)||!rows.length){box.innerHTML='<p class="ms">Оголошень цієї техніки поки немає. Залиште заявку — диспетчер підбере варіант, а власники відгукнуться на «Дошці оголошень».</p>';return}
+var cnt={};box.innerHTML='<ul class="models">'+rows.map(function(r){var mid=modelFor(r.brand);if(mid)cnt[mid]=(cnt[mid]||0)+1;
+var href=mid?"/?model="+mid+"&sel="+r.id+"&from="+encodeURIComponent(from):"/?tech="+r.id+"&from="+encodeURIComponent(from);
+var isNew=Date.now()-new Date(r.created_at).getTime()<14*864e5;
+return '<li><a class="orow" href="'+href+'"><span><b>'+esc(r.brand)+'</b>'+(isNew?' <i class="nw">НОВЕ</i>':'')+'<br><span class="mb">'+esc(r.region)+' · '+(r.available?"доступна":"зараз зайнята")+'</span></span><span class="op">'+(Number(r.price)>0?esc(r.price)+" ₴/"+esc(r.unit):"Договірна")+'</span><span class="mm">Дати й бронь →</span></a></li>'}).join("")+'</ul>';
+Object.keys(cnt).forEach(function(id){var e=document.querySelector('[data-avail="'+id+'"]');if(e)e.textContent="Є в оренду: "+cnt[id]})
+}).catch(function(){box.innerHTML='<p class="ms">Не вдалося завантажити оголошення. Оновіть сторінку.</p>'});
+var h=location.hash.slice(1);if(h){var d=document.getElementById(h);if(d&&d.tagName==="DETAILS"){d.open=true;setTimeout(function(){d.scrollIntoView()},100)}}})();</script>`;
+  const ld = g.models.length ? { "@type": "ItemList", name: g.name, itemListElement: g.models.map((m, i) => ({ "@type": "ListItem", position: i + 1, name: m.name, url: `${SITE}${path}#${m.id}` })) } : null;
+  write(path, page({ path, title: `${g.name} в оренду: оголошення та характеристики — ТехМайданчик`.slice(0, 70), desc: (g.models.length ? `${g.name}: ${g.models.map((m) => m.name).join(", ")}. Оголошення власників, характеристики за даними виробників, календар і бронювання.` : `${g.name} в оренду: оголошення власників, календар вільних дат і бронювання на ТехМайданчику.`).slice(0, 160), h1: g.h1, body, crumbs: [["Головна", "/"], ["Каталог техніки", "/katalog/"], [g.name, path]], ld: ld ? [ld] : [] }));
 }
 {
-  const body = `<p>Моделі техніки з характеристиками за даними виробників. Оберіть категорію.</p><ul class="grid">${GROUPS.map((g) => `<li><a href="/katalog/${g.slug}/">${g.name} (${g.models.length})</a></li>`).join("")}</ul>${cta()}<p class="ms">${esc(DISC)}</p>`;
+  const body = `<p>Моделі техніки з характеристиками за даними виробників. Оберіть категорію.</p><ul class="grid">${GROUPS.map((g) => `<li><a href="/katalog/${g.slug}/">${g.name}</a></li>`).join("")}</ul>${cta()}<p class="ms">${esc(DISC)}</p>`;
   write("/katalog/", page({ path: "/katalog/", title: "Каталог техніки: моделі та характеристики — ТехМайданчик", desc: "Екскаватори, міні-екскаватори, автокрани, катки й навантажувачі: моделі та характеристики за даними виробників.", h1: "Каталог техніки", body, crumbs: [["Головна", "/"], ["Каталог техніки", "/katalog/"]], ld: [] }));
 }
 const today = new Date().toISOString().slice(0, 10);

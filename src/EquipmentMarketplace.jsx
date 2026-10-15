@@ -655,7 +655,7 @@ const CAT_UI = {
 };
 const isNewListing = (l) => !!(l && l.createdAt && Date.now() - new Date(l.createdAt).getTime() < 14 * 86400000);
 
-const MODEL_PAGES = { "Екскаватор": "ekskavatory", "Міні-екскаватор": "mini-ekskavatory", "Кран": "avtokrany", "Каток": "katky", "Навантажувач": "navantazhuvachi" };
+const MODEL_PAGES = Object.fromEntries(MODEL_GROUPS.map((g) => [g.type, g.slug]));
 
 function CategoryCatalog({ listings, filterType, onPick, lang, t }) {
   const ui = CAT_UI[lang] || CAT_UI.uk;
@@ -668,7 +668,7 @@ function CategoryCatalog({ listings, filterType, onPick, lang, t }) {
           <Label>{t("categories_label")}</Label>
           <h3 className="cat-title">{t("categories_title")}</h3>
         </div>
-        <button type="button" className="cat-all" data-on={filterType === "Усі" ? "1" : "0"} onClick={() => onPick("Усі")}>
+        <button type="button" className="cat-all" data-on={filterType === "Усі" ? "1" : "0"} onClick={() => { window.location.href = "/katalog/"; }}>
           {ui.all} <b>{listings.length}</b>
         </button>
       </div>
@@ -1068,11 +1068,14 @@ export default function EquipmentMarketplace() {
     try { const q = new URLSearchParams(window.location.search); has = q.has("tech") || q.has("model"); } catch {}
     if (has && window.history.state && (window.history.state.tech !== undefined || window.history.state.model !== undefined)) window.history.back();
     else {
+      let from = null;
+      try { from = new URLSearchParams(window.location.search).get("from"); } catch {}
+      if (from && /^\/katalog\/[a-z0-9-]*\/?$/.test(from)) { window.location.assign(from + (modelId ? `#${modelId}` : "")); return; }
       setDetailListing(null);
       setModelId(null);
       try { if (has) history.replaceState({}, "", window.location.pathname); } catch {}
     }
-  }, []);
+  }, [modelId]);
   const [aiOpen, setAiOpen] = useState(false);
   const [requests, setRequests] = useState([]);
   const [dispatchOwners, setDispatchOwners] = useState([]); // справжні власники з бази (для диспетчера)
@@ -1299,11 +1302,12 @@ export default function EquipmentMarketplace() {
   const deepLinkDone = useRef(false);
   const modelDeepDone = useRef(false);
   useEffect(() => {
-    let mid = null, wantReq = false;
-    try { const q = new URLSearchParams(window.location.search); mid = q.get("model"); wantReq = q.get("request") === "1"; } catch {}
+    let mid = null, wantReq = false, selParam = null;
+    try { const q = new URLSearchParams(window.location.search); mid = q.get("model"); wantReq = q.get("request") === "1"; selParam = q.get("sel"); } catch {}
     if (mid && findModel(mid) && !modelDeepDone.current) {
       modelDeepDone.current = true;
       setModelId(mid);
+      if (selParam) setModelSel(selParam);
       if (wantReq) reqModelRef.current = mid;
     }
     if (deepLinkDone.current || !listings.length) return;
@@ -1323,7 +1327,7 @@ export default function EquipmentMarketplace() {
     setListingReviews({ items: data || [], ok: true });
   };
   const modelListings = useMemo(() => { const m = modelId && findModel(modelId); return m ? listings.filter((l) => modelMatchesListing(m, l)) : []; }, [modelId, listings]);
-  const modelSelected = modelListings.find((l) => l.id === modelSel) || modelListings[0] || null;
+  const modelSelected = modelListings.find((l) => String(l.id) === String(modelSel)) || modelListings[0] || null;
   const reviewTarget = modelId ? modelSelected : detailListing;
   useEffect(() => { if (reviewTarget) loadReviews(reviewTarget.id); else setListingReviews({ items: [], ok: true }); }, [reviewTarget && reviewTarget.id]); // eslint-disable-line
   const submitReview = async (body) => {
@@ -3342,297 +3346,6 @@ export default function EquipmentMarketplace() {
             setTimeout(() => catListRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 60);
           }}
         />
-      )}
-
-      {/* Filters (client view) */}
-      {role === "client" && (
-        <div className="cat-filters" ref={catListRef} style={{ scrollMarginTop: 96, padding: "0 24px 8px", display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
-          <span style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 12.5, color: "#A3A8AD" }}>Коли потрібно:</span>
-          <label className="dt"><span className="dt-ph" aria-hidden="true">{catFrom ? "" : "Від"}</span>
-          <input
-            type="date"
-            aria-label="Потрібно з"
-            min={new Date().toLocaleDateString("sv-SE")}
-            value={catFrom}
-            onChange={(e) => {
-              setCatFrom(e.target.value);
-              if (catTo && e.target.value && catTo < e.target.value) setCatTo(e.target.value);
-            }}
-            style={selectStyle}
-          /></label>
-          <span style={{ color: "#70777D" }}>—</span>
-          <label className="dt"><span className="dt-ph" aria-hidden="true">{catTo ? "" : "До"}</span>
-          <input type="date" aria-label="Потрібно по" min={catFrom || new Date().toLocaleDateString("sv-SE")} value={catTo} onChange={(e) => setCatTo(e.target.value)} style={selectStyle} /></label>
-          {(catFrom || catTo) && (
-            <button onClick={() => { setCatFrom(""); setCatTo(""); }} aria-label="Скинути дати" style={{ ...selectStyle, cursor: "pointer", color: "#A3A8AD" }}>
-              ✕ Скинути
-            </button>
-          )}
-          {datesChosen && (
-            <label style={{ display: "flex", alignItems: "center", gap: 6, fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 12.5, color: "#A3A8AD", cursor: "pointer" }}>
-              <input type="checkbox" checked={onlyFree} onChange={(e) => setOnlyFree(e.target.checked)} style={{ accentColor: "#FF6A1A", width: 16, height: 16 }} />
-              Тільки вільна на ці дати
-            </label>
-          )}
-          <span style={{ flexBasis: "100%", height: 0 }} />
-          <select aria-label="Тип техніки" value={filterType} onChange={(e) => setFilterType(e.target.value)} style={selectStyle}>
-            <option value="Усі">{t("filter_all")}</option>
-            {TYPES.map((ty) => (
-              <option key={ty} value={ty}>{tType(ty, lang)}</option>
-            ))}
-          </select>
-          <select aria-label="Регіон" value={filterRegion} onChange={(e) => setFilterRegion(e.target.value)} style={selectStyle}>
-            <option value="Усі">{t("filter_all")}</option>
-            {REGIONS.filter((r) => r !== "Інше").map((r) => (
-              <option key={r}>{r}</option>
-            ))}
-          </select>
-          <select aria-label="Сортування" value={sortBy} onChange={(e) => setSortBy(e.target.value)} style={selectStyle}>
-            <option value="default">{t("sort_default")}</option>
-            <option value="price_asc">{t("sort_price_asc")}</option>
-            <option value="price_desc">{t("sort_price_desc")}</option>
-          </select>
-          <input
-            type="number"
-            value={filterMaxPrice}
-            onChange={(e) => setFilterMaxPrice(e.target.value)}
-            aria-label={t("filter_price_placeholder")}
-            placeholder={t("filter_price_placeholder")}
-            style={{ ...selectStyle, width: 140 }}
-          />
-          <button
-            onClick={() => setShowFavoritesOnly((v) => !v)}
-            style={{
-              ...selectStyle,
-              cursor: "pointer",
-              color: showFavoritesOnly ? "#FF6A1A" : "#ffffff",
-              borderColor: showFavoritesOnly ? "#FF6A1A" : "#63696D",
-            }}
-          >
-            ♥ {t("favorites_btn")}{favorites.size > 0 ? ` (${favorites.size})` : ""}
-          </button>
-        </div>
-      )}
-
-      {/* Recently viewed */}
-      {role === "client" && recentlyViewed.length > 0 && (
-        <div style={{ padding: "0 24px 12px", display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-          <Label>{t("recently_viewed")}</Label>
-          {recentlyViewed.map((id) => {
-            const l = listings.find((x) => x.id === id);
-            if (!l) return null;
-            return (
-              <button
-                key={id}
-                onClick={() => setFilterType(l.type)}
-                style={{ ...smallBtn, padding: "5px 10px", fontSize: 11 }}
-              >
-                {l.brand}
-              </button>
-            );
-          })}
-        </div>
-      )}
-
-      {/* Catalog */}
-      {role !== "dispatcher" && (
-      <div
-        style={{
-          padding: "16px 24px 64px",
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
-          gap: 16,
-        }}
-      >
-        {filtered.map((l, i) => (
-          <Plate
-            key={l.id}
-            className="equipment-card reveal"
-            style={{ padding: "14px 12px", cursor: "pointer", transitionDelay: `${Math.min(i % 6, 5) * 0.06}s` }}
-            onClick={() => openDetail(l)}
-          >
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                const url = `${window.location.origin}${window.location.pathname}#listing-${l.id}`;
-                navigator.clipboard?.writeText(url);
-                flashToast("Посилання скопійовано");
-              }}
-              aria-label="Поділитися"
-              style={{
-                position: "absolute",
-                top: 2,
-                right: 46,
-                width: 44,
-                height: 44,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                fontSize: 15,
-                color: "#70777D",
-                zIndex: 2,
-              }}
-            >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4">
-                <circle cx="12.5" cy="3.5" r="2" />
-                <circle cx="3.5" cy="8" r="2" />
-                <circle cx="12.5" cy="12.5" r="2" />
-                <path d="M5.3 7L10.7 4.3M5.3 9L10.7 11.7" />
-              </svg>
-            </button>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                toggleFavorite(l.id);
-              }}
-              aria-label="Обране"
-              style={{
-                position: "absolute",
-                top: 2,
-                right: 2,
-                width: 44,
-                height: 44,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                fontSize: 18,
-                color: favorites.has(l.id) ? "#FF6A1A" : "#70777D",
-                zIndex: 2,
-              }}
-            >
-              {favorites.has(l.id) ? "♥" : "♡"}
-            </button>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-              <div>
-                <div style={{ marginBottom: 6 }}>
-                  <RoleTag kind="lease" />
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 3 }}>
-                  <span className={l.available ? "status-dot-available" : ""} style={{ width: 6, height: 6, borderRadius: "50%", background: l.available ? "#5FA876" : "#70777D", display: "inline-block" }} />
-                  <span style={{ fontSize: 10.5, color: "#70777D", fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif" }}>
-                    {l.available ? t("status_available") : t("status_busy")}
-                  </span>
-                  {isNewListing(l) && <span className="lp-badge-new" style={{ marginLeft: 8, padding: "2px 8px", fontSize: 10 }}>НОВЕ</span>}
-                </div>
-                {datesChosen && l.available && (
-                  <div style={{ fontSize: 11.5, fontWeight: 600, marginBottom: 4, color: busyOnChosen(l) ? "#c96b5a" : "#5FA876" }}>
-                    {busyOnChosen(l) ? `● Зайнята на ці дати (до ${deals.fmtDate(busyOnChosen(l))})` : "● Вільна на ваші дати"}
-                  </div>
-                )}
-                <Label>{tType(l.type, lang)}</Label>
-                <div style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif", fontSize: 18, fontWeight: 600, marginTop: 2 }}>
-                  {l.brand}
-                </div>
-                <div style={{ marginTop: 4 }}><RatingLine stat={ratings[l.id]} /></div>
-              </div>
-              <VideoPeek video={listingVideo(l)}>
-              {l.photos && l.photos.length > 0 ? (
-                <div style={{ position: "relative", marginTop: 26 }}>
-                  <img src={l.photos[0]} alt={l.brand} style={{ width: 52, height: 52, objectFit: "cover", border: "1px solid #63696D", borderRadius: 6, display: "block" }} />
-                  {l.photos.length > 1 && (
-                    <span style={{ position: "absolute", bottom: -4, right: -4, fontSize: 9.5, fontWeight: 600, background: "#08090A", color: "#F4F4F1", border: "1px solid #63696D", borderRadius: 980, padding: "1px 5px" }}>
-                      +{l.photos.length - 1}
-                    </span>
-                  )}
-                </div>
-              ) : (
-                <div className="icon-tilt" style={{ marginTop: 26, color: "#FF6A1A", filter: "drop-shadow(0 2px 3px rgba(0,0,0,0.4))" }}><EquipmentIcon type={l.type} size={46} /></div>
-              )}
-              </VideoPeek>
-            </div>
-
-            <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 4 }}>
-              {Object.entries(l.specs).filter(([k, v]) => v && v !== "—" && !k.startsWith("_")).map(([k, v]) => (
-                <div key={k} style={{ display: "flex", justifyContent: "space-between", fontSize: 12.5, fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", color: "#F4F4F1" }}>
-                  <span style={{ color: "#A3A8AD" }}>{k}</span>
-                  <span>{v}</span>
-                </div>
-              ))}
-            </div>
-
-            <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px dashed #63696D", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <div>
-                <div
-                  style={{
-                    fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif",
-                    fontSize: 19,
-                    fontWeight: 600,
-                    background: "linear-gradient(90deg, #FF6A1A, #FFB52E)",
-                    WebkitBackgroundClip: "text",
-                    backgroundClip: "text",
-                    color: "transparent",
-                  }}
-                >
-                  {l.price > 0 ? (<>{l.price} ₴<span style={{ fontSize: 12, color: "#A3A8AD", WebkitTextFillColor: "#A3A8AD" }}>/{l.unit}</span></>) : "Договірна"}
-                </div>
-                <div style={{ fontSize: 11, color: "#A3A8AD" }}>
-                  {l.region} · {l.owner}
-                  {ownerRatings[l.owner] && (
-                    <span style={{ color: "#FFB52E" }}> · ★ {ownerRatings[l.owner].avg.toFixed(1)} ({ownerRatings[l.owner].count})</span>
-                  )}
-                </div>
-                {l.photos && l.photos.length > 0 && (
-                  <div
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 4,
-                      marginTop: 4,
-                      fontSize: 10.5,
-                      fontWeight: 600,
-                      color: "#0b0a09",
-                      background: "linear-gradient(90deg, #ffe08a, #FFB52E)",
-                      borderRadius: 980,
-                      padding: "2px 9px",
-                    }}
-                  >
-                    ✓ Перевірено власником
-                  </div>
-                )}
-                {!l.available && l.busyUntil && (
-                  <div style={{ fontSize: 11, color: "#c9a83f", marginTop: 2 }}>{t("busy_until")} {l.busyUntil}</div>
-                )}
-                {busyNowUntil(l.id) && (
-                  <div style={{ fontSize: 12, fontWeight: 700, color: "#c96b5a", marginTop: 4, letterSpacing: "0.02em" }}>
-                    ● ЗАЙНЯТА до {deals.fmtDate(busyNowUntil(l.id))}
-                  </div>
-                )}
-                {!busyNowUntil(l.id) && busyNextRange(l.id) && (
-                  <div style={{ fontSize: 11.5, color: "#FFB52E", marginTop: 4 }}>
-                    Найближча оренда: {deals.fmtDate(busyNextRange(l.id).date_from)} — {deals.fmtDate(busyNextRange(l.id).date_to)}
-                  </div>
-                )}
-              </div>
-              <button
-                disabled={!l.available}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  openBooking(l);
-                }}
-                style={{
-                  ...smallBtn,
-                  opacity: l.available ? 1 : 0.4,
-                  cursor: l.available ? "pointer" : "not-allowed",
-                }}
-              >
-                {l.available ? t("respond_btn") : t("busy_btn")}
-              </button>
-            </div>
-          </Plate>
-        ))}
-        {!listingsReady && [0, 1, 2].map((i) => <div key={i} className="skeleton" style={{ height: 150 }} aria-hidden="true" />)}
-        {listingsReady && filtered.length === 0 && (
-          <div style={{ color: "#A3A8AD", fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 13 }}>
-            {listings.length === 0 ? t("catalog_soon") : t("catalog_empty")}
-          </div>
-        )}
-      </div>
       )}
 
       {/* Дошка запитів + FAQ на кінетичній сітці */}
