@@ -6,7 +6,7 @@
 .w{max-width:860px;margin:0 auto;padding:0 20px}header{border-bottom:1px solid #202428}header .w{display:flex;justify-content:space-between;align-items:center;padding:14px 20px;gap:12px;flex-wrap:wrap}
 .logo{font-weight:800;letter-spacing:.04em;color:#F4F4F1;text-decoration:none}.logo b{color:#FF6A1A}
 .btn{display:inline-block;background:#FF6A1A;color:#08090A;font-weight:700;text-decoration:none;border-radius:980px;padding:12px 24px;min-height:44px}
-.btn.o{background:none;color:#FF6A1A;border:1px solid #FF6A1A}nav.bc{font-size:14px;color:#A3A8AD;padding:20px 0 0}nav.bc a{color:#A3A8AD}
+.btn.o{background:none;color:#FF6A1A;border:1px solid #FF6A1A}.back{display:inline-flex;align-items:center;min-height:44px;margin-top:16px;padding:0 18px;border:1px solid #FF6A1A;border-radius:980px;color:#FF6A1A;text-decoration:none;font-weight:700}.back:hover{background:rgba(255,106,26,.12)}nav.bc{font-size:14px;color:#A3A8AD;padding:20px 0 0}nav.bc a{color:#A3A8AD}
 h1{font-size:clamp(28px,5vw,44px);line-height:1.15;margin:16px 0}h2{font-size:24px;margin:40px 0 12px}p,li{color:#D5D8DA}ul{padding-left:20px}li{margin:6px 0}
 .box{background:#101214;border:1px solid #202428;border-radius:16px;padding:20px 22px;margin:24px 0}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;padding:0;list-style:none}.grid a{display:block;padding:12px 16px;border:1px solid #202428;border-radius:12px;text-decoration:none;color:#F4F4F1}.grid a:hover{border-color:#FF6A1A}
 .models{list-style:none;padding:0;margin:20px 0}.mrow{border:1px solid #202428;border-radius:16px;background:#101214;margin:10px 0}.mrow summary{list-style:none;display:grid;grid-template-columns:1fr;gap:6px;padding:16px 18px}.mrow summary::-webkit-details-marker{display:none}
@@ -15,10 +15,10 @@ h1{font-size:clamp(28px,5vw,44px);line-height:1.15;margin:16px 0}h2{font-size:24
 @media(min-width:700px){.mrow summary{grid-template-columns:minmax(200px,1.1fr) 1.6fr auto;align-items:center}}
 footer{border-top:1px solid #202428;margin-top:56px;padding:28px 0 48px;color:#A3A8AD;font-size:14px}details{border-top:1px solid #202428;padding:12px 0}summary{cursor:pointer;font-weight:600}</style></head>
 <body><header><div class="w"><a class="logo" href="/">ТЕХ<b>МАЙДАНЧИК</b></a><a class="btn" href="/">Залишити заявку</a></div></header>
-<main class="w"><nav class="bc" aria-label="Навігація"><a href="/">Головна</a> / <a href="/katalog/">Каталог техніки</a> / Маніпулятори</nav>
-<h1>Маніпулятори в оренду</h1><p>Вантажівки з крано-маніпуляторною установкою: довозять і розвантажують плити, блоки, матеріали. Нижче — оголошення власників.</p><p><a class="btn" href="/">Залишити заявку на маніпулятори</a> <a class="btn o" href="tel:+380981319725">+380 98 131 97 25</a></p>
+<main class="w"><a class="back" href="/">← На головну</a><nav class="bc" aria-label="Навігація"><a href="/">Головна</a> / <a href="/katalog/">Каталог техніки</a> / Маніпулятори</nav>
+<h1>Маніпулятори в оренду</h1><p><a class="btn" href="/">Залишити заявку на маніпулятори</a> <a class="btn o" href="tel:+380981319725">+380 98 131 97 25</a></p>
 <h2>Оголошення власників</h2><div id="owners" data-type="Маніпулятор" data-from="/katalog/manipulyatory/"><p class="ms">Завантажуємо оголошення…</p></div>
-<p class="ms">Характеристики наведено за даними виробника (посилання біля кожної моделі) і залежать від комплектації та ринку. Параметри, яких немає на сторінці виробника, не наводяться.</p>
+
 <h2>Інші категорії</h2><ul class="grid"><li><a href="/katalog/ekskavatory/">Екскаватори</a></li><li><a href="/katalog/mini-ekskavatory/">Міні-екскаватори</a></li><li><a href="/katalog/avtokrany/">Автокрани</a></li><li><a href="/katalog/katky/">Катки</a></li><li><a href="/katalog/navantazhuvachi/">Навантажувачі</a></li><li><a href="/katalog/samoskydy/">Самоскиди</a></li><li><a href="/katalog/avtovyshky/">Автовишки</a></li><li><a href="/katalog/buldozery/">Бульдозери</a></li><li><a href="/katalog/greidery/">Грейдери</a></li><li><a href="/katalog/gidromolot/">Гідромолоти</a></li></ul>
 <script>(function(){var U="https://jsyjqudermvbylaweuqj.supabase.co",K="sb_publishable_ShJs7HgeVml_QbQO5pvb1g_yCaWV8ai",M=[];
 var map={"м":"m","с":"c","а":"a","т":"t"};function nm(s){return String(s||"").toLowerCase().replace(/[мсат]/g,function(c){return map[c]}).replace(/[^a-z0-9]/g,"")}

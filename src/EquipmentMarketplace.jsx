@@ -761,9 +761,6 @@ function ModelPage({ model, listings, user, ratings, busyRanges, selectedId, onS
           ))}
         </div>
         {model.note && <div style={{ fontFamily: FONT, fontSize: 12.5, color: "#A3A8AD" }}>{model.note}</div>}
-        <div style={{ fontFamily: FONT, fontSize: 12.5, color: "#70777D" }}>
-          За даними виробника, залежить від комплектації. Джерело: <a href={model.src} target="_blank" rel="noopener nofollow" style={{ color: "#FFB81C" }}>сторінка виробника</a>.
-        </div>
       </section>
 
       <section ref={bookRef} id="booking" style={{ display: "flex", flexDirection: "column", gap: 12, scrollMarginTop: 80 }}>

@@ -46,7 +46,7 @@ const css = `*{box-sizing:border-box}body{margin:0;background:#08090A;color:#F4F
 .w{max-width:860px;margin:0 auto;padding:0 20px}header{border-bottom:1px solid #202428}header .w{display:flex;justify-content:space-between;align-items:center;padding:14px 20px;gap:12px;flex-wrap:wrap}
 .logo{font-weight:800;letter-spacing:.04em;color:#F4F4F1;text-decoration:none}.logo b{color:#FF6A1A}
 .btn{display:inline-block;background:#FF6A1A;color:#08090A;font-weight:700;text-decoration:none;border-radius:980px;padding:12px 24px;min-height:44px}
-.btn.o{background:none;color:#FF6A1A;border:1px solid #FF6A1A}nav.bc{font-size:14px;color:#A3A8AD;padding:20px 0 0}nav.bc a{color:#A3A8AD}
+.btn.o{background:none;color:#FF6A1A;border:1px solid #FF6A1A}.back{display:inline-flex;align-items:center;min-height:44px;margin-top:16px;padding:0 18px;border:1px solid #FF6A1A;border-radius:980px;color:#FF6A1A;text-decoration:none;font-weight:700}.back:hover{background:rgba(255,106,26,.12)}nav.bc{font-size:14px;color:#A3A8AD;padding:20px 0 0}nav.bc a{color:#A3A8AD}
 h1{font-size:clamp(28px,5vw,44px);line-height:1.15;margin:16px 0}h2{font-size:24px;margin:40px 0 12px}p,li{color:#D5D8DA}ul{padding-left:20px}li{margin:6px 0}
 .box{background:#101214;border:1px solid #202428;border-radius:16px;padding:20px 22px;margin:24px 0}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;padding:0;list-style:none}.grid a{display:block;padding:12px 16px;border:1px solid #202428;border-radius:12px;text-decoration:none;color:#F4F4F1}.grid a:hover{border-color:#FF6A1A}
 .models{list-style:none;padding:0;margin:20px 0}.mrow{border:1px solid #202428;border-radius:16px;background:#101214;margin:10px 0}.mrow summary{list-style:none;display:grid;grid-template-columns:1fr;gap:6px;padding:16px 18px}.mrow summary::-webkit-details-marker{display:none}
@@ -55,7 +55,7 @@ h1{font-size:clamp(28px,5vw,44px);line-height:1.15;margin:16px 0}h2{font-size:24
 @media(min-width:700px){.mrow summary{grid-template-columns:minmax(200px,1.1fr) 1.6fr auto;align-items:center}}
 footer{border-top:1px solid #202428;margin-top:56px;padding:28px 0 48px;color:#A3A8AD;font-size:14px}details{border-top:1px solid #202428;padding:12px 0}summary{cursor:pointer;font-weight:600}`;
 
-function page({ path, title, desc, h1, body, crumbs, ld }) {
+function page({ path, title, desc, h1, body, crumbs, ld, back }) {
   const url = `${SITE}${path}`;
   const bc = { "@type": "BreadcrumbList", itemListElement: crumbs.map((c, i) => ({ "@type": "ListItem", position: i + 1, name: c[0], item: `${SITE}${c[1]}` })) };
   return `<!doctype html><html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -64,7 +64,7 @@ function page({ path, title, desc, h1, body, crumbs, ld }) {
 <meta name="twitter:card" content="summary_large_image"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="manifest" href="/manifest.webmanifest">
 <script type="application/ld+json">${JSON.stringify({ "@context": "https://schema.org", "@graph": [bc, ...ld] })}</script><style>${css}</style></head>
 <body><header><div class="w"><a class="logo" href="/">ТЕХ<b>МАЙДАНЧИК</b></a><a class="btn" href="/">Залишити заявку</a></div></header>
-<main class="w"><nav class="bc" aria-label="Навігація">${crumbs.map((c, i) => (i < crumbs.length - 1 ? `<a href="${c[1]}">${esc(c[0])}</a> / ` : esc(c[0]))).join("")}</nav>
+<main class="w">${back ? `<a class="back" href="/">← На головну</a>` : ""}<nav class="bc" aria-label="Навігація">${crumbs.map((c, i) => (i < crumbs.length - 1 ? `<a href="${c[1]}">${esc(c[0])}</a> / ` : esc(c[0]))).join("")}</nav>
 <h1>${esc(h1)}</h1>${body}</main>
 <footer><div class="w"><p><a href="/">ТехМайданчик</a> — біржа будівельної техніки. Диспетчер, Миколаїв: <a href="tel:${PHONE}">${PHONE_FMT}</a>, <a href="mailto:${EMAIL}">${EMAIL}</a>.</p><p><a href="/orenda/">Уся техніка</a></p></div></footer></body></html>`;
 }
@@ -113,13 +113,13 @@ const SB_KEY = process.env.VITE_SUPABASE_ANON_KEY || "sb_publishable_ShJs7HgeVml
 const DISC = "Характеристики наведено за даними виробника (посилання біля кожної моделі) і залежать від комплектації та ринку. Параметри, яких немає на сторінці виробника, не наводяться.";
 let FROM = "";
 const modelRows = (g) => `<ul class="models">${g.models.map((m) => `<li><details class="mrow" id="${m.id}"><summary><span><span class="mn">${esc(m.name)}</span><br><span class="mb">${esc(m.brand)} · ${esc(m.kind)}</span></span><span class="mk">${m.key.map((k) => `<i>${esc(k)}</i>`).join("")}</span><span class="mm">Усі характеристики ▾</span><span class="avail" data-avail="${m.id}"></span></summary>
-<table>${m.specs.map(([a, b]) => `<tr><td>${esc(a)}</td><td>${esc(b)}</td></tr>`).join("")}</table>${m.note ? `<p class="ms">${esc(m.note)}</p>` : ""}<p class="ms">Джерело: <a href="${m.src}" rel="noopener nofollow" target="_blank">сторінка виробника</a></p><p class="mact"><a class="btn" href="/?model=${m.id}&amp;from=${FROM}">Дати, бронювання й відгуки</a> <a class="btn o" href="/?model=${m.id}&amp;request=1&amp;from=${FROM}">Залишити заявку</a></p></details></li>`).join("")}</ul>`;
+<table>${m.specs.map(([a, b]) => `<tr><td>${esc(a)}</td><td>${esc(b)}</td></tr>`).join("")}</table>${m.note ? `<p class="ms">${esc(m.note)}</p>` : ""}<p class="mact"><a class="btn" href="/?model=${m.id}&amp;from=${FROM}">Дати, бронювання й відгуки</a> <a class="btn o" href="/?model=${m.id}&amp;request=1&amp;from=${FROM}">Залишити заявку</a></p></details></li>`).join("")}</ul>`;
 for (const g of GROUPS) {
   const path = `/katalog/${g.slug}/`;
   FROM = path;
-  const body = `<p>${esc(g.intro)}</p>${cta("Залишити заявку на " + g.name.toLowerCase())}
+  const body = `${cta("Залишити заявку на " + g.name.toLowerCase())}
 <h2>Оголошення власників</h2><div id="owners" data-type="${esc(g.type)}" data-from="${path}"><p class="ms">Завантажуємо оголошення…</p></div>
-${g.models.length ? `<h2>Моделі та характеристики</h2>${modelRows(g)}` : ""}<p class="ms">${esc(DISC)}</p>
+${g.models.length ? `<h2>Моделі та характеристики</h2>${modelRows(g)}` : ""}
 <h2>Інші категорії</h2><ul class="grid">${GROUPS.filter((x) => x !== g).map((x) => `<li><a href="/katalog/${x.slug}/">${x.name}</a></li>`).join("")}</ul>
 <script>(function(){var U=${JSON.stringify(SB_URL)},K=${JSON.stringify(SB_KEY)},M=${JSON.stringify(g.models.map((m) => ({ id: m.id, n: m.name })))};
 var map={"м":"m","с":"c","а":"a","т":"t"};function nm(s){return String(s||"").toLowerCase().replace(/[мсат]/g,function(c){return map[c]}).replace(/[^a-z0-9]/g,"")}
@@ -136,11 +136,11 @@ Object.keys(cnt).forEach(function(id){var e=document.querySelector('[data-avail=
 }).catch(function(){box.innerHTML='<p class="ms">Не вдалося завантажити оголошення. Оновіть сторінку.</p>'});
 var h=location.hash.slice(1);if(h){var d=document.getElementById(h);if(d&&d.tagName==="DETAILS"){d.open=true;setTimeout(function(){d.scrollIntoView()},100)}}})();</script>`;
   const ld = g.models.length ? { "@type": "ItemList", name: g.name, itemListElement: g.models.map((m, i) => ({ "@type": "ListItem", position: i + 1, name: m.name, url: `${SITE}${path}#${m.id}` })) } : null;
-  write(path, page({ path, title: `${g.name} в оренду: оголошення та характеристики — ТехМайданчик`.slice(0, 70), desc: (g.models.length ? `${g.name}: ${g.models.map((m) => m.name).join(", ")}. Оголошення власників, характеристики за даними виробників, календар і бронювання.` : `${g.name} в оренду: оголошення власників, календар вільних дат і бронювання на ТехМайданчику.`).slice(0, 160), h1: g.h1, body, crumbs: [["Головна", "/"], ["Каталог техніки", "/katalog/"], [g.name, path]], ld: ld ? [ld] : [] }));
+  write(path, page({ path, title: `${g.name} в оренду: оголошення та характеристики — ТехМайданчик`.slice(0, 70), desc: (g.models.length ? `${g.name}: ${g.models.map((m) => m.name).join(", ")}. Оголошення власників, характеристики за даними виробників, календар і бронювання.` : `${g.name} в оренду: оголошення власників, календар вільних дат і бронювання на ТехМайданчику.`).slice(0, 160), h1: g.h1, body, crumbs: [["Головна", "/"], ["Каталог техніки", "/katalog/"], [g.name, path]], ld: ld ? [ld] : [], back: true }));
 }
 {
-  const body = `<p>Моделі техніки з характеристиками за даними виробників. Оберіть категорію.</p><ul class="grid">${GROUPS.map((g) => `<li><a href="/katalog/${g.slug}/">${g.name}</a></li>`).join("")}</ul>${cta()}<p class="ms">${esc(DISC)}</p>`;
-  write("/katalog/", page({ path: "/katalog/", title: "Каталог техніки: моделі та характеристики — ТехМайданчик", desc: "Екскаватори, міні-екскаватори, автокрани, катки й навантажувачі: моделі та характеристики за даними виробників.", h1: "Каталог техніки", body, crumbs: [["Головна", "/"], ["Каталог техніки", "/katalog/"]], ld: [] }));
+  const body = `<p>Моделі техніки з характеристиками за даними виробників. Оберіть категорію.</p><ul class="grid">${GROUPS.map((g) => `<li><a href="/katalog/${g.slug}/">${g.name}</a></li>`).join("")}</ul>${cta()}`;
+  write("/katalog/", page({ path: "/katalog/", title: "Каталог техніки: моделі та характеристики — ТехМайданчик", desc: "Екскаватори, міні-екскаватори, автокрани, катки й навантажувачі: моделі та характеристики за даними виробників.", h1: "Каталог техніки", body, crumbs: [["Головна", "/"], ["Каталог техніки", "/katalog/"]], ld: [], back: true }));
 }
 const today = new Date().toISOString().slice(0, 10);
 writeFileSync(join(ROOT, "sitemap.xml"), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls.map((u) => `<url><loc>${SITE}${u}</loc><lastmod>${today}</lastmod><priority>${u === "/" ? "1.0" : u === "/orenda/" || u === "/katalog/" ? "0.8" : "0.6"}</priority></url>`).join("")}</urlset>\n`);
