@@ -709,6 +709,29 @@ export function BookingForm({ listing, busyRanges, onSubmit, initialFrom = "", i
   const estimate = days > 0 && (listing.unit === "добу" || listing.unit === "зміну") ? days * Number(listing.price) : null;
   const canSend = !!from && !!to && !reversed && !clash && !busy;
 
+  // Швидкий вибір строку: тиждень, 1–3 місяці. Початок — найближча дата, коли техніка вільна весь строк.
+  const [dur, setDur] = useState("");
+  const isoOf = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const endFor = (startIso, spec) => {
+    const d = new Date(startIso + "T00:00:00");
+    if (spec.days) { d.setDate(d.getDate() + spec.days - 1); return isoOf(d); }
+    const day = d.getDate();
+    d.setDate(1); d.setMonth(d.getMonth() + spec.months);
+    d.setDate(Math.min(day, new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate()));
+    d.setDate(d.getDate() - 1);
+    return isoOf(d);
+  };
+  const pickDuration = (key, spec) => {
+    let start = from && from >= today ? from : today;
+    for (let i = 0; i < 400; i++) {
+      const end = endFor(start, spec);
+      if (!taken.some((r) => rangesOverlap(r.date_from, r.date_to, start, end))) { setFrom(start); setTo(end); setDur(key); return; }
+      const d = new Date(start + "T00:00:00"); d.setDate(d.getDate() + 1); start = isoOf(d);
+    }
+    setDur(key);
+  };
+  const DURS = [["w", "Тиждень", { days: 7 }], ["m1", "1 місяць", { months: 1 }], ["m2", "2 місяці", { months: 2 }], ["m3", "3 місяці", { months: 3 }]];
+
   const submit = async (e) => {
     e.preventDefault();
     if (!canSend) return;
@@ -742,12 +765,21 @@ export function BookingForm({ listing, busyRanges, onSubmit, initialFrom = "", i
         <div style={{ fontFamily: FONT, fontSize: 12.5, color: GREEN }}>Найближчим часом техніка вільна</div>
       )}
 
+      <div>
+        <div style={{ fontFamily: FONT, fontSize: 12.5, color: "#A3A8AD", marginBottom: 6 }}>Швидкий вибір строку (підберемо найближчі вільні дати)</div>
+        <div className="lp-dur">
+          {DURS.map(([k, label, spec]) => (
+            <button type="button" key={k} data-on={dur === k ? "1" : "0"} onClick={() => pickDuration(k, spec)}>{label}</button>
+          ))}
+        </div>
+      </div>
+      <AvailabilityCalendar ranges={taken} months={dur === "m3" ? 4 : dur === "m2" ? 3 : 2} selectFrom={from && to && !reversed ? from : ""} selectTo={from && to && !reversed ? to : ""} />
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
         <Field label="З якого дня" style={{ flex: "1 1 140px" }}>
-          <input type="date" aria-label="З якого дня" min={today} value={from} onChange={(e) => setFrom(e.target.value)} style={inputStyle} required />
+          <input type="date" aria-label="З якого дня" min={today} value={from} onChange={(e) => { setFrom(e.target.value); setDur(""); }} style={inputStyle} required />
         </Field>
         <Field label="По який день" style={{ flex: "1 1 140px" }}>
-          <input type="date" aria-label="По який день" min={from || today} value={to} onChange={(e) => setTo(e.target.value)} style={inputStyle} required />
+          <input type="date" aria-label="По який день" min={from || today} value={to} onChange={(e) => { setTo(e.target.value); setDur(""); }} style={inputStyle} required />
         </Field>
       </div>
       {reversed && <ErrorText>Кінець періоду не може бути раніше за початок</ErrorText>}

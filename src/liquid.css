@@ -109,3 +109,32 @@ button svg, .lg-icon svg { filter: drop-shadow(0 1px 0 rgba(255,255,255,.28)) dr
   .cat-desc, .cat-go { display: none; }
 }
 @media (prefers-reduced-motion: reduce) { .cat-card { transition: none; } .cat-card:hover { transform: none; } }
+
+/* ---- Сторінка техніки ---- */
+.lp-page { position: fixed; inset: 0; z-index: 49; background: #08090A; overflow-y: auto; overscroll-behavior: contain; animation: lpIn .28s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes lpIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+.lp-bar { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; gap: 12px; padding: max(10px, env(safe-area-inset-top)) 16px 10px; background: rgba(8,9,10,.88); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-bottom: 1px solid #202428; }
+.lp-back { min-height: 44px; padding: 0 16px; border-radius: 980px; border: 1px solid rgba(255,196,130,.45); background: rgba(255,255,255,.05); color: #F4F4F1; font: 600 14px/1 -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; cursor: pointer; }
+.lp-crumb { color: #A3A8AD; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lp-body { max-width: 760px; margin: 0 auto; padding: 20px 16px calc(120px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 16px; }
+.lp-hero { position: relative; display: flex; align-items: center; justify-content: center; min-height: 220px; border-radius: 20px; border: 1px solid #202428; background: radial-gradient(120% 90% at 50% 20%, rgba(255,106,26,.16), rgba(16,18,20,.96) 70%); overflow: hidden; }
+.lp-hero img.lp-photo { width: 100%; max-height: 380px; object-fit: contain; display: block; padding: 14px; }
+.lp-hero img.lp-cut { width: 86%; max-height: 300px; object-fit: contain; filter: drop-shadow(0 18px 20px rgba(0,0,0,.55)); }
+.lp-badge-new { display: inline-flex; align-items: center; gap: 6px; padding: 4px 11px; border-radius: 980px; font: 800 11px/1 -apple-system, sans-serif; letter-spacing: .08em; color: #1a0f05; background: linear-gradient(135deg, #FFB81C, #FF6A1A); box-shadow: 0 4px 14px -4px rgba(255,106,26,.8); }
+.lp-sticky { position: fixed; left: 0; right: 0; bottom: 0; z-index: 3; display: flex; align-items: center; gap: 14px; padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); background: rgba(8,9,10,.92); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-top: 1px solid #202428; }
+.lp-sticky .lp-price { font: 700 20px/1.1 -apple-system, sans-serif; color: #F4F4F1; white-space: nowrap; }
+.lp-sticky .lp-price small { display: block; font: 400 11px/1.2 -apple-system, sans-serif; color: #A3A8AD; }
+.lp-sticky button { flex: 1; max-width: 420px; margin-left: auto; }
+.lp-dur { display: flex; gap: 8px; flex-wrap: wrap; }
+.lp-dur button { min-height: 40px; padding: 0 16px; border-radius: 980px; border: 1px solid #2f3439; background: rgba(255,255,255,.04); color: #F4F4F1; font: 600 13.5px/1 -apple-system, sans-serif; cursor: pointer; }
+.lp-dur button[data-on="1"] { border-color: #FF6A1A; background: rgba(255,106,26,.18); color: #FFB81C; }
+.rv-item { border-top: 1px solid #202428; padding: 12px 0; }
+.card-new { position: absolute; top: 10px; right: 10px; z-index: 2; }
+.cat-ico[data-photo="1"] { width: 100%; height: 92px; border: 0; border-radius: 14px; box-shadow: none; background: radial-gradient(90% 90% at 50% 30%, rgba(255,106,26,.22), rgba(14,16,20,0) 75%); }
+.cat-ico[data-photo="1"] img { object-fit: contain; filter: drop-shadow(0 10px 10px rgba(0,0,0,.55)); transition: transform .35s cubic-bezier(.2,.8,.2,1); }
+.cat-card:hover .cat-ico[data-photo="1"] img { transform: scale(1.06) translateY(-2px); }
+@media (max-width: 700px) { .cat-ico[data-photo="1"] { height: 64px; } }
+@media (prefers-reduced-motion: reduce) { .lp-page { animation: none; } .cat-card:hover .cat-ico[data-photo="1"] img { transform: none; } }
+
+body:has(.lp-page) .oc, body:has(.lp-page) .ai-fab { display: none !important; }
+body:has(.lp-page) .sticky-cta { display: none !important; }

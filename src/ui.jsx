@@ -253,3 +253,25 @@ export function RoleTag({ kind, style }) {
     </span>
   );
 }
+
+// Повноекранна сторінка поверх каталогу (картка техніки): верхня панель «Назад», зручно на телефоні.
+export function PageShell({ children, onClose, title, crumb }) {
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("keydown", onKey);
+    return () => { document.body.style.overflow = prev; document.removeEventListener("keydown", onKey); };
+  }, [onClose]);
+  return (
+    <div className="lp-page" role="dialog" aria-modal="true" aria-label={title}>
+      <div className="lp-bar">
+        <button type="button" className="lp-back" onClick={onClose}>
+          <span aria-hidden="true">←</span> Назад до каталогу
+        </button>
+        {crumb && <span className="lp-crumb">{crumb}</span>}
+      </div>
+      <div className="lp-body">{children}</div>
+    </div>
+  );
+}

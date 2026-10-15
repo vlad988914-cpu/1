@@ -85,7 +85,14 @@ function WantedCard({ item, index = 0, user, onRespond, onUnpublish, onSignIn })
 }
 
 // ---------------- Дошка ----------------
-export function WantedBoard({ items, user, onPublish, onRespond, onUnpublish, onSignIn, loaded }) {
+const BOARD_TX = {
+  uk: { title: "Дошка оголошень", intro: "Не знайшли потрібну техніку в каталозі? Подайте оголошення — наприклад, «візьму в оренду баштовий кран на 3 місяці». Власники побачать його й відгукнуться своєю технікою, а ви оберете варіант. Контакти відкриваються лише після підтвердження диспетчера.", btn: "Подати оголошення", empty: "Поки що оголошень немає. Будьте першим: подайте оголошення — власники побачать його одразу.", now: "Зараз шукають" },
+  ru: { title: "Доска объявлений", intro: "Не нашли нужную технику в каталоге? Подайте объявление — например, «возьму в аренду башенный кран на 3 месяца». Владельцы увидят его и откликнутся своей техникой, а вы выберете вариант. Контакты открываются только после подтверждения диспетчера.", btn: "Подать объявление", empty: "Пока объявлений нет. Будьте первым: подайте объявление — владельцы увидят его сразу.", now: "Сейчас ищут" },
+  en: { title: "Classifieds", intro: "Can't find the equipment in the catalog? Post a listing, for example “looking to rent a tower crane for 3 months”. Owners will see it and reply with their equipment, and you choose. Contacts are revealed only after the dispatcher confirms.", btn: "Post a listing", empty: "No listings yet. Be the first: post one and owners will see it right away.", now: "Looking now" },
+};
+
+export function WantedBoard({ items, user, onPublish, onRespond, onUnpublish, onSignIn, loaded, lang = "uk" }) {
+  const tx = BOARD_TX[lang] || BOARD_TX.uk;
   const [type, setType] = useState("Усі");
   const [shownAll, setShownAll] = useState(false);
   const types = ["Усі", ...Array.from(new Set(items.map((i) => i.req_type)))];
@@ -95,14 +102,14 @@ export function WantedBoard({ items, user, onPublish, onRespond, onUnpublish, on
   return (
     <div style={{ padding: "8px 24px 48px", maxWidth: 1100, margin: "0 auto" }}>
       <h2 style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif", fontSize: 24, textTransform: "none", margin: "0 0 6px" }}>
-        Дошка запитів
+        {tx.title}
       </h2>
       <p style={{ fontFamily: FONT, fontSize: 13.5, color: "#A3A8AD", margin: "0 0 14px", maxWidth: 680 }}>
-        Не знайшли потрібну техніку? Вивісьте свою заявку: дати, строк і ціну. Власники відгукнуться своєю технікою — ви оберете, а диспетчер підтвердить. Контакти відкриваються лише після підтвердження.
+        {tx.intro}
       </p>
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginBottom: 14 }}>
         <button onClick={onPublish} style={{ ...primaryBtn, minHeight: 44 }}>
-          Вивісити свою заявку
+          {tx.btn}
         </button>
         {types.length > 2 && (
           <select aria-label="Тип техніки на дошці" value={type} onChange={(e) => setType(e.target.value)} style={selectStyle}>
@@ -113,12 +120,12 @@ export function WantedBoard({ items, user, onPublish, onRespond, onUnpublish, on
             ))}
           </select>
         )}
-        <span style={{ fontFamily: FONT, fontSize: 12.5, color: "#70777D" }}>{items.length > 0 ? `Зараз шукають: ${items.length}` : ""}</span>
+        <span style={{ fontFamily: FONT, fontSize: 12.5, color: "#70777D" }}>{items.length > 0 ? `${tx.now}: ${items.length}` : ""}</span>
       </div>
 
       {loaded && list.length === 0 && (
         <div style={{ fontFamily: FONT, fontSize: 13, color: "#A3A8AD" }}>
-          Поки що нікого не шукають. Будьте першим: вивісьте заявку — власники побачать її одразу.
+          {tx.empty}
         </div>
       )}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 14 }}>

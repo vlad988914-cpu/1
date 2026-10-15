@@ -1,10 +1,11 @@
-import React, { useState, useMemo, useEffect, useRef } from "react";
+import React, { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { supabase } from "./supabaseClient";
-import { Plate, Label, badgeStyle, miniBtn, ErrorText, Field, primaryBtn, smallBtn, selectStyle, inputStyle, Modal, RoleTag, lgGlass } from "./ui.jsx";
+import { PageShell, Plate, Label, badgeStyle, miniBtn, ErrorText, Field, primaryBtn, smallBtn, selectStyle, inputStyle, Modal, RoleTag, lgGlass } from "./ui.jsx";
 import { answerFromKnowledge, FALLBACK_ANSWER, JOB_PILLS, HELPER_PILLS } from "../shared/workKnowledge.js";
 import { ClientCabinet, OwnerCabinet, NotificationsPanel, BookingForm, AvailabilityCalendar } from "./cabinets.jsx";
 import { WantedBoard, RespondForm } from "./wanted.jsx";
+import { ListingReviews } from "./reviews.jsx";
 import HeaderForge from "./forge/Forge.jsx";
 import ScrollStory from "./story/ScrollStory.jsx";
 import KineticGrid from "./KineticGrid.jsx";
@@ -107,7 +108,7 @@ const TRANSLATIONS = {
     faq_items: [
       { q: "Скільки коштує розміщення техніки в каталозі?", a: "Реєстрація та додавання оголошень безкоштовні. Ми не беремо комісію з угод — власник і клієнт домовляються напряму." },
       { q: "Як швидко підтвердять бронь?", a: "Диспетчер перевіряє техніку й дати та підтверджує вручну — зазвичай протягом години в робочий час. Підтвердження й контакт власника з'являться в «Моєму кабінеті», ви отримаєте сповіщення. Для цього потрібен акаунт — реєстрація займає хвилину." },
-      { q: "Що якщо підходящої техніки не знайдеться?", a: "Вивісьте заявку на «Дошці запитів»: дати, строк і ціну, яку готові заплатити. Власники самі запропонують свою техніку, ви оберете, а диспетчер підтвердить оренду — і відкриються контакти. Диспетчер також запитує власників напряму. Заявка лишається активною, поки ви її не скасуєте." },
+      { q: "Що якщо підходящої техніки не знайдеться?", a: "Подайте оголошення на «Дошці оголошень»: дати, строк і ціну, яку готові заплатити. Власники самі запропонують свою техніку, ви оберете, а диспетчер підтвердить оренду — і відкриються контакти. Диспетчер також запитує власників напряму. Заявка лишається активною, поки ви її не скасуєте." },
       { q: "Чи можна перевірити власника техніки перед угодою?", a: "У профілі власника відображається позначка верифікації — ми перевіряємо контакти та документи перед її наданням." },
     ],
   },
@@ -193,7 +194,7 @@ const TRANSLATIONS = {
     faq_items: [
       { q: "Сколько стоит размещение техники в каталоге?", a: "Регистрация и добавление объявлений бесплатны. Мы не берём комиссию со сделок — владелец и клиент договариваются напрямую." },
       { q: "Как быстро подтвердят бронь?", a: "Диспетчер проверяет технику и даты и подтверждает вручную — обычно в течение часа в рабочее время. Подтверждение и контакт владельца появятся в «Моём кабинете», вы получите уведомление. Для этого нужен аккаунт — регистрация занимает минуту." },
-      { q: "Что если подходящей техники не найдётся?", a: "Вывесите заявку на «Доске запросов»: даты, срок и цену, которую готовы заплатить. Владельцы сами предложат свою технику, вы выберете, а диспетчер подтвердит аренду — и откроются контакты. Диспетчер также запрашивает владельцев напрямую. Заявка остаётся активной, пока вы её не отмените." },
+      { q: "Что если подходящей техники не найдётся?", a: "Вывесите заявку на «Доске объявлений»: даты, срок и цену, которую готовы заплатить. Владельцы сами предложат свою технику, вы выберете, а диспетчер подтвердит аренду — и откроются контакты. Диспетчер также запрашивает владельцев напрямую. Заявка остаётся активной, пока вы её не отмените." },
       { q: "Можно ли проверить владельца техники перед сделкой?", a: "В профиле владельца отображается отметка верификации — мы проверяем контакты и документы перед её выдачей." },
     ],
   },
@@ -279,7 +280,7 @@ const TRANSLATIONS = {
     faq_items: [
       { q: "How much does listing equipment in the catalog cost?", a: "Registration and adding listings are free. We don't take a commission from deals — the owner and client arrange things directly." },
       { q: "How fast is a booking confirmed?", a: "The dispatcher checks the equipment and dates and confirms manually — usually within an hour during business hours. The confirmation and the owner's contact appear in your cabinet and you get a notification. An account is needed — signing up takes a minute." },
-      { q: "What if no suitable equipment is found?", a: "Post your request on the Wanted board: dates, term and the price you are ready to pay. Owners offer their equipment, you choose, and the dispatcher confirms the rental — then contacts open. The dispatcher also asks owners directly. Your request stays active until you cancel it." },
+      { q: "What if no suitable equipment is found?", a: "Post your request on the Classifieds board: dates, term and the price you are ready to pay. Owners offer their equipment, you choose, and the dispatcher confirms the rental — then contacts open. The dispatcher also asks owners directly. Your request stays active until you cancel it." },
       { q: "Can I verify the equipment owner before a deal?", a: "A verification badge is shown on the owner's profile — we check contacts and documents before granting it." },
     ],
   },
@@ -651,6 +652,10 @@ const CAT_UI = {
   ru: { all: "Вся техника", go: "Перейти в категорию", none: "Пока нет", n: (c) => (c === 1 ? "1 объявление" : `${c} объявл.`), reset: "Показать всю технику" },
   en: { all: "All equipment", go: "Open category", none: "None yet", n: (c) => (c === 1 ? "1 listing" : `${c} listings`), reset: "Show all equipment" },
 };
+// Фото техніки (вирізані зображення з наданого користувачем каталогу) для карток категорій і оголошень без власних фото
+const PHOTO_BY_TYPE = { "Екскаватор": "/cat/excavator.webp", "Навантажувач": "/cat/loader.webp", "Бульдозер": "/cat/bulldozer.webp", "Каток": "/cat/roller.webp", "Грейдер": "/cat/grader.webp", "Самоскид": "/cat/dumper.webp" };
+const isNewListing = (l) => !!(l && l.createdAt && Date.now() - new Date(l.createdAt).getTime() < 14 * 86400000);
+
 const MODEL_PAGES = { "Екскаватор": "ekskavatory", "Міні-екскаватор": "mini-ekskavatory", "Кран": "avtokrany", "Каток": "katky", "Навантажувач": "navantazhuvachi" };
 
 function CategoryCatalog({ listings, filterType, onPick, lang, t }) {
@@ -673,8 +678,8 @@ function CategoryCatalog({ listings, filterType, onPick, lang, t }) {
           const c = counts[ty] || 0;
           return (
             <button key={ty} type="button" className="cat-card" data-on={filterType === ty ? "1" : "0"} data-empty={c ? "0" : "1"} onClick={() => { if (MODEL_PAGES[ty]) { window.location.href = `/katalog/${MODEL_PAGES[ty]}/`; } else onPick(ty); }} aria-pressed={filterType === ty}>
-              <span className="cat-ico" data-img={ILLUSTRATED_ICONS[ty] ? "1" : "0"}>
-                {ILLUSTRATED_ICONS[ty] ? <img src={ILLUSTRATED_ICONS[ty]} alt="" draggable="false" /> : (() => { const Ic = ICONS_BY_TYPE[ty] || IconExcavator; return <Ic size={58} />; })()}
+              <span className="cat-ico" data-img={ILLUSTRATED_ICONS[ty] || PHOTO_BY_TYPE[ty] ? "1" : "0"} data-photo={PHOTO_BY_TYPE[ty] ? "1" : "0"}>
+                {PHOTO_BY_TYPE[ty] ? <img src={PHOTO_BY_TYPE[ty]} alt="" draggable="false" loading="lazy" /> : ILLUSTRATED_ICONS[ty] ? <img src={ILLUSTRATED_ICONS[ty]} alt="" draggable="false" /> : (() => { const Ic = ICONS_BY_TYPE[ty] || IconExcavator; return <Ic size={58} />; })()}
               </span>
               <span className="cat-name">{tType(ty, lang)}</span>
               <span className="cat-desc">{(CAT_COPY[ty] && CAT_COPY[ty][lang]) || ""}</span>
@@ -913,7 +918,22 @@ export default function EquipmentMarketplace() {
   const openDetail = (l) => {
     setDetailListing(l);
     setDetailPhotoIndex(0);
+    try { history.pushState({ tech: l.id }, "", `?tech=${encodeURIComponent(l.id)}`); } catch {}
   };
+  const dropListingPage = () => {
+    setDetailListing(null);
+    try { if (new URLSearchParams(window.location.search).has("tech")) history.replaceState({}, "", window.location.pathname); } catch {}
+  };
+  // Закриття сторінки техніки: якщо відкрили через адресу ?tech=… — повертаємось «назад», інакше просто закриваємо
+  const closeListingPage = useCallback(() => {
+    let has = false;
+    try { has = new URLSearchParams(window.location.search).has("tech"); } catch {}
+    if (has && window.history.state && window.history.state.tech !== undefined) window.history.back();
+    else {
+      setDetailListing(null);
+      try { if (has) history.replaceState({}, "", window.location.pathname); } catch {}
+    }
+  }, []);
   const [aiOpen, setAiOpen] = useState(false);
   const [requests, setRequests] = useState([]);
   const [dispatchOwners, setDispatchOwners] = useState([]); // справжні власники з бази (для диспетчера)
@@ -1116,6 +1136,52 @@ export default function EquipmentMarketplace() {
     loadRatings();
   };
 
+  // ---- Сторінка техніки: адреса ?tech=<id>, кнопка «назад» браузера, відгуки ----
+  useEffect(() => {
+    const onPop = () => {
+      let id = null;
+      try { id = new URLSearchParams(window.location.search).get("tech"); } catch {}
+      if (!id) { setDetailListing(null); return; }
+      const l = listings.find((x) => String(x.id) === id);
+      if (l) { setDetailListing(l); setDetailPhotoIndex(0); }
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, [listings]);
+  const deepLinkDone = useRef(false);
+  useEffect(() => {
+    if (deepLinkDone.current || !listings.length) return;
+    let id = null;
+    try { id = new URLSearchParams(window.location.search).get("tech"); } catch {}
+    deepLinkDone.current = true;
+    if (!id) return;
+    const l = listings.find((x) => String(x.id) === id);
+    if (l) setDetailListing(l);
+  }, [listings]);
+
+  const [listingReviews, setListingReviews] = useState({ items: [], ok: true });
+  const loadReviews = async (id) => {
+    if (!supabase || !id) { setListingReviews({ items: [], ok: false }); return; }
+    const { data, error } = await supabase.from("listing_reviews").select("listing_id,user_id,author_name,body,created_at").eq("listing_id", id).order("created_at", { ascending: false });
+    if (error) { setListingReviews({ items: [], ok: false }); return; } // таблицю ще не створено — просто без відгуків
+    setListingReviews({ items: data || [], ok: true });
+  };
+  useEffect(() => { if (detailListing) loadReviews(detailListing.id); }, [detailListing && detailListing.id]); // eslint-disable-line
+  const submitReview = async (body) => {
+    if (!user || !user.id) { setShowAuthForm(true); return false; }
+    const { error } = await supabase.from("listing_reviews").upsert({ listing_id: detailListing.id, user_id: user.id, author_name: user.name || "Клієнт", body }, { onConflict: "listing_id,user_id" });
+    if (error) { flashToast("Не вдалося зберегти відгук. Спробуйте пізніше"); return false; }
+    flashToast("Дякуємо за відгук!");
+    loadReviews(detailListing.id);
+    return true;
+  };
+  const deleteReview = async () => {
+    if (!user || !detailListing) return;
+    const { error } = await supabase.from("listing_reviews").delete().eq("listing_id", detailListing.id).eq("user_id", user.id);
+    if (error) { flashToast("Не вдалося видалити відгук"); return; }
+    loadReviews(detailListing.id);
+  };
+
   // Додавати техніку можуть лише власники (і диспетчер) — перевіряє також база (RLS)
   // Орендувати може лише зареєстрований користувач: гостя просимо увійти й після входу відкриваємо форму
   const [pendingRequest, setPendingRequest] = useState(null);
@@ -1232,7 +1298,7 @@ export default function EquipmentMarketplace() {
       if (paths.length) await supabase.storage.from("listing-photos").remove(paths);
     } catch (e) {}
     setListings((prev) => prev.filter((x) => x.id !== l.id));
-    setDetailListing(null);
+    dropListingPage();
     flashToast("Оголошення видалено");
   };
 
@@ -1268,7 +1334,7 @@ export default function EquipmentMarketplace() {
     deals.notifyDispatcher(data); // Telegram диспетчера (лише для тих, хто увійшов)
     setShowRequestForm(false);
     setAiPrefill(null);
-    flashToast(data.isPublic ? "Заявку прийнято й вивішено на «Дошці запитів». Відгуки — у «Моєму кабінеті»" : "Заявку прийнято. Хід і відповіді — у «Моєму кабінеті»");
+    flashToast(data.isPublic ? "Заявку прийнято й вивішено на «Дошці оголошень». Відгуки — у «Моєму кабінеті»" : "Заявку прийнято. Хід і відповіді — у «Моєму кабінеті»");
     setTimeout(() => {
       loadClientData();
       loadWanted();
@@ -2943,15 +3009,6 @@ export default function EquipmentMarketplace() {
               <IconExcavator size={16} />
               {t("hero_cta_client")}
             </button>
-            <button
-              onClick={() => {
-                setRole("owner");
-                openAddListing();
-              }}
-              style={smallBtn}
-            >
-              {t("hero_cta_owner")}
-            </button>
           </div>
           <div className="mo-in ss-l ss-opt-p" style={{ "--i": 6, display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 8, marginBottom: 8 }}>
             <button className="hero-pill" onClick={() => scrollToApp()}>
@@ -2959,9 +3016,6 @@ export default function EquipmentMarketplace() {
             </button>
             <button className="hero-pill" onClick={() => openRequestForm()}>
               {t("pill_request")}
-            </button>
-            <button className="hero-pill" onClick={() => { setRole("owner"); openAddListing(); }}>
-              {t("pill_add")}
             </button>
             <button className="hero-pill hero-pill-outline" onClick={copyContactEmail}>
               {t("pill_contact")}
@@ -3297,8 +3351,9 @@ export default function EquipmentMarketplace() {
             </button>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
               <div>
-                <div style={{ marginBottom: 6 }}>
+                <div style={{ marginBottom: 6, display: "flex", gap: 8, alignItems: "center" }}>
                   <RoleTag kind="lease" />
+                  {isNewListing(l) && <span className="lp-badge-new">НОВЕ</span>}
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 3 }}>
                   <span className={l.available ? "status-dot-available" : ""} style={{ width: 6, height: 6, borderRadius: "50%", background: l.available ? "#5FA876" : "#70777D", display: "inline-block" }} />
@@ -3328,7 +3383,11 @@ export default function EquipmentMarketplace() {
                   )}
                 </div>
               ) : (
+                PHOTO_BY_TYPE[l.type] ? (
+                <img src={PHOTO_BY_TYPE[l.type]} alt="" loading="lazy" style={{ marginTop: 22, width: 92, height: 60, objectFit: "contain", filter: "drop-shadow(0 6px 6px rgba(0,0,0,.5))" }} />
+              ) : (
                 <div className="icon-tilt" style={{ marginTop: 26, color: "#FF6A1A", filter: "drop-shadow(0 2px 3px rgba(0,0,0,0.4))" }}><EquipmentIcon type={l.type} size={46} /></div>
+              )
               )}
               </VideoPeek>
             </div>
@@ -3426,9 +3485,10 @@ export default function EquipmentMarketplace() {
       <div>
       {/* Дошка запитів: хто що шукає */}
       <div data-scene style={{ padding: "8px 24px 0", maxWidth: 1100, margin: "0 auto" }}>
-        <SectionDivider n={4} of={5} title="ДОШКА ЗАПИТІВ" />
+        <SectionDivider n={4} of={5} title={({ uk: "ДОШКА ОГОЛОШЕНЬ", ru: "ДОСКА ОБЪЯВЛЕНИЙ", en: "CLASSIFIEDS" })[lang] || "ДОШКА ОГОЛОШЕНЬ"} />
       </div>
       <WantedBoard
+        lang={lang}
         items={wantedItems}
         loaded={wantedLoaded}
         user={user}
@@ -3533,7 +3593,7 @@ export default function EquipmentMarketplace() {
       </footer>
 
       {detailListing && (
-        <Modal onClose={() => setDetailListing(null)} title={detailListing.brand} wide>
+        <PageShell onClose={closeListingPage} title={detailListing.brand} crumb={`${tType(detailListing.type, lang)} · ${detailListing.region}`}>
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
               <RoleTag kind="lease" />
@@ -3548,15 +3608,14 @@ export default function EquipmentMarketplace() {
             {listingVideo(detailListing) && (
               <video src={listingVideo(detailListing).src} poster={listingVideo(detailListing).poster} controls muted loop playsInline preload="metadata" style={{ width: "100%", borderRadius: 12, background: "#000", display: "block" }} />
             )}
-            <div style={{ display: "flex", justifyContent: "center", padding: "20px 0", background: "#191C1F", borderRadius: 12 }}>
+            <div className="lp-hero">
+              {isNewListing(detailListing) && <span className="lp-badge-new card-new">НОВЕ</span>}
               {detailListing.photos && detailListing.photos.length > 0 ? (
-                <img
-                  src={detailListing.photos[detailPhotoIndex] || detailListing.photos[0]}
-                  alt={detailListing.brand}
-                  style={{ maxWidth: "100%", maxHeight: 160, objectFit: "cover" }}
-                />
+                <img className="lp-photo" src={detailListing.photos[detailPhotoIndex] || detailListing.photos[0]} alt={detailListing.brand} />
+              ) : PHOTO_BY_TYPE[detailListing.type] ? (
+                <img className="lp-cut" src={PHOTO_BY_TYPE[detailListing.type]} alt={tType(detailListing.type, lang)} />
               ) : (
-                <div style={{ color: "#FF6A1A" }}><EquipmentIcon type={detailListing.type} size={90} /></div>
+                <div style={{ color: "#FF6A1A" }}><EquipmentIcon type={detailListing.type} size={110} /></div>
               )}
             </div>
             {detailListing.photos && detailListing.photos.length > 1 && (
@@ -3661,7 +3720,7 @@ export default function EquipmentMarketplace() {
               disabled={!detailListing.available}
               onClick={() => {
                 const dl = detailListing;
-                setDetailListing(null);
+                dropListingPage();
                 openBooking(dl);
               }}
               style={{ ...primaryBtn, width: "100%", opacity: detailListing.available ? 1 : 0.4, cursor: detailListing.available ? "pointer" : "not-allowed" }}
@@ -3679,8 +3738,34 @@ export default function EquipmentMarketplace() {
                 </button>
               </div>
             )}
+
+            <div style={{ paddingTop: 8, borderTop: "1px solid #202428" }}>
+              <ListingReviews
+                items={listingReviews.items}
+                available={listingReviews.ok}
+                user={user}
+                isOwnerOfListing={!!(user && detailListing.ownerId && detailListing.ownerId === user.id)}
+                onSubmit={submitReview}
+                onDelete={deleteReview}
+                onSignIn={() => { setShowAuthForm(true); flashToast("Щоб залишити відгук, увійдіть або зареєструйтесь"); }}
+              />
+            </div>
           </div>
-        </Modal>
+          <div className="lp-sticky">
+            <div className="lp-price">
+              {detailListing.price > 0 ? `${detailListing.price} ₴` : "Договірна"}
+              {detailListing.price > 0 && <small>за {detailListing.unit}</small>}
+            </div>
+            <button
+              type="button"
+              disabled={!detailListing.available}
+              onClick={() => { const dl = detailListing; dropListingPage(); openBooking(dl); }}
+              style={{ ...primaryBtn, opacity: detailListing.available ? 1 : 0.4, cursor: detailListing.available ? "pointer" : "not-allowed" }}
+            >
+              Обрати дати й забронювати
+            </button>
+          </div>
+        </PageShell>
       )}
 
       {showAddForm && (
@@ -5210,6 +5295,7 @@ const mapListingRow = (r) => ({
   photos: r.photos || [],
   available: r.available,
   busyUntil: r.busy_until || null,
+  createdAt: r.created_at || null,
 });
 
 // ---- Add listing form (owner side) ----
@@ -5439,7 +5525,7 @@ function RequestForm({ onSubmit, user, initial, t, lang }) {
           value={form.comment}
           onChange={set("comment")}
           rows={3}
-          placeholder="Наприклад: потрібен екскаватор для котловану під фундамент..."
+          placeholder="Наприклад: потрібен екскаватор для котловану під фундамент, або: візьму в оренду баштовий кран"
           style={{ ...inputStyle, resize: "vertical" }}
         />
       </Field>
@@ -5495,7 +5581,7 @@ function RequestForm({ onSubmit, user, initial, t, lang }) {
       <label style={{ display: "flex", alignItems: "flex-start", gap: 8, fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 13, color: "#D9DCDF", cursor: "pointer" }}>
         <input type="checkbox" checked={!!form.isPublic} onChange={(e) => setForm((f) => ({ ...f, isPublic: e.target.checked }))} style={{ accentColor: "#FF6A1A", width: 18, height: 18, marginTop: 2 }} />
         <span>
-          Вивісити заявку на «Дошці запитів» — власники зможуть запропонувати свою техніку
+          Вивісити заявку на «Дошці оголошень» — власники зможуть запропонувати свою техніку
           <span style={{ display: "block", fontSize: 11.5, color: "#70777D", marginTop: 2 }}>
             Усі побачать: тип техніки, регіон, дати, ціну, коментар і ваше ім'я (без прізвища). Телефон не показується — не пишіть його в коментарі.
           </span>
