@@ -651,6 +651,8 @@ const CAT_UI = {
   ru: { all: "Вся техника", go: "Перейти в категорию", none: "Пока нет", n: (c) => (c === 1 ? "1 объявление" : `${c} объявл.`), reset: "Показать всю технику" },
   en: { all: "All equipment", go: "Open category", none: "None yet", n: (c) => (c === 1 ? "1 listing" : `${c} listings`), reset: "Show all equipment" },
 };
+const MODEL_PAGES = { "Екскаватор": "ekskavatory", "Міні-екскаватор": "mini-ekskavatory", "Кран": "avtokrany", "Каток": "katky", "Навантажувач": "navantazhuvachi" };
+
 function CategoryCatalog({ listings, filterType, onPick, lang, t }) {
   const ui = CAT_UI[lang] || CAT_UI.uk;
   const counts = {};
@@ -670,7 +672,7 @@ function CategoryCatalog({ listings, filterType, onPick, lang, t }) {
         {TYPES.map((ty) => {
           const c = counts[ty] || 0;
           return (
-            <button key={ty} type="button" className="cat-card" data-on={filterType === ty ? "1" : "0"} data-empty={c ? "0" : "1"} onClick={() => onPick(ty)} aria-pressed={filterType === ty}>
+            <button key={ty} type="button" className="cat-card" data-on={filterType === ty ? "1" : "0"} data-empty={c ? "0" : "1"} onClick={() => { if (MODEL_PAGES[ty]) { window.location.href = `/katalog/${MODEL_PAGES[ty]}/`; } else onPick(ty); }} aria-pressed={filterType === ty}>
               <span className="cat-ico" data-img={ILLUSTRATED_ICONS[ty] ? "1" : "0"}>
                 {ILLUSTRATED_ICONS[ty] ? <img src={ILLUSTRATED_ICONS[ty]} alt="" draggable="false" /> : (() => { const Ic = ICONS_BY_TYPE[ty] || IconExcavator; return <Ic size={58} />; })()}
               </span>
@@ -900,7 +902,9 @@ export default function EquipmentMarketplace() {
   const [listings, setListings] = useState(supabase ? [] : seedListings);
   const [listingsReady, setListingsReady] = useState(!supabase); // каталог завантажено з бази
   const [listingsFromDb, setListingsFromDb] = useState(false);
-  const [filterType, setFilterType] = useState("Усі");
+  const [filterType, setFilterType] = useState(() => {
+    try { const q = new URLSearchParams(window.location.search).get("type"); return q && TYPES.includes(q) ? q : "Усі"; } catch { return "Усі"; }
+  });
   const [filterRegion, setFilterRegion] = useState("Усі");
   const [showAddForm, setShowAddForm] = useState(false);
   const [showRequestForm, setShowRequestForm] = useState(false);
@@ -982,6 +986,9 @@ export default function EquipmentMarketplace() {
   const [scrolled, setScrolled] = useState(false);
   const appSectionRef = useRef(null);
   const catListRef = useRef(null);
+  useEffect(() => {
+    try { if (new URLSearchParams(window.location.search).get("type")) setTimeout(() => catListRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 1200); } catch {}
+  }, []);
   useSpotlight(); // світло карток слідує за курсором
   useMagnetic(); // головна кнопка «тягнеться» до курсора
   useEffect(() => {

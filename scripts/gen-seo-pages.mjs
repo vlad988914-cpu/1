@@ -3,6 +3,7 @@
 import { mkdirSync, writeFileSync, rmSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { GROUPS } from "./models-data.mjs";
 
 const SITE = (process.env.SITE_URL || "https://www.tehmaydan.com").replace(/\/$/, "");
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "public");
@@ -48,6 +49,10 @@ const css = `*{box-sizing:border-box}body{margin:0;background:#08090A;color:#F4F
 .btn.o{background:none;color:#FF6A1A;border:1px solid #FF6A1A}nav.bc{font-size:14px;color:#A3A8AD;padding:20px 0 0}nav.bc a{color:#A3A8AD}
 h1{font-size:clamp(28px,5vw,44px);line-height:1.15;margin:16px 0}h2{font-size:24px;margin:40px 0 12px}p,li{color:#D5D8DA}ul{padding-left:20px}li{margin:6px 0}
 .box{background:#101214;border:1px solid #202428;border-radius:16px;padding:20px 22px;margin:24px 0}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;padding:0;list-style:none}.grid a{display:block;padding:12px 16px;border:1px solid #202428;border-radius:12px;text-decoration:none;color:#F4F4F1}.grid a:hover{border-color:#FF6A1A}
+.models{list-style:none;padding:0;margin:20px 0}.mrow{border:1px solid #202428;border-radius:16px;background:#101214;margin:10px 0}.mrow summary{list-style:none;display:grid;grid-template-columns:1fr;gap:6px;padding:16px 18px}.mrow summary::-webkit-details-marker{display:none}
+.mrow .mn{font-weight:800;font-size:18px;color:#F4F4F1}.mrow .mb{color:#A3A8AD;font-size:13px}.mrow .mk{display:flex;flex-wrap:wrap;gap:6px}.mrow .mk i{font-style:normal;font-size:13px;background:#1A1D20;border:1px solid #2A2F34;border-radius:980px;padding:3px 10px;color:#FFB81C}
+.mrow .mm{color:#FF6A1A;font-size:13px}.mrow[open] .mm{display:none}.mrow table{width:calc(100% - 36px);margin:0 18px 8px;border-collapse:collapse}.mrow td{padding:8px 0;border-top:1px solid #202428;vertical-align:top;font-size:15px}.mrow td:first-child{color:#A3A8AD;width:48%;padding-right:12px}.mrow .ms{padding:4px 18px 16px;font-size:13px;color:#A3A8AD}
+@media(min-width:700px){.mrow summary{grid-template-columns:minmax(200px,1.1fr) 1.6fr auto;align-items:center}}
 footer{border-top:1px solid #202428;margin-top:56px;padding:28px 0 48px;color:#A3A8AD;font-size:14px}details{border-top:1px solid #202428;padding:12px 0}summary{cursor:pointer;font-weight:600}`;
 
 function page({ path, title, desc, h1, body, crumbs, ld }) {
@@ -101,6 +106,22 @@ for (const c of CATS) {
     write(p2, page({ path: p2, title: `Оренда ${c.gen} ${ci.loc} — ТехМайданчик`, desc: `Оренда ${c.gen} ${ci.loc}: залиште заявку з датами та адресою, диспетчер підбере вільну техніку й підтвердить. ТехМайданчик.`, h1: `Оренда ${c.gen} ${ci.loc}`, body: body2, crumbs: [["Головна", "/"], ["Оренда техніки", "/orenda/"], [`Оренда ${c.gen}`, path], [ci.name, p2]], ld: [svc(`Оренда ${c.gen} ${ci.loc}`, ci.name, p2), faqLd(faq)] }));
   }
 }
+// каталог моделей
+rmSync(join(ROOT, "katalog"), { recursive: true, force: true });
+const DISC = "Характеристики наведено за даними виробника (посилання біля кожної моделі) і залежать від комплектації та ринку. Параметри, яких немає на сторінці виробника, не наводяться.";
+const modelRows = (g) => `<ul class="models">${g.models.map((m) => `<li><details class="mrow" id="${m.id}"><summary><span><span class="mn">${esc(m.name)}</span><br><span class="mb">${esc(m.brand)} · ${esc(m.kind)}</span></span><span class="mk">${m.key.map((k) => `<i>${esc(k)}</i>`).join("")}</span><span class="mm">Усі характеристики ▾</span></summary>
+<table>${m.specs.map(([a, b]) => `<tr><td>${esc(a)}</td><td>${esc(b)}</td></tr>`).join("")}</table>${m.note ? `<p class="ms">${esc(m.note)}</p>` : ""}<p class="ms">Джерело: <a href="${m.src}" rel="noopener nofollow" target="_blank">сторінка виробника</a></p></details></li>`).join("")}</ul>`;
+for (const g of GROUPS) {
+  const path = `/katalog/${g.slug}/`;
+  const body = `<p>${esc(g.intro)}</p>${cta("Залишити заявку на " + g.name.toLowerCase())}<p><a href="/?type=${encodeURIComponent(g.type)}">Переглянути оголошення цієї техніки на ТехМайданчику →</a></p>${modelRows(g)}<p class="ms">${esc(DISC)}</p>
+<h2>Інші категорії</h2><ul class="grid">${GROUPS.filter((x) => x !== g).map((x) => `<li><a href="/katalog/${x.slug}/">${x.name}</a></li>`).join("")}</ul>`;
+  const ld = { "@type": "ItemList", name: g.name, itemListElement: g.models.map((m, i) => ({ "@type": "ListItem", position: i + 1, name: m.name, url: `${SITE}${path}#${m.id}` })) };
+  write(path, page({ path, title: `${g.name}: моделі та характеристики — ТехМайданчик`.slice(0, 70), desc: `${g.name}: ${g.models.map((m) => m.name).join(", ")}. Повні характеристики за даними виробників і посилання на джерела.`.slice(0, 160), h1: g.h1, body, crumbs: [["Головна", "/"], ["Каталог техніки", "/katalog/"], [g.name, path]], ld: [ld] }));
+}
+{
+  const body = `<p>Моделі техніки з характеристиками за даними виробників. Оберіть категорію.</p><ul class="grid">${GROUPS.map((g) => `<li><a href="/katalog/${g.slug}/">${g.name} (${g.models.length})</a></li>`).join("")}</ul>${cta()}<p class="ms">${esc(DISC)}</p>`;
+  write("/katalog/", page({ path: "/katalog/", title: "Каталог техніки: моделі та характеристики — ТехМайданчик", desc: "Екскаватори, міні-екскаватори, автокрани, катки й навантажувачі: моделі та характеристики за даними виробників.", h1: "Каталог техніки", body, crumbs: [["Головна", "/"], ["Каталог техніки", "/katalog/"]], ld: [] }));
+}
 const today = new Date().toISOString().slice(0, 10);
-writeFileSync(join(ROOT, "sitemap.xml"), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls.map((u) => `<url><loc>${SITE}${u}</loc><lastmod>${today}</lastmod><priority>${u === "/" ? "1.0" : u === "/orenda/" ? "0.8" : "0.6"}</priority></url>`).join("")}</urlset>\n`);
+writeFileSync(join(ROOT, "sitemap.xml"), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls.map((u) => `<url><loc>${SITE}${u}</loc><lastmod>${today}</lastmod><priority>${u === "/" ? "1.0" : u === "/orenda/" || u === "/katalog/" ? "0.8" : "0.6"}</priority></url>`).join("")}</urlset>\n`);
 console.log(`Згенеровано ${urls.length - 1} сторінок + sitemap (${SITE})`);
