@@ -3,12 +3,12 @@ import "./story.css";
 import { defaultStory } from "./story.config.js";
 import { progressOf, timeAt, stageAt, scrollTargetFor, follow, formatSpec } from "./story.logic.js";
 import { easeOutExpo } from "../motion/tokens.js";
+import OrbitCorner from "./OrbitCorner.jsx";
 
 const prefersReduced = () => typeof window !== "undefined" && !!window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 // Телефон (<900 px): без «липкої» перемотки — звичайна сторінка, що гортається вгору-вниз: головний екран + картки етапів зі знімками.
 const isSimple = () => typeof window !== "undefined" && window.innerWidth < 900;
-const SHOTS = { bucket: "/story/shot-bucket.webp", boom: "/story/shot-boom.webp", cab: "/story/shot-cab.webp" };
 
 /** Число параметра «набігає» щоразу, коли етап стає активним (reduced-motion — одразу кінцеве значення). */
 function SpecValue({ value, decimals = 0, active }) {
@@ -48,6 +48,7 @@ function SpecValue({ value, decimals = 0, active }) {
 export default function ScrollStory({ config = defaultStory, onCta, intro }) {
   const { video, stops, stages, heightVh } = config;
   const secRef = useRef(null);
+  const cardsRef = useRef(null);
   const vidRef = useRef(null);
   const simple = useMemo(() => isSimple(), []);
   const fillRef = useRef(null);
@@ -128,13 +129,12 @@ export default function ScrollStory({ config = defaultStory, onCta, intro }) {
 
   if (simple) {
     return (
-      <section id="story" className="ss-simple" aria-label="Техніка зблизька">
+      <section id="story" className="ss-simple" aria-label="Техніка зблизька" ref={cardsRef}>
         <div className="sm-hero" style={{ backgroundImage: `url(${video.poster})` }}>
           <div className="sm-hero-in ss-intro">{intro}</div>
         </div>
         {stages.slice(1).map((s) => (
           <article key={s.id} className="sm-card" data-stage={s.id}>
-            {SHOTS[s.id] && <img className="sm-shot" src={SHOTS[s.id]} alt={`CAT M320: ${s.kicker}`} loading="lazy" decoding="async" />}
             <div className="sm-body">
               <div className="ss-kicker">{s.kicker}</div>
               <h2 className="ss-title">{s.title}</h2>
@@ -161,6 +161,7 @@ export default function ScrollStory({ config = defaultStory, onCta, intro }) {
             </div>
           </article>
         ))}
+        <OrbitCorner cardsRef={cardsRef} reduced={reduced} />
       </section>
     );
   }

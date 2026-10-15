@@ -34,12 +34,16 @@ export const badgeStyle = {
 };
 
 export const miniBtn = (color) => ({
-  background: "none",
+  background: "linear-gradient(180deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.02) 45%, rgba(255,255,255,0.05) 100%), rgba(14,16,20,0.58)",
   border: `1px solid ${color}`,
   color,
-  fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
+  borderRadius: 980,
+  boxShadow: "inset 0 1px 0 rgba(255,255,255,0.35), inset 0 -6px 9px -6px currentColor, 0 7px 12px -8px currentColor, 0 1px 3px rgba(0,0,0,0.4)",
+  backdropFilter: "blur(8px)",
+  WebkitBackdropFilter: "blur(8px)",
+  fontFamily: LG_FONT,
   fontSize: 10.5,
-  padding: "3px 8px",
+  padding: "4px 11px",
   cursor: "pointer",
 });
 
@@ -60,33 +64,47 @@ export function Field({ label, children, style }) {
   );
 }
 
+import "./liquid.css";
+
+// Liquid glass: темне скло, кольорова кромка, блик зверху, кольорове світіння знизу
+const LG_FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif";
+export const lgGlass = (rgb, fill = 0.16) => ({
+  background: `linear-gradient(180deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.03) 40%, rgba(${rgb},${fill}) 100%), rgba(14,16,20,0.58)`,
+  border: `1px solid rgba(${rgb},0.6)`,
+  boxShadow: `inset 0 1.5px 0 rgba(255,255,255,0.38), inset 0 -9px 14px -7px rgba(${rgb},0.55), inset 0 0 0 1px rgba(255,255,255,0.05), 0 10px 20px -9px rgba(${rgb},0.65), 0 2px 5px rgba(0,0,0,0.45)`,
+  backdropFilter: "blur(10px) saturate(1.5)",
+  WebkitBackdropFilter: "blur(10px) saturate(1.5)",
+});
+
 export const primaryBtn = {
-  background: "linear-gradient(90deg, #FF6A1A, #FFB52E)",
-  color: "#08090A",
-  border: "none",
+  ...lgGlass("255,106,26", 0.5),
+  background: "linear-gradient(180deg, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0.04) 42%, rgba(255,181,46,0.0) 100%), linear-gradient(90deg, rgba(255,106,26,0.62), rgba(255,181,46,0.46)), rgba(14,16,20,0.6)",
+  border: "1px solid rgba(255,196,130,0.7)",
+  color: "#ffffff",
+  textShadow: "0 1px 2px rgba(0,0,0,0.55)",
   borderRadius: 980,
   padding: "12px 22px",
-  fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
+  fontFamily: LG_FONT,
   fontSize: 14,
   fontWeight: 600,
   letterSpacing: "-0.01em",
   textTransform: "none",
   cursor: "pointer",
-  boxShadow: "0 4px 16px rgba(255, 90, 31, 0.3)",
 };
 
 export const smallBtn = {
-  background: "transparent",
+  ...lgGlass("255,255,255", 0.07),
+  border: "1px solid rgba(255,255,255,0.3)",
+  boxShadow: "inset 0 1.5px 0 rgba(255,255,255,0.35), inset 0 -8px 12px -7px rgba(255,255,255,0.18), inset 0 0 0 1px rgba(255,255,255,0.04), 0 9px 16px -10px currentColor, 0 2px 5px rgba(0,0,0,0.4)",
   color: "#ffffff",
-  border: "1px solid rgba(255,255,255,0.18)",
   borderRadius: 980,
   padding: "8px 16px",
-  fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
+  fontFamily: LG_FONT,
   fontSize: 13,
   fontWeight: 500,
   letterSpacing: "-0.01em",
   textTransform: "none",
-  transition: "border-color 0.2s ease, color 0.2s ease",
+  transition: "border-color 0.2s ease, color 0.2s ease, transform 0.2s ease",
 };
 
 export const selectStyle = {

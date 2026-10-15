@@ -159,7 +159,7 @@
 .sm-hero::before { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(5,6,8,.25) 0%, transparent 30%, rgba(5,6,8,.78) 100%); }
 .sm-hero-in { position: relative; z-index: 1; width: 100%; box-sizing: border-box; padding: 16px 18px 18px; border-radius: 16px; background: rgba(14,16,20,.62); border: 1px solid rgba(255,255,255,.1); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); }
 .sm-card { margin: 12px 12px 0; border-radius: 18px; overflow: hidden; background: #101316; border: 1px solid rgba(255,255,255,.08); }
-.sm-shot { display: block; width: 100%; aspect-ratio: 16 / 9; max-height: 210px; object-fit: cover; object-position: 50% 45%; background: #0c0e10; }
+.sm-card .sm-body { padding-top: 20px; }
 .sm-body { padding: 16px 18px 20px; }
 .sm-card .ss-title { font-size: clamp(26px, 8vw, 34px); margin: 4px 0 6px; }
 .sm-card .ss-specs { margin-top: 14px; }
@@ -167,3 +167,23 @@
 .ss-simple .ss-note { display: block !important; }
 .sm-card .ss-cta { margin-top: 16px; }
 .ss-simple .ss-intro h1 { font-size: clamp(26px, 7vw, 34px) !important; }
+
+/* ───── телефон: кутове відео — екскаватор обертається, стрілки показують ківш, стрілу, кабіну ───── */
+.oc { position: fixed; left: 12px; bottom: calc(96px + env(safe-area-inset-bottom, 0px)); width: 176px; z-index: 55; opacity: 0; transform: translateY(12px) scale(.96); pointer-events: none;
+  transition: opacity .3s var(--mo-ease-out, ease-out), transform .3s var(--mo-ease-out, ease-out); }
+.oc[data-show="1"] { opacity: 1; transform: none; pointer-events: auto; }
+.oc-frame { position: relative; aspect-ratio: 4 / 3; border-radius: 18px; overflow: hidden; background: #0c0e10;
+  border: 1px solid rgba(255, 196, 130, 0.5);
+  box-shadow: inset 0 1.5px 0 rgba(255,255,255,.35), 0 12px 24px -8px rgba(255,106,26,.55), 0 4px 12px rgba(0,0,0,.55); }
+.oc-media { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.oc-svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+.oc-part line { stroke: rgba(255,255,255,.4); stroke-width: .7; stroke-linecap: round; stroke-dasharray: 1.6 1.4; transition: stroke .25s ease, stroke-width .25s ease; }
+.oc-part circle { fill: rgba(255,255,255,.55); stroke: rgba(14,16,20,.7); stroke-width: .6; transition: fill .25s ease; }
+.oc-part[data-on="1"] line { stroke: #FFB52E; stroke-width: 1.1; stroke-dasharray: none; filter: drop-shadow(0 0 1.5px rgba(255,106,26,.9)); }
+.oc-part[data-on="1"] circle { fill: #FF6A1A; stroke: #fff; stroke-width: .9; }
+.oc-chip { position: absolute; padding: 5px 9px; border-radius: 980px; font: 600 10.5px/1 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif; color: #d5d8db; cursor: pointer;
+  background: linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,.03) 45%), rgba(14,16,20,.7); border: 1px solid rgba(255,255,255,.26);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); box-shadow: inset 0 1px 0 rgba(255,255,255,.3), 0 4px 8px -4px rgba(0,0,0,.6); }
+.oc-chip[data-on="1"] { color: #fff; border-color: rgba(255,196,130,.8); background: linear-gradient(180deg, rgba(255,255,255,.22), rgba(255,255,255,.04) 45%), linear-gradient(90deg, rgba(255,106,26,.6), rgba(255,181,46,.45)), rgba(14,16,20,.7); box-shadow: inset 0 1px 0 rgba(255,255,255,.4), 0 5px 12px -4px rgba(255,106,26,.7); }
+@media (max-width: 360px) { .oc { width: 168px; } }
+@media (prefers-reduced-motion: reduce) { .oc { transition: none; } }

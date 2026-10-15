@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { supabase } from "./supabaseClient";
-import { Plate, Label, badgeStyle, miniBtn, ErrorText, Field, primaryBtn, smallBtn, selectStyle, inputStyle, Modal, RoleTag } from "./ui.jsx";
+import { Plate, Label, badgeStyle, miniBtn, ErrorText, Field, primaryBtn, smallBtn, selectStyle, inputStyle, Modal, RoleTag, lgGlass } from "./ui.jsx";
 import { answerFromKnowledge, FALLBACK_ANSWER, JOB_PILLS, HELPER_PILLS } from "../shared/workKnowledge.js";
 import { ClientCabinet, OwnerCabinet, NotificationsPanel, BookingForm, AvailabilityCalendar } from "./cabinets.jsx";
 import { WantedBoard, RespondForm } from "./wanted.jsx";
@@ -300,19 +300,23 @@ const FontLink = () => (
 // ---- Seed data ----
 const TYPES = [
   "Екскаватор",
+  "Міні-екскаватор",
   "Навантажувач",
   "Самоскид",
-  "Гідромолот",
-  "Кран",
+  "Маніпулятор",
+  "Автовишка",
   "Бульдозер",
+  "Грейдер",
   "Каток",
+  "Кран",
+  "Гідромолот",
 ];
 
 // Display-only translation of type names; TYPES stays the internal key everywhere (filters, icons, EQUIPMENT_INFO)
 const TYPE_LABELS = {
-  uk: { "Екскаватор": "Екскаватор", "Навантажувач": "Навантажувач", "Самоскид": "Самоскид", "Гідромолот": "Гідромолот", "Кран": "Кран", "Бульдозер": "Бульдозер", "Каток": "Каток" },
-  ru: { "Екскаватор": "Экскаватор", "Навантажувач": "Погрузчик", "Самоскид": "Самосвал", "Гідромолот": "Гидромолот", "Кран": "Кран", "Бульдозер": "Бульдозер", "Каток": "Каток" },
-  en: { "Екскаватор": "Excavator", "Навантажувач": "Loader", "Самоскид": "Dump Truck", "Гідромолот": "Hydraulic Hammer", "Кран": "Crane", "Бульдозер": "Bulldozer", "Каток": "Road Roller" },
+  uk: { "Міні-екскаватор": "Міні-екскаватор", "Маніпулятор": "Вантажівка з маніпулятором", "Автовишка": "Автовишка", "Грейдер": "Грейдер", "Екскаватор": "Екскаватор", "Навантажувач": "Навантажувач", "Самоскид": "Самоскид", "Гідромолот": "Гідромолот", "Кран": "Кран", "Бульдозер": "Бульдозер", "Каток": "Каток" },
+  ru: { "Міні-екскаватор": "Мини-экскаватор", "Маніпулятор": "Грузовик с манипулятором", "Автовишка": "Автовышка", "Грейдер": "Грейдер", "Екскаватор": "Экскаватор", "Навантажувач": "Погрузчик", "Самоскид": "Самосвал", "Гідромолот": "Гидромолот", "Кран": "Кран", "Бульдозер": "Бульдозер", "Каток": "Каток" },
+  en: { "Міні-екскаватор": "Mini Excavator", "Маніпулятор": "Crane Truck", "Автовишка": "Aerial Platform", "Грейдер": "Grader", "Екскаватор": "Excavator", "Навантажувач": "Loader", "Самоскид": "Dump Truck", "Гідромолот": "Hydraulic Hammer", "Кран": "Crane", "Бульдозер": "Bulldozer", "Каток": "Road Roller" },
 };
 const tType = (type, lang) => (TYPE_LABELS[lang] && TYPE_LABELS[lang][type]) || type;
 
@@ -545,7 +549,80 @@ function IconRoller({ size = 24, style }) {
   );
 }
 
+function IconMiniExcavator({ size = 24, style }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 32 32" style={style} fill="currentColor">
+      <rect x="3" y="22.5" width="16" height="4.2" rx="2.1" />
+      <rect x="6" y="15.5" width="8" height="6" rx="1" />
+      <rect x="7.4" y="16.7" width="3.6" height="3" fill={ICON_DARK} />
+      <path d="M13 17.5l3.4-6.2c.3-.5.9-.7 1.4-.4l1.5.8c.5.3.7.9.4 1.4L16 19.4z" />
+      <path d="M17.5 11.8l6.7 3.1c.5.2.7.8.5 1.3l-.6 1.2c-.2.5-.8.7-1.3.5l-6.9-3.2z" />
+      <path d="M23.2 15.6l4 .8-.7 4.2-3.6-1.5z" />
+      <circle cx="6" cy="24.6" r="1.1" fill={ICON_DARK} />
+      <circle cx="16" cy="24.6" r="1.1" fill={ICON_DARK} />
+    </svg>
+  );
+}
+function IconAerial({ size = 24, style }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 32 32" style={style} fill="currentColor">
+      <rect x="2" y="21" width="20" height="3.2" rx="0.8" />
+      <path d="M14.5 14.5h4.7c.7 0 1.3.4 1.6 1l1.7 3.2v2.3h-8z" />
+      <rect x="15.8" y="15.8" width="3.2" height="2.6" rx="0.4" fill={ICON_DARK} />
+      <path d="M5 21l13.8-12.6 1.7 1.8L8 21z" />
+      <rect x="18" y="4.5" width="9" height="5.5" rx="0.9" />
+      <rect x="19.3" y="6" width="6.4" height="2.4" fill={ICON_DARK} />
+      <circle cx="7" cy="25.6" r="2.4" />
+      <circle cx="18" cy="25.6" r="2.4" />
+      <circle cx="7" cy="25.6" r="0.9" fill={ICON_DARK} />
+      <circle cx="18" cy="25.6" r="0.9" fill={ICON_DARK} />
+      <path d="M23.2 21.6h5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  );
+}
+function IconManipulator({ size = 24, style }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 32 32" style={style} fill="currentColor">
+      <rect x="2" y="20" width="18" height="3.2" rx="0.8" />
+      <rect x="3" y="14.6" width="8" height="5" rx="0.6" />
+      <path d="M21.5 14.2h3.7c.6 0 1.1.3 1.4.8l1.6 3v2.3h-6.7z" />
+      <rect x="22.7" y="15.4" width="2.9" height="2.2" rx="0.4" fill={ICON_DARK} />
+      <path d="M12 14.6l1.2-1.8 8.6-7.8c.4-.4 1-.3 1.4.1s.3 1-.1 1.4L14.6 15z" />
+      <path d="M22 5.2l5.6 2.2-.7 1.7-5.6-2.2z" />
+      <path d="M27 9.2v6" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+      <circle cx="7" cy="25" r="2.4" />
+      <circle cx="14.5" cy="25" r="2.4" />
+      <circle cx="24" cy="25" r="2.4" />
+      <circle cx="7" cy="25" r="0.9" fill={ICON_DARK} />
+      <circle cx="14.5" cy="25" r="0.9" fill={ICON_DARK} />
+      <circle cx="24" cy="25" r="0.9" fill={ICON_DARK} />
+    </svg>
+  );
+}
+function IconGrader({ size = 24, style }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 32 32" style={style} fill="currentColor">
+      <path d="M2 19.5h18v2.6H2z" />
+      <path d="M17 13.5h5.8c.7 0 1.2.4 1.4 1l.8 4.5H17z" />
+      <rect x="18.4" y="14.8" width="3.6" height="2.8" rx="0.4" fill={ICON_DARK} />
+      <path d="M20 12.2h5.6c.6 0 1 .4 1 1v6.3H20z" />
+      <path d="M3 24.5l12-3.2.7 1.8-12.6 3.4c-.6.2-1.1-.1-1.3-.7s.1-1 .6-1.1z" fill={ICON_DARK} />
+      <circle cx="4.6" cy="24.2" r="2.8" />
+      <circle cx="21" cy="24.2" r="3.2" />
+      <circle cx="27" cy="24.2" r="2.8" />
+      <circle cx="4.6" cy="24.2" r="1" fill={ICON_DARK} />
+      <circle cx="21" cy="24.2" r="1.2" fill={ICON_DARK} />
+      <circle cx="27" cy="24.2" r="1" fill={ICON_DARK} />
+      <path d="M8.5 26.8h8.4v1.2H8.5z" />
+    </svg>
+  );
+}
+
 const ICONS_BY_TYPE = {
+  "Міні-екскаватор": IconMiniExcavator,
+  Автовишка: IconAerial,
+  Маніпулятор: IconManipulator,
+  Грейдер: IconGrader,
   Екскаватор: IconExcavator,
   Навантажувач: IconLoader,
   Самоскид: IconDumpTruck,
@@ -554,6 +631,60 @@ const ICONS_BY_TYPE = {
   Бульдозер: IconBulldozer,
   Каток: IconRoller,
 };
+
+// ---- Каталог за категоріями: картки з іконкою, описом і лічильником реальних оголошень ----
+const CAT_COPY = {
+  "Екскаватор": { uk: "Земляні роботи: котловани, траншеї, планування, знесення.", ru: "Земляные работы: котлованы, траншеи, планировка, снос.", en: "Earthworks: pits, trenches, grading, demolition." },
+  "Міні-екскаватор": { uk: "Для тісних дворів і траншей біля будівель.", ru: "Для тесных дворов и траншей у зданий.", en: "For tight yards and trenches beside buildings." },
+  "Навантажувач": { uk: "Склад, стройка, сніг: швидке переміщення сипучого.", ru: "Склад, стройка, снег: быстрое перемещение сыпучего.", en: "Yards, sites, snow: fast moving of bulk material." },
+  "Самоскид": { uk: "Вивезення ґрунту, щебеню, будівельного сміття.", ru: "Вывоз грунта, щебня, строительного мусора.", en: "Hauling soil, gravel and construction debris." },
+  "Маніпулятор": { uk: "Довезе й сам розвантажить: плити, блоки, матеріали.", ru: "Довезёт и сам разгрузит: плиты, блоки, материалы.", en: "Delivers and unloads itself: slabs, blocks, materials." },
+  "Автовишка": { uk: "Роботи на висоті без риштувань: дерева, ліхтарі, фасади.", ru: "Работы на высоте без лесов: деревья, фонари, фасады.", en: "Work at height without scaffolding: trees, lights, facades." },
+  "Бульдозер": { uk: "Розрівнювання, зрізання й розчищення ділянок.", ru: "Выравнивание, срезка и расчистка участков.", en: "Levelling, cutting and clearing of sites." },
+  "Грейдер": { uk: "Планування доріг і майданчиків з точним профілем.", ru: "Планировка дорог и площадок с точным профилем.", en: "Grading roads and sites to an exact profile." },
+  "Каток": { uk: "Ущільнення ґрунту, щебеню й асфальту.", ru: "Уплотнение грунта, щебня и асфальта.", en: "Compacting soil, gravel and asphalt." },
+  "Кран": { uk: "Монтаж конструкцій і підйом важких вантажів.", ru: "Монтаж конструкций и подъём тяжёлых грузов.", en: "Erecting structures and lifting heavy loads." },
+  "Гідромолот": { uk: "Руйнування бетону, асфальту й твердих порід.", ru: "Разрушение бетона, асфальта и твёрдых пород.", en: "Breaking concrete, asphalt and hard rock." },
+};
+const CAT_UI = {
+  uk: { all: "Уся техніка", go: "Перейти в категорію", none: "Поки немає", n: (c) => (c === 1 ? "1 оголошення" : `${c} оголошень`), reset: "Показати всю техніку" },
+  ru: { all: "Вся техника", go: "Перейти в категорию", none: "Пока нет", n: (c) => (c === 1 ? "1 объявление" : `${c} объявл.`), reset: "Показать всю технику" },
+  en: { all: "All equipment", go: "Open category", none: "None yet", n: (c) => (c === 1 ? "1 listing" : `${c} listings`), reset: "Show all equipment" },
+};
+function CategoryCatalog({ listings, filterType, onPick, lang, t }) {
+  const ui = CAT_UI[lang] || CAT_UI.uk;
+  const counts = {};
+  listings.forEach((l) => { counts[l.type] = (counts[l.type] || 0) + 1; });
+  return (
+    <div className="cat-catalog" data-scene style={{ padding: "8px 24px 18px" }}>
+      <div className="cat-head">
+        <div>
+          <Label>{t("categories_label")}</Label>
+          <h3 className="cat-title">{t("categories_title")}</h3>
+        </div>
+        <button type="button" className="cat-all" data-on={filterType === "Усі" ? "1" : "0"} onClick={() => onPick("Усі")}>
+          {ui.all} <b>{listings.length}</b>
+        </button>
+      </div>
+      <div className="cat-grid">
+        {TYPES.map((ty) => {
+          const c = counts[ty] || 0;
+          return (
+            <button key={ty} type="button" className="cat-card" data-on={filterType === ty ? "1" : "0"} data-empty={c ? "0" : "1"} onClick={() => onPick(ty)} aria-pressed={filterType === ty}>
+              <span className="cat-ico" data-img={ILLUSTRATED_ICONS[ty] ? "1" : "0"}>
+                {ILLUSTRATED_ICONS[ty] ? <img src={ILLUSTRATED_ICONS[ty]} alt="" draggable="false" /> : (() => { const Ic = ICONS_BY_TYPE[ty] || IconExcavator; return <Ic size={58} />; })()}
+              </span>
+              <span className="cat-name">{tType(ty, lang)}</span>
+              <span className="cat-desc">{(CAT_COPY[ty] && CAT_COPY[ty][lang]) || ""}</span>
+              <span className="cat-count">{c ? ui.n(c) : ui.none}</span>
+              <span className="cat-go">{ui.go}</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 function SectionDivider({ n, of, title }) {
   return (
@@ -604,6 +735,26 @@ function EquipmentIcon({ type, size = 24, style }) {
 
 // ---- Equipment guide: flippable educational cards (own original copy/icons) ----
 const EQUIPMENT_INFO = {
+  "Міні-екскаватор": {
+    definition: "Компактний екскаватор для тісних майданчиків: двори, підвали, траншеї біля будівель, де велика машина не проходить.",
+    parts: ["Стріла", "Рукоять", "Ківш", "Кабіна"],
+    uses: ["Траншеї під комунікації", "Роботи у дворах", "Демонтаж у приміщеннях"],
+  },
+  "Маніпулятор": {
+    definition: "Вантажівка з крано-маніпуляторною установкою: сама довозить вантаж і сама його розвантажує чи піднімає.",
+    parts: ["Борт", "Маніпулятор", "Опори", "Кабіна"],
+    uses: ["Доставка й розвантаження матеріалів", "Монтаж плит і блоків", "Перевезення техніки"],
+  },
+  "Автовишка": {
+    definition: "Автомобіль з підйомною телескопічною чи колінчастою стрілою й люлькою для робіт на висоті без риштувань.",
+    parts: ["Люлька", "Стріла", "Опори", "Шасі"],
+    uses: ["Обрізання дерев", "Монтаж і ремонт освітлення", "Фасадні роботи"],
+  },
+  "Грейдер": {
+    definition: "Дорожня машина з довгим регульованим відвалом для точного профілювання й планування полотна доріг і майданчиків.",
+    parts: ["Відвал", "Рама", "Кабіна", "Колісна база"],
+    uses: ["Планування доріг", "Профілювання щебеню", "Зрізання ґрунту"],
+  },
   "Екскаватор": {
     definition: "Гусенична або колісна машина для копання ґрунту, розробки котлованів і навантажувальних робіт на будь-якій поверхні.",
     parts: ["Стріла", "Рукоять", "Ковш", "Кабіна"],
@@ -830,6 +981,7 @@ export default function EquipmentMarketplace() {
     ownerResponses.filter((x) => x.status === "chosen" && x.request.status !== "taken").length;
   const [scrolled, setScrolled] = useState(false);
   const appSectionRef = useRef(null);
+  const catListRef = useRef(null);
   useSpotlight(); // світло карток слідує за курсором
   useMagnetic(); // головна кнопка «тягнеться» до курсора
   useEffect(() => {
@@ -2958,9 +3110,23 @@ export default function EquipmentMarketplace() {
         <DispatcherPanel requests={requests} owners={dispatchOwners} listings={listings} allBookings={dealsData.bookings} offers={dealsData.offers} onDispatch={handleDispatch} onOwnerAction={handleOwnerAction} onRefresh={loadDispatcherData} onPropose={handlePropose} onManual={handleManualBooking} onConfirm={handleConfirmBooking} onCancel={handleCancelBooking} onDecline={handleDeclineRequest} users={dispatchUsers} onSetRole={handleSetRole} onDeleteUser={handleDeleteUser} viewRequest={dispatcherViewRequest} user={user} t={t} />
       )}
 
+      {/* Категорії (client view) */}
+      {role === "client" && (
+        <CategoryCatalog
+          listings={listings}
+          filterType={filterType}
+          lang={lang}
+          t={t}
+          onPick={(ty) => {
+            setFilterType(ty);
+            setTimeout(() => catListRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 60);
+          }}
+        />
+      )}
+
       {/* Filters (client view) */}
       {role === "client" && (
-        <div className="cat-filters" style={{ padding: "0 24px 8px", display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+        <div className="cat-filters" ref={catListRef} style={{ scrollMarginTop: 96, padding: "0 24px 8px", display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
           <span style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 12.5, color: "#A3A8AD" }}>Коли потрібно:</span>
           <label className="dt"><span className="dt-ph" aria-hidden="true">{catFrom ? "" : "Від"}</span>
           <input
@@ -4260,8 +4426,8 @@ function AuthForm({ onSubmit }) {
   const segBtn = (active) => ({
     flex: 1,
     padding: "9px 10px",
-    border: `1px solid ${active ? "#FF6A1A" : "#63696D"}`,
-    background: active ? "rgba(255,90,31,0.1)" : "transparent",
+    ...(active ? lgGlass("255,106,26", 0.4) : { ...lgGlass("255,255,255", 0.06), border: "1px solid rgba(255,255,255,0.22)" }),
+    borderRadius: 980,
     color: "#ffffff",
     fontFamily: font,
     fontSize: 12,
@@ -4841,12 +5007,12 @@ function AiAssistant({ user, onPrefillRequest, onViewListing, listings, t, open,
                 ? last.options
                 : followUps;
               const chip = {
+                ...lgGlass("255,255,255", 0.06),
+                border: "1px solid rgba(255,255,255,0.24)",
                 fontSize: 11.5,
-                padding: "6px 11px",
+                padding: "6px 12px",
                 borderRadius: 980,
-                border: "1px solid #63696D",
-                background: "transparent",
-                color: "#A3A8AD",
+                color: "#d5d8db",
                 cursor: "pointer",
                 fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
               };
