@@ -74,12 +74,15 @@ export async function notifyDispatcher(payload) {
     const { data } = await supabase.auth.getSession();
     const token = data && data.session && data.session.access_token;
     if (!token) return;
-    await fetch("/api/notify", {
+    const r = await fetch("/api/notify", {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({ ...payload, contact: String(payload.contact || "").trim().length >= 5 ? payload.contact : "не вказано" }),
     });
-  } catch (e) {}
+    if (!r.ok) console.warn("notify failed:", r.status);
+  } catch (e) {
+    console.warn("notify error:", e && e.message);
+  }
 }
 
 // ---- Дошка запитів ----

@@ -1864,7 +1864,7 @@ export default function EquipmentMarketplace() {
       if (res.reason === "busy") refreshBusy();
       return false;
     }
-    deals.notifyDispatcher({ type: l.type, region: l.region, comment: `Бронь ${l.brand}, ${deals.fmtDate(dateFrom)} — ${deals.fmtDate(dateTo)}`, contact: user.phone, requesterName: user.name });
+    deals.notifyDispatcher({ type: l.type, region: l.region, dateFrom, comment: `Бронь ${l.brand}, ${deals.fmtDate(dateFrom)} — ${deals.fmtDate(dateTo)}${comment ? ". " + comment : ""}`, contact: user.phone || user.email || "не вказано", requesterName: user.name });
     setBookingListing(null);
     flashToast("Заявку надіслано. Відповідь і контакт власника з'являться в «Моєму кабінеті»");
     loadClientData();
@@ -2068,7 +2068,7 @@ export default function EquipmentMarketplace() {
       flashToast("Не вдалося надіслати: " + error.message);
       return false;
     }
-    deals.notifyDispatcher({ type: l.type, region: l.region, comment, contact: user.phone, requesterName: user.name });
+    deals.notifyDispatcher({ type: l.type, region: l.region, comment, contact: user.phone || user.email || "не вказано", requesterName: user.name });
     flashToast("Запит надіслано диспетчеру. Відповідь побачите в «Моєму кабінеті»");
     setTimeout(() => loadClientData(), 600);
     return true;
