@@ -657,6 +657,33 @@ const isNewListing = (l) => !!(l && l.createdAt && Date.now() - new Date(l.creat
 
 const MODEL_PAGES = Object.fromEntries(MODEL_GROUPS.map((g) => [g.type, g.slug]));
 
+// Відео на картці категорії: стоїть кадром-постером, рухається при наведенні (на телефоні — коли картка в зоні видимості)
+const CARD_VIDEOS = {
+  "Екскаватор": { src: "/cat/excavator.mp4", poster: "/cat/excavator.jpg" },
+};
+function HoverVideo({ src, poster }) {
+  const ref = useRef(null);
+  const play = () => { const v = ref.current; if (v && v.paused) { const p = v.play(); if (p && p.catch) p.catch(() => {}); } };
+  const stop = () => { const v = ref.current; if (v && !v.paused) v.pause(); };
+  useEffect(() => {
+    const v = ref.current;
+    const noHover = typeof window !== "undefined" && window.matchMedia && window.matchMedia("(hover: none)").matches;
+    const calm = typeof window !== "undefined" && window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (!v || !noHover || calm || !("IntersectionObserver" in window)) return undefined;
+    const io = new IntersectionObserver((es) => es.forEach((e) => (e.isIntersecting && e.intersectionRatio > 0.6 ? play() : stop())), { threshold: [0, 0.6, 1] });
+    io.observe(v);
+    return () => io.disconnect();
+  }, []);
+  return (
+    <span className="cat-vid" onMouseEnter={play} onMouseLeave={stop} onFocus={play} onBlur={stop}>
+      <video ref={ref} muted loop playsInline preload="metadata" poster={poster} aria-hidden="true" tabIndex={-1}>
+        <source src={src} type="video/mp4" />
+        <source src={src.replace(/\.mp4$/, ".webm")} type="video/webm" />
+      </video>
+    </span>
+  );
+}
+
 function CategoryCatalog({ listings, filterType, onPick, lang, t }) {
   const ui = CAT_UI[lang] || CAT_UI.uk;
   const counts = {};
@@ -677,9 +704,13 @@ function CategoryCatalog({ listings, filterType, onPick, lang, t }) {
           const c = counts[ty] || 0;
           return (
             <button key={ty} type="button" className="cat-card" data-on={filterType === ty ? "1" : "0"} data-empty={c ? "0" : "1"} onClick={() => { if (MODEL_PAGES[ty]) { window.location.href = `/katalog/${MODEL_PAGES[ty]}/`; } else onPick(ty); }} aria-pressed={filterType === ty}>
-              <span className="cat-ico" data-img={ILLUSTRATED_ICONS[ty] ? "1" : "0"}>
-                {ILLUSTRATED_ICONS[ty] ? <img src={ILLUSTRATED_ICONS[ty]} alt="" draggable="false" /> : (() => { const Ic = ICONS_BY_TYPE[ty] || IconExcavator; return <Ic size={58} />; })()}
-              </span>
+              {CARD_VIDEOS[ty] ? (
+                <HoverVideo src={CARD_VIDEOS[ty].src} poster={CARD_VIDEOS[ty].poster} />
+              ) : (
+                <span className="cat-ico" data-img={ILLUSTRATED_ICONS[ty] ? "1" : "0"}>
+                  {ILLUSTRATED_ICONS[ty] ? <img src={ILLUSTRATED_ICONS[ty]} alt="" draggable="false" /> : (() => { const Ic = ICONS_BY_TYPE[ty] || IconExcavator; return <Ic size={58} />; })()}
+                </span>
+              )}
               <span className="cat-name">{tType(ty, lang)}</span>
               <span className="cat-desc">{(CAT_COPY[ty] && CAT_COPY[ty][lang]) || ""}</span>
               <span className="cat-count">{c ? ui.n(c) : ui.none}</span>
