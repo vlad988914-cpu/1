@@ -139,9 +139,9 @@ button svg, .lg-icon svg { filter: drop-shadow(0 1px 0 rgba(255,255,255,.28)) dr
 body:has(.lp-page) .oc, body:has(.lp-page) .ai-fab { display: none !important; }
 body:has(.lp-page) .sticky-cta { display: none !important; }
 
-/* Відео на картці категорії */
-.cat-vid { display: block; width: 100%; height: 150px; border-radius: 16px; overflow: hidden; margin-bottom: 10px; background: #0B0D10; box-shadow: 0 8px 22px rgba(0,0,0,.45), inset 0 0 0 1px rgba(255,255,255,.08); }
-.cat-vid video { width: 100%; height: 100%; object-fit: cover; object-position: 35% 55%; display: block; transition: transform .5s cubic-bezier(.2,.8,.2,1); }
-.cat-card:hover .cat-vid video { transform: scale(1.04); }
-@media (max-width: 700px) { .cat-vid { height: 130px; } }
-@media (prefers-reduced-motion: reduce) { .cat-card:hover .cat-vid video { transform: none; } }
+/* Відео на картці категорії: вікно як була іконка, але техніка видна повністю; при наведенні — свічення */
+.cat-vid { display: block; width: 220px; max-width: 100%; aspect-ratio: 1168 / 768; border-radius: 18px; overflow: hidden; margin-bottom: 8px; flex: none; background: #0B0D10; border: 1px solid rgba(255,255,255,.14); box-shadow: 0 8px 20px rgba(0,0,0,.45); transition: box-shadow .35s ease, border-color .35s ease, transform .35s cubic-bezier(.2,.8,.2,1); }
+.cat-vid video { width: 100%; height: 100%; object-fit: contain; display: block; }
+.cat-card:hover .cat-vid, .cat-vid:hover, .cat-card:focus-visible .cat-vid { border-color: rgba(255,150,60,.95); box-shadow: 0 0 0 1px rgba(255,150,60,.55), 0 0 22px 4px rgba(255,106,26,.55), 0 0 56px 10px rgba(255,106,26,.25); transform: translateY(-2px); }
+@media (max-width: 700px) { .cat-vid { width: 190px; } }
+@media (prefers-reduced-motion: reduce) { .cat-vid { transition: box-shadow .2s ease, border-color .2s ease; } .cat-card:hover .cat-vid, .cat-vid:hover { transform: none; } }

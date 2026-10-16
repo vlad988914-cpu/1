@@ -660,6 +660,9 @@ const MODEL_PAGES = Object.fromEntries(MODEL_GROUPS.map((g) => [g.type, g.slug])
 // Відео на картці категорії: стоїть кадром-постером, рухається при наведенні (на телефоні — коли картка в зоні видимості)
 const CARD_VIDEOS = {
   "Екскаватор": { src: "/cat/excavator.mp4", poster: "/cat/excavator.jpg" },
+  "Міні-екскаватор": { src: "/cat/mini-excavator.mp4", poster: "/cat/mini-excavator.jpg" },
+  "Навантажувач": { src: "/cat/loader.mp4", poster: "/cat/loader.jpg" },
+  "Самоскид": { src: "/cat/dump-truck.mp4", poster: "/cat/dump-truck.jpg" },
 };
 function HoverVideo({ src, poster }) {
   const ref = useRef(null);
