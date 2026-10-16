@@ -663,6 +663,13 @@ const CARD_VIDEOS = {
   "Міні-екскаватор": { src: "/cat/mini-excavator.mp4", poster: "/cat/mini-excavator.jpg" },
   "Навантажувач": { src: "/cat/loader.mp4", poster: "/cat/loader.jpg" },
   "Самоскид": { src: "/cat/dump-truck.mp4", poster: "/cat/dump-truck.jpg" },
+  "Маніпулятор": { src: "/cat/manipulator.mp4", poster: "/cat/manipulator.jpg" },
+  "Автовишка": { src: "/cat/aerial-lift.mp4", poster: "/cat/aerial-lift.jpg" },
+  "Кран": { src: "/cat/crane.mp4", poster: "/cat/crane.jpg" },
+  "Бульдозер": { src: "/cat/bulldozer.mp4", poster: "/cat/bulldozer.jpg" },
+  "Грейдер": { src: "/cat/grader.mp4", poster: "/cat/grader.jpg" },
+  "Каток": { src: "/cat/roller.mp4", poster: "/cat/roller.jpg" },
+  "Гідромолот": { src: "/cat/hydrohammer.mp4", poster: "/cat/hydrohammer.jpg" },
 };
 function HoverVideo({ src, poster }) {
   const ref = useRef(null);
