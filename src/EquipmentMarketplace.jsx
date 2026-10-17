@@ -15,7 +15,7 @@ import ScrambleText from "./ScrambleText.jsx";
 import { SplitWords, CountUp, SlidingTabs, ScrollProgress, SceneAura, useSpotlight, useMagnetic, useReveal, useScenes } from "./motion/index.jsx";
 import { DealsSection, EventLog, EquipmentBoard, UsersBoard, PairsBoard } from "./dispatcherDeals.jsx";
 import * as deals from "./services/deals.js";
-import { LangContext, useLang, TX, trType, trGroup, trKind, trLabel, trVal, trNote, trUnit, perUnit, trInfo } from "./lang.js";
+import { LangContext, useLang, TX, trType, trGroup, plural, STAT_FORMS, trKind, trLabel, trVal, trNote, trUnit, perUnit, trInfo } from "./lang.js";
 
 // ---- Bot API config ----
 // TODO: після розгортання бота на Railway/Render замініть на реальну адресу,
@@ -3259,17 +3259,17 @@ export default function EquipmentMarketplace() {
         {listings.filter((l) => l.ownerId).length > 0 && (
           <div className="mo-stats">
             {[
-              [listings.filter((l) => l.ownerId).length, "одиниць техніки в каталозі"],
-              [wantedItems.length, "запитів на дошці"],
-              [new Set(listings.filter((l) => l.ownerId).map((l) => l.region)).size, "міст"],
-            ].map(([n, label]) => (
+              [listings.filter((l) => l.ownerId).length, "units"],
+              [wantedItems.length, "wanted"],
+              [new Set(listings.filter((l) => l.ownerId).map((l) => l.region)).size, "cities"],
+            ].map(([n, k]) => { const label = plural(n, STAT_FORMS[k][lang] || STAT_FORMS[k].uk, lang); return (
               <div key={label} className="mo-stat">
                 <b>
                   <CountUp value={n} />
                 </b>
                 <span>{label}</span>
               </div>
-            ))}
+            ); })}
           </div>
         )}
         <span style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 12, color: "#A3A8AD", letterSpacing: "0.04em" }}>

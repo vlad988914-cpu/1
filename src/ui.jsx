@@ -135,21 +135,31 @@ export function Modal({ children, onClose, title, splitLeft, wide }) {
   const [closing, setClosing] = useState(false);
   const exitTimer = useRef(null);
 
+  // onClose у батьків часто створюється заново при кожному рендері. Тримаємо його в ref,
+  // щоб ефекти НЕ перезапускались (інакше фокус «стрибає» з поля вводу, клавіатура ховається).
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
   // Уход короче входа (≈75%): сначала проигрываем анимацию, потом сообщаем родителю
   const requestClose = useCallback(() => {
     if (exitTimer.current) return;
     const reduce = typeof window !== "undefined" && window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (reduce) {
-      onClose();
+      onCloseRef.current();
       return;
     }
     setClosing(true);
-    exitTimer.current = setTimeout(onClose, 200);
-  }, [onClose]);
+    exitTimer.current = setTimeout(() => onCloseRef.current(), 200);
+  }, []);
   useEffect(() => () => clearTimeout(exitTimer.current), []);
 
+  // Фокус на кнопку закриття — лише один раз при відкритті і лише якщо фокус ще не у полі вводу
   useEffect(() => {
-    closeBtnRef.current?.focus();
+    const ae = document.activeElement;
+    if (!(ae && /^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName))) closeBtnRef.current?.focus();
+  }, []);
+
+  useEffect(() => {
     const onKeyDown = (e) => {
       if (e.key === "Escape") requestClose();
     };
@@ -258,13 +268,15 @@ export function RoleTag({ kind, style }) {
 // Повноекранна сторінка поверх каталогу (картка техніки): верхня панель «Назад», зручно на телефоні.
 export function PageShell({ children, onClose, title, crumb }) {
   const backText = useTx().back;
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
   useEffect(() => {
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    const onKey = (e) => { if (e.key === "Escape") onClose(); };
+    const onKey = (e) => { if (e.key === "Escape") onCloseRef.current(); };
     document.addEventListener("keydown", onKey);
     return () => { document.body.style.overflow = prev; document.removeEventListener("keydown", onKey); };
-  }, [onClose]);
+  }, []);
   return (
     <div className="lp-page" role="dialog" aria-modal="true" aria-label={title}>
       <div className="lp-bar">

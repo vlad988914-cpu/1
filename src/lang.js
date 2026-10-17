@@ -226,3 +226,18 @@ export const TX = {
   },
 };
 export const useTx = () => { const l = useLang(); return TX[l] || TX.uk; };
+
+// Відмінювання: forms = [одна, кілька, багато] (uk/ru), [one, many] (en)
+export function plural(n, forms, lang = "uk") {
+  if (lang === "en") return n === 1 ? forms[0] : forms[1];
+  const a = Math.abs(n) % 100, b = a % 10;
+  if (a > 10 && a < 20) return forms[2];
+  if (b === 1) return forms[0];
+  if (b >= 2 && b <= 4) return forms[1];
+  return forms[2];
+}
+export const STAT_FORMS = {
+  units: { uk: ["одиниця техніки в каталозі", "одиниці техніки в каталозі", "одиниць техніки в каталозі"], ru: ["единица техники в каталоге", "единицы техники в каталоге", "единиц техники в каталоге"], en: ["machine in the catalog", "machines in the catalog"] },
+  wanted: { uk: ["запит на дошці", "запити на дошці", "запитів на дошці"], ru: ["запрос на доске", "запроса на доске", "запросов на доске"], en: ["request on the board", "requests on the board"] },
+  cities: { uk: ["місто", "міста", "міст"], ru: ["город", "города", "городов"], en: ["city", "cities"] },
+};
