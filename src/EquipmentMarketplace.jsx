@@ -15,6 +15,7 @@ import ScrambleText from "./ScrambleText.jsx";
 import { SplitWords, CountUp, SlidingTabs, ScrollProgress, SceneAura, useSpotlight, useMagnetic, useReveal, useScenes } from "./motion/index.jsx";
 import { DealsSection, EventLog, EquipmentBoard, UsersBoard, PairsBoard } from "./dispatcherDeals.jsx";
 import * as deals from "./services/deals.js";
+import { LangContext, useLang, TX, trType, trGroup, trKind, trLabel, trVal, trNote, trUnit, perUnit, trInfo } from "./lang.js";
 
 // ---- Bot API config ----
 // TODO: після розгортання бота на Railway/Render замініть на реальну адресу,
@@ -315,12 +316,7 @@ const TYPES = [
 ];
 
 // Display-only translation of type names; TYPES stays the internal key everywhere (filters, icons, EQUIPMENT_INFO)
-const TYPE_LABELS = {
-  uk: { "Міні-екскаватор": "Міні-екскаватор", "Маніпулятор": "Вантажівка з маніпулятором", "Автовишка": "Автовишка", "Грейдер": "Грейдер", "Екскаватор": "Екскаватор", "Навантажувач": "Навантажувач", "Самоскид": "Самоскид", "Гідромолот": "Гідромолот", "Кран": "Кран", "Бульдозер": "Бульдозер", "Каток": "Каток" },
-  ru: { "Міні-екскаватор": "Мини-экскаватор", "Маніпулятор": "Грузовик с манипулятором", "Автовишка": "Автовышка", "Грейдер": "Грейдер", "Екскаватор": "Экскаватор", "Навантажувач": "Погрузчик", "Самоскид": "Самосвал", "Гідромолот": "Гидромолот", "Кран": "Кран", "Бульдозер": "Бульдозер", "Каток": "Каток" },
-  en: { "Міні-екскаватор": "Mini Excavator", "Маніпулятор": "Crane Truck", "Автовишка": "Aerial Platform", "Грейдер": "Grader", "Екскаватор": "Excavator", "Навантажувач": "Loader", "Самоскид": "Dump Truck", "Гідромолот": "Hydraulic Hammer", "Кран": "Crane", "Бульдозер": "Bulldozer", "Каток": "Road Roller" },
-};
-const tType = (type, lang) => (TYPE_LABELS[lang] && TYPE_LABELS[lang][type]) || type;
+const tType = trType;
 
 const REGIONS = [
   "Київ",
@@ -745,7 +741,9 @@ const CAN_KEYS = /глибина|виліт|висота|вантажопідй�
 function ModelPage({ model, listings, user, ratings, busyRanges, selectedId, onSelect, onClose, onRate, onBook, onRequest, onSignIn, reviews, onReviewSubmit, onReviewDelete }) {
   const g = model.group;
   const FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif";
-  const info = EQUIPMENT_INFO[g.type];
+  const lang = useLang();
+  const T = TX[lang] || TX.uk;
+  const info = trInfo(g.type, EQUIPMENT_INFO[g.type], lang);
   const sel = listings.find((l) => l.id === selectedId) || listings[0] || null;
   const stat = listings.reduce((a, l) => { const r = ratings[l.id]; return r ? { sum: a.sum + r.sum, count: a.count + r.count } : a; }, { sum: 0, count: 0 });
   const tiles = model.specs.filter(([k]) => CAN_KEYS.test(k)).slice(0, 4);
@@ -754,37 +752,37 @@ function ModelPage({ model, listings, user, ratings, busyRanges, selectedId, onS
   const bookRef = useRef(null);
   const h2 = { fontFamily: FONT, fontSize: 20, fontWeight: 700, margin: 0 };
   return (
-    <PageShell onClose={onClose} title={model.name} crumb={`${g.name} · ${model.brand}`}>
+    <PageShell onClose={onClose} title={model.name} crumb={`${trGroup(g.name, lang)} · ${model.brand}`}>
       <div className="lp-hero" style={{ minHeight: 190 }}>
         <div style={{ textAlign: "center", padding: 18 }}>
           <div style={{ color: "#FF6A1A", display: "flex", justifyContent: "center" }}><EquipmentIcon type={g.type} size={96} /></div>
         </div>
       </div>
       <div>
-        <Label>{model.brand} · {model.kind}</Label>
+        <Label>{model.brand} · {trKind(model.kind, lang)}</Label>
         <h1 style={{ fontFamily: FONT, textTransform: "none", fontSize: 30, fontWeight: 700, margin: "4px 0 8px" }}>{model.name}</h1>
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
           <RatingLine stat={stat} size={16} />
-          {listings.some(isNewListing) && <span className="lp-badge-new">НОВЕ</span>}
+          {listings.some(isNewListing) && <span className="lp-badge-new">{T.isNew}</span>}
           <span style={{ fontFamily: FONT, fontSize: 13, color: listings.length ? "#6fae6f" : "#A3A8AD" }}>
-            {listings.length ? `Оголошень у каталозі: ${listings.length}` : "Оголошень цієї моделі поки немає"}
+            {listings.length ? T.listingsCount(listings.length) : T.noListings}
           </span>
         </div>
         <div className="mk" style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 12 }}>
-          {model.key.map((k) => <span key={k} style={{ fontFamily: FONT, fontSize: 13, padding: "4px 12px", border: "1px solid #2f3439", borderRadius: 980, color: "#FFB81C", background: "#1A1D20" }}>{k}</span>)}
+          {model.key.map((k) => <span key={k} style={{ fontFamily: FONT, fontSize: 13, padding: "4px 12px", border: "1px solid #2f3439", borderRadius: 980, color: "#FFB81C", background: "#1A1D20" }}>{trVal(k, lang)}</span>)}
         </div>
       </div>
 
       <section style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        <h2 style={h2}>Що може ця техніка</h2>
+        <h2 style={h2}>{T.can}</h2>
         {info && <p style={{ margin: 0, fontFamily: FONT, fontSize: 14.5, lineHeight: 1.6, color: "#D9DCDF" }}>{info.definition}</p>}
         {info && <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>{info.uses.map((u) => <span key={u} style={{ fontFamily: FONT, fontSize: 13, padding: "5px 12px", border: "1px solid #3a3f44", borderRadius: 980 }}>{u}</span>)}</div>}
         {tiles.length > 0 && (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 10, marginTop: 4 }}>
             {tiles.map(([k, v]) => (
               <div key={k} style={{ border: "1px solid #202428", borderRadius: 14, padding: "12px 14px", background: "#101214" }}>
-                <div style={{ fontFamily: FONT, fontSize: 12, color: "#A3A8AD" }}>{k}</div>
-                <div style={{ fontFamily: FONT, fontSize: 17, fontWeight: 700, marginTop: 4 }}>{v.split(" (")[0]}</div>
+                <div style={{ fontFamily: FONT, fontSize: 12, color: "#A3A8AD" }}>{trLabel(k, lang)}</div>
+                <div style={{ fontFamily: FONT, fontSize: 17, fontWeight: 700, marginTop: 4 }}>{trVal(v.split(" (")[0], lang)}</div>
               </div>
             ))}
           </div>
@@ -792,23 +790,23 @@ function ModelPage({ model, listings, user, ratings, busyRanges, selectedId, onS
       </section>
 
       <section style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-        <h2 style={h2}>Характеристики</h2>
+        <h2 style={h2}>{T.specs}</h2>
         <div style={{ border: "1px solid #202428", borderRadius: 16, background: "#101214", padding: "4px 16px" }}>
           {model.specs.map(([k, v], i) => (
             <div key={k} style={{ display: "flex", justifyContent: "space-between", gap: 16, padding: "10px 0", borderTop: i ? "1px solid #202428" : "none", fontFamily: FONT, fontSize: 14.5 }}>
-              <span style={{ color: "#A3A8AD" }}>{k}</span>
-              <span style={{ textAlign: "right" }}>{v}</span>
+              <span style={{ color: "#A3A8AD" }}>{trLabel(k, lang)}</span>
+              <span style={{ textAlign: "right" }}>{trVal(v, lang)}</span>
             </div>
           ))}
         </div>
-        {model.note && <div style={{ fontFamily: FONT, fontSize: 12.5, color: "#A3A8AD" }}>{model.note}</div>}
+        {model.note && <div style={{ fontFamily: FONT, fontSize: 12.5, color: "#A3A8AD" }}>{trNote(model.note, lang)}</div>}
       </section>
 
       <section ref={bookRef} id="booking" style={{ display: "flex", flexDirection: "column", gap: 12, scrollMarginTop: 80 }}>
-        <h2 style={h2}>Календар і бронювання</h2>
+        <h2 style={h2}>{T.calBook}</h2>
         {!sel ? (
           <div style={{ border: "1px solid #3a3f44", borderRadius: 14, padding: 16, fontFamily: FONT, fontSize: 14, color: "#D9DCDF", lineHeight: 1.55 }}>
-            Вільних оголошень цієї моделі зараз немає. Залиште заявку — диспетчер підбере таку або схожу техніку й повідомить вас, а власники зможуть відгукнутися на «Дошці оголошень».
+            {T.noSel}
           </div>
         ) : (
           <>
@@ -823,20 +821,20 @@ function ModelPage({ model, listings, user, ratings, busyRanges, selectedId, onS
               <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap", fontFamily: FONT }}>
                 <div>
                   <div style={{ fontWeight: 700, fontSize: 16 }}>{sel.brand}</div>
-                  <div style={{ fontSize: 12.5, color: "#A3A8AD" }}>{sel.owner} · {sel.region}{sel.available ? "" : " · зараз недоступна"}</div>
+                  <div style={{ fontSize: 12.5, color: "#A3A8AD" }}>{sel.owner} · {sel.region}{sel.available ? "" : T.unavail}</div>
                 </div>
-                <div style={{ fontWeight: 700, fontSize: 20, color: "#FFB81C" }}>{sel.price > 0 ? `${sel.price} ₴/${sel.unit}` : "Договірна"}</div>
+                <div style={{ fontWeight: 700, fontSize: 20, color: "#FFB81C" }}>{sel.price > 0 ? `${sel.price} ₴/${trUnit(sel.unit, lang)}` : T.negotiable}</div>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", fontFamily: FONT, fontSize: 13, color: "#A3A8AD" }}>
                 <RatingLine stat={ratings[sel.id]} />
-                {!isOwn && <><span>Ваша оцінка:</span><Stars value={0} size={20} mine={(ratings[sel.id] && ratings[sel.id].mine) || 0} onPick={(n) => onRate(sel, n)} /></>}
+                {!isOwn && <><span>{T.yourRating}</span><Stars value={0} size={20} mine={(ratings[sel.id] && ratings[sel.id].mine) || 0} onPick={(n) => onRate(sel, n)} /></>}
               </div>
             </div>
             {(!user || isOwn || isDisp) && <AvailabilityCalendar ranges={busyRanges.filter((r) => r.listing_id === sel.id)} months={3} />}
             {!user ? (
-              <button type="button" onClick={() => onSignIn("Щоб забронювати техніку, увійдіть або зареєструйтесь — це 1 хвилина")} style={{ ...primaryBtn, width: "100%", minHeight: 48 }}>Увійти, щоб забронювати</button>
+              <button type="button" onClick={() => onSignIn(T.signInBookMsg)} style={{ ...primaryBtn, width: "100%", minHeight: 48 }}>{T.signInBook}</button>
             ) : isOwn || isDisp ? (
-              <div style={{ fontFamily: FONT, fontSize: 13, color: "#A3A8AD" }}>{isOwn ? "Це ваша техніка." : "Диспетчер оформлює бронь у «Панелі диспетчера»."}</div>
+              <div style={{ fontFamily: FONT, fontSize: 13, color: "#A3A8AD" }}>{isOwn ? T.ownTech : T.dispNote}</div>
             ) : (
               <BookingForm key={sel.id} listing={sel} busyRanges={busyRanges} onSubmit={(d) => onBook(sel, d)} />
             )}
@@ -846,14 +844,14 @@ function ModelPage({ model, listings, user, ratings, busyRanges, selectedId, onS
 
       {sel && (
         <div style={{ paddingTop: 8, borderTop: "1px solid #202428" }}>
-          <ListingReviews items={reviews.items} available={reviews.ok} user={user} isOwnerOfListing={isOwn} onSubmit={onReviewSubmit} onDelete={onReviewDelete} onSignIn={() => onSignIn("Щоб залишити відгук, увійдіть або зареєструйтесь")} />
+          <ListingReviews items={reviews.items} available={reviews.ok} user={user} isOwnerOfListing={isOwn} onSubmit={onReviewSubmit} onDelete={onReviewDelete} onSignIn={() => onSignIn(T.signInReviewMsg)} />
         </div>
       )}
 
       <div className="lp-sticky">
-        <div className="lp-price">{sel && sel.price > 0 ? `${sel.price} ₴` : model.name}{sel && sel.price > 0 && <small>за {sel.unit}</small>}</div>
-        {sel && <button type="button" onClick={() => bookRef.current && bookRef.current.scrollIntoView({ behavior: "smooth", block: "start" })} style={{ ...smallBtn, flex: "0 0 auto", marginLeft: "auto", minHeight: 48 }}>Дати</button>}
-        <button type="button" onClick={onRequest} style={{ ...primaryBtn, minHeight: 48, marginLeft: sel ? 0 : "auto" }}>Залишити заявку</button>
+        <div className="lp-price">{sel && sel.price > 0 ? `${sel.price} ₴` : model.name}{sel && sel.price > 0 && <small>{perUnit(sel.unit, lang)}</small>}</div>
+        {sel && <button type="button" onClick={() => bookRef.current && bookRef.current.scrollIntoView({ behavior: "smooth", block: "start" })} style={{ ...smallBtn, flex: "0 0 auto", marginLeft: "auto", minHeight: 48 }}>{T.dates}</button>}
+        <button type="button" onClick={onRequest} style={{ ...primaryBtn, minHeight: 48, marginLeft: sel ? 0 : "auto" }}>{T.request}</button>
       </div>
     </PageShell>
   );
@@ -1012,9 +1010,10 @@ function Stars({ value = 0, size = 14, onPick, mine = 0 }) {
   );
 }
 function RatingLine({ stat, size = 13 }) {
+  const T = TX[useLang()] || TX.uk;
   const font = "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
   if (!stat || !stat.count) {
-    return <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11.5, color: "#7d8387", fontFamily: font }}><Stars value={0} size={size} />Ще без оцінок</span>;
+    return <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11.5, color: "#7d8387", fontFamily: font }}><Stars value={0} size={size} />{T.noRatings}</span>;
   }
   const avg = stat.sum / stat.count;
   return <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, color: "#D5D8DA", fontFamily: font }}><Stars value={avg} size={size} /><b style={{ fontWeight: 600 }}>{avg.toFixed(1)}</b><span style={{ color: "#A3A8AD" }}>({stat.count})</span></span>;
@@ -2185,6 +2184,7 @@ export default function EquipmentMarketplace() {
 
 
   return (
+    <LangContext.Provider value={lang}>
     <div
       style={{
         position: "relative",
@@ -3534,7 +3534,7 @@ export default function EquipmentMarketplace() {
               <video src={listingVideo(detailListing).src} poster={listingVideo(detailListing).poster} controls muted loop playsInline preload="metadata" style={{ width: "100%", borderRadius: 12, background: "#000", display: "block" }} />
             )}
             <div className="lp-hero">
-              {isNewListing(detailListing) && <span className="lp-badge-new card-new">НОВЕ</span>}
+              {isNewListing(detailListing) && <span className="lp-badge-new card-new">{(TX[lang] || TX.uk).isNew}</span>}
               {detailListing.photos && detailListing.photos.length > 0 ? (
                 <img className="lp-photo" src={detailListing.photos[detailPhotoIndex] || detailListing.photos[0]} alt={detailListing.brand} />
               ) : (
@@ -3579,12 +3579,12 @@ export default function EquipmentMarketplace() {
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 <div>
                   <Label>Для чого служить</Label>
-                  <p style={{ margin: "8px 0 0", fontSize: 13.5, lineHeight: 1.55, color: "#D9DCDF" }}>{EQUIPMENT_INFO[detailListing.type].definition}</p>
+                  <p style={{ margin: "8px 0 0", fontSize: 13.5, lineHeight: 1.55, color: "#D9DCDF" }}>{trInfo(detailListing.type, EQUIPMENT_INFO[detailListing.type], lang).definition}</p>
                 </div>
                 <div>
                   <Label>{t("guide_uses_label")}</Label>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
-                    {EQUIPMENT_INFO[detailListing.type].uses.map((u) => (
+                    {trInfo(detailListing.type, EQUIPMENT_INFO[detailListing.type], lang).uses.map((u) => (
                       <span key={u} style={{ fontSize: 12, padding: "4px 10px", borderRadius: 980, border: "1px solid #3a3f44", color: "#FFB52E" }}>{u}</span>
                     ))}
                   </div>
@@ -3593,9 +3593,9 @@ export default function EquipmentMarketplace() {
             )}
 
             <div style={{ borderTop: "1px solid #202428", borderBottom: "1px solid #202428", padding: "12px 0" }}>
-              <Label>Параметри</Label>
+              <Label>{lang === "ru" ? "Параметры" : lang === "en" ? "Parameters" : "Параметри"}</Label>
               <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 8 }}>
-                {[["Тип", tType(detailListing.type, lang)], ["Регіон", detailListing.region], ...Object.entries(detailListing.specs).filter(([k, v]) => v && v !== "—" && !k.startsWith("_"))].map(([k, v]) => (
+                {[[lang === "ru" ? "Тип" : lang === "en" ? "Type" : "Тип", tType(detailListing.type, lang)], [lang === "ru" ? "Регион" : lang === "en" ? "Region" : "Регіон", detailListing.region], ...Object.entries(detailListing.specs).filter(([k, v]) => v && v !== "—" && !k.startsWith("_")).map(([k, v]) => [trLabel(k, lang), trVal(v, lang)])].map(([k, v]) => (
                   <div key={k} style={{ display: "flex", justifyContent: "space-between", gap: 12, fontSize: 13 }}>
                     <span style={{ color: "#A3A8AD" }}>{k}</span>
                     <span style={{ textAlign: "right" }}>{v}</span>
@@ -3759,7 +3759,7 @@ export default function EquipmentMarketplace() {
 
       {showAuthForm && (
         <Modal onClose={() => setShowAuthForm(false)} title={t("register_title")} splitLeft>
-          <AuthForm onSubmit={handleAuth} />
+          <AuthForm onSubmit={handleAuth} onTelegramDone={() => { setShowAuthForm(false); flashToast("Ви увійшли через Telegram"); }} />
         </Modal>
       )}
       {showProfile && user && (
@@ -3856,6 +3856,7 @@ export default function EquipmentMarketplace() {
         </div>
       )}
     </div>
+    </LangContext.Provider>
   );
 }
 
@@ -4400,7 +4401,64 @@ const translateAuthError = (msg = "") => {
   return "Не вдалося виконати: " + msg;
 };
 
-function AuthForm({ onSubmit }) {
+function TelegramLogin({ role, onDone }) {
+  const [state, setState] = useState("idle"); // idle | waiting | error
+  const [link, setLink] = useState("");
+  const [msg, setMsg] = useState("");
+  const timer = useRef(null);
+  useEffect(() => () => clearInterval(timer.current), []);
+  const fail = (m) => { clearInterval(timer.current); setState("error"); setMsg(m); };
+  const start = async () => {
+    setMsg("");
+    const win = window.open("", "_blank"); // відкриваємо одразу, щоб Safari не блокував
+    try {
+      const r = await fetch("/api/tg-start", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ role }) });
+      const d = await r.json();
+      if (!r.ok || !d.url) { if (win) win.close(); return fail("Вхід через Telegram тимчасово недоступний. Увійдіть за email."); }
+      setLink(d.url);
+      setState("waiting");
+      if (win) win.location.href = d.url;
+      const t0 = Date.now();
+      clearInterval(timer.current);
+      timer.current = setInterval(async () => {
+        if (Date.now() - t0 > 10 * 60 * 1000) return fail("Час вийшов. Спробуйте ще раз.");
+        try {
+          const pr = await fetch("/api/tg-poll", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code: d.code, secret: d.secret }) });
+          const pd = await pr.json();
+          if (pd.status === "ok" && pd.token_hash) {
+            clearInterval(timer.current);
+            const { error } = await supabase.auth.verifyOtp({ token_hash: pd.token_hash, type: "magiclink" });
+            if (error) return fail("Не вдалося увійти. Спробуйте ще раз.");
+            onDone();
+          } else if (pd.status === "expired" || pd.status === "gone") fail("Сеанс завершився. Спробуйте ще раз.");
+        } catch (e) {}
+      }, 2000);
+    } catch (e) {
+      if (win) win.close();
+      fail("Немає зв'язку з сервером. Спробуйте ще раз.");
+    }
+  };
+  const font = "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif";
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      {state !== "waiting" ? (
+        <button type="button" onClick={start} style={{ ...primaryBtn, width: "100%", minHeight: 48, background: "#229ED9", borderColor: "#229ED9", color: "#fff" }}>
+          ✈ Увійти через Telegram
+        </button>
+      ) : (
+        <div style={{ border: "1px solid #229ED9", borderRadius: 14, padding: 12, fontFamily: font, fontSize: 13, lineHeight: 1.5 }}>
+          Відкрийте бота, натисніть «Старт» і «Поділитися номером». Вхід виконається автоматично.
+          <a href={link} target="_blank" rel="noopener noreferrer" style={{ display: "block", marginTop: 8, textAlign: "center", padding: "12px 10px", borderRadius: 980, background: "#229ED9", color: "#fff", textDecoration: "none", fontWeight: 600 }}>Відкрити Telegram</a>
+          <div style={{ marginTop: 8, color: "#A3A8AD", fontSize: 12 }}>Чекаємо підтвердження…</div>
+        </div>
+      )}
+      {msg && <ErrorText>{msg}</ErrorText>}
+      <div style={{ fontFamily: font, fontSize: 11.5, color: "#70777D", textAlign: "center" }}>Без пароля й листів: підтвердіть номер у Telegram за 10 секунд</div>
+    </div>
+  );
+}
+
+function AuthForm({ onSubmit, onTelegramDone }) {
   const [mode, setMode] = useState("signup"); // signup | login
   const [form, setForm] = useState({ name: "", org: "", phone: "", email: "", password: "", role: "client" });
   const [errors, setErrors] = useState({});
@@ -4462,20 +4520,21 @@ function AuthForm({ onSubmit }) {
       <div style={{ fontFamily: font, fontSize: 12, color: "#A3A8AD" }}>Орендувати й здавати техніку можуть лише зареєстровані користувачі.</div>
 
       {mode === "signup" && (
-        <>
-          <Field label="Я реєструюсь як">
-            <div style={{ display: "flex", gap: 8 }}>
-              {[
-                { key: "client", label: "Клієнт" },
-                { key: "owner", label: "Власник техніки" },
-              ].map((r) => (
-                <button type="button" key={r.key} onClick={() => setForm((f) => ({ ...f, role: r.key }))} style={segBtn(form.role === r.key)}>
-                  {r.label}
-                </button>
-              ))}
-            </div>
-          </Field>
+        <Field label="Я реєструюсь як">
+          <div style={{ display: "flex", gap: 8 }}>
+            {[{ key: "client", label: "Клієнт" }, { key: "owner", label: "Власник техніки" }].map((r) => (
+              <button type="button" key={r.key} onClick={() => setForm((f) => ({ ...f, role: r.key }))} style={segBtn(form.role === r.key)}>{r.label}</button>
+            ))}
+          </div>
+        </Field>
+      )}
+      <TelegramLogin role={mode === "signup" ? form.role : "client"} onDone={onTelegramDone} />
+      <div style={{ display: "flex", alignItems: "center", gap: 10, fontFamily: font, fontSize: 12, color: "#70777D" }}>
+        <span style={{ flex: 1, height: 1, background: "#2f3439" }} />або за email<span style={{ flex: 1, height: 1, background: "#2f3439" }} />
+      </div>
 
+      {mode === "signup" && (
+        <>
           <Field label="Ім'я та прізвище">
             <input value={form.name} onChange={set("name")} placeholder="Володимир Іваненко" autoComplete="name" style={inputStyle} />
             {errors.name && <ErrorText>{errors.name}</ErrorText>}

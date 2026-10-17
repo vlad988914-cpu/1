@@ -1,6 +1,7 @@
 // Спільні елементи інтерфейсу: картка, підпис, кнопки, поля, модальне вікно.
 // Винесено з головного файлу, щоб нові екрани (кабінети, диспетчерська) могли ними користуватись.
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useTx } from "./lang.js";
 
 export const Plate = ({ children, style, className, onClick }) => (
   <div
@@ -256,6 +257,7 @@ export function RoleTag({ kind, style }) {
 
 // Повноекранна сторінка поверх каталогу (картка техніки): верхня панель «Назад», зручно на телефоні.
 export function PageShell({ children, onClose, title, crumb }) {
+  const backText = useTx().back;
   useEffect(() => {
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -267,7 +269,7 @@ export function PageShell({ children, onClose, title, crumb }) {
     <div className="lp-page" role="dialog" aria-modal="true" aria-label={title}>
       <div className="lp-bar">
         <button type="button" className="lp-back" onClick={onClose}>
-          <span aria-hidden="true">←</span> Назад до каталогу
+          <span aria-hidden="true">←</span> {backText}
         </button>
         {crumb && <span className="lp-crumb">{crumb}</span>}
       </div>

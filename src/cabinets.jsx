@@ -5,6 +5,7 @@ import { Plate, Label, Field, ErrorText, RoleTag, primaryBtn, smallBtn, selectSt
 import { bookingPhase, fmtDate, fmtPeriod, fmtDateTime, daysInclusive, rangesOverlap, todayLocal, unitLabel } from "./services/deals.js";
 import { OwnerResponses } from "./wanted.jsx";
 import { SlidingTabs } from "./motion/index.jsx";
+import { useLang, useTx, LOCALES, trType, trUnit } from "./lang.js";
 
 const FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif";
 const GREEN = "#6fae6f";
@@ -692,6 +693,8 @@ export function OwnerInbox({ items, onRespond, onRefresh }) {
 
 // ---- Бронювання техніки клієнтом: техніка + дати → заявка диспетчеру ----
 export function BookingForm({ listing, busyRanges, onSubmit, initialFrom = "", initialTo = "" }) {
+  const lang = useLang();
+  const T = useTx();
   const today = todayLocal();
   const [from, setFrom] = useState(initialFrom);
   const [to, setTo] = useState(initialTo);
@@ -730,7 +733,7 @@ export function BookingForm({ listing, busyRanges, onSubmit, initialFrom = "", i
     }
     setDur(key);
   };
-  const DURS = [["w", "Тиждень", { days: 7 }], ["m1", "1 місяць", { months: 1 }], ["m2", "2 місяці", { months: 2 }], ["m3", "3 місяці", { months: 3 }]];
+  const DURS = [["w", T.week, { days: 7 }], ["m1", T.m1, { months: 1 }], ["m2", T.m2, { months: 2 }], ["m3", T.m3, { months: 3 }]];
 
   const submit = async (e) => {
     e.preventDefault();
@@ -748,13 +751,13 @@ export function BookingForm({ listing, busyRanges, onSubmit, initialFrom = "", i
       <div>
         <div style={{ fontFamily: FONT, fontSize: 18, fontWeight: 600 }}>{listing.brand}</div>
         <div style={{ fontFamily: FONT, fontSize: 12.5, color: "#A3A8AD" }}>
-          {listing.type} · {listing.region} · {listing.price} ₴/{listing.unit}
+          {trType(listing.type, lang)} · {listing.region} · {listing.price} ₴/{trUnit(listing.unit, lang)}
         </div>
       </div>
 
       {taken.length > 0 ? (
         <div style={{ padding: "10px 12px", border: "1px solid #c96b5a", background: "rgba(201,107,90,0.08)", fontFamily: FONT, fontSize: 12.5 }}>
-          <div style={{ color: "#e0a89c", fontWeight: 600, marginBottom: 4 }}>Ці дати вже зайняті</div>
+          <div style={{ color: "#e0a89c", fontWeight: 600, marginBottom: 4 }}>{T.busyDates}</div>
           {taken.map((r, i) => (
             <div key={i} style={{ color: "#e0a89c" }}>
               {fmtDate(r.date_from)} — {fmtDate(r.date_to)}
@@ -762,11 +765,11 @@ export function BookingForm({ listing, busyRanges, onSubmit, initialFrom = "", i
           ))}
         </div>
       ) : (
-        <div style={{ fontFamily: FONT, fontSize: 12.5, color: GREEN }}>Найближчим часом техніка вільна</div>
+        <div style={{ fontFamily: FONT, fontSize: 12.5, color: GREEN }}>{T.freeSoon}</div>
       )}
 
       <div>
-        <div style={{ fontFamily: FONT, fontSize: 12.5, color: "#A3A8AD", marginBottom: 6 }}>Швидкий вибір строку (підберемо найближчі вільні дати)</div>
+        <div style={{ fontFamily: FONT, fontSize: 12.5, color: "#A3A8AD", marginBottom: 6 }}>{T.quick}</div>
         <div className="lp-dur">
           {DURS.map(([k, label, spec]) => (
             <button type="button" key={k} data-on={dur === k ? "1" : "0"} onClick={() => pickDuration(k, spec)}>{label}</button>
@@ -775,37 +778,37 @@ export function BookingForm({ listing, busyRanges, onSubmit, initialFrom = "", i
       </div>
       <AvailabilityCalendar ranges={taken} months={dur === "m3" ? 4 : dur === "m2" ? 3 : 2} selectFrom={from && to && !reversed ? from : ""} selectTo={from && to && !reversed ? to : ""} />
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-        <Field label="З якого дня" style={{ flex: "1 1 140px" }}>
-          <input type="date" aria-label="З якого дня" min={today} value={from} onChange={(e) => { setFrom(e.target.value); setDur(""); }} style={inputStyle} required />
+        <Field label={T.fromDay} style={{ flex: "1 1 140px" }}>
+          <input type="date" aria-label={T.fromDay} min={today} value={from} onChange={(e) => { setFrom(e.target.value); setDur(""); }} style={inputStyle} required />
         </Field>
-        <Field label="По який день" style={{ flex: "1 1 140px" }}>
-          <input type="date" aria-label="По який день" min={from || today} value={to} onChange={(e) => { setTo(e.target.value); setDur(""); }} style={inputStyle} required />
+        <Field label={T.toDay} style={{ flex: "1 1 140px" }}>
+          <input type="date" aria-label={T.toDay} min={from || today} value={to} onChange={(e) => { setTo(e.target.value); setDur(""); }} style={inputStyle} required />
         </Field>
       </div>
-      {reversed && <ErrorText>Кінець періоду не може бути раніше за початок</ErrorText>}
-      {clash && <ErrorText>Ці дати зайняті ({fmtDate(clash.date_from)} — {fmtDate(clash.date_to)}). Оберіть інші.</ErrorText>}
+      {reversed && <ErrorText>{T.reversed}</ErrorText>}
+      {clash && <ErrorText>{T.clash(fmtDate(clash.date_from), fmtDate(clash.date_to))}</ErrorText>}
 
       {estimate !== null && !clash && (
         <div style={{ fontFamily: FONT, fontSize: 13 }}>
-          Орієнтовно: {listing.price} ₴ × {days} = <b>{estimate.toLocaleString("uk-UA")} ₴</b>
-          <span style={{ color: "#70777D" }}> (без доставки; остаточну ціну підтвердить диспетчер)</span>
+          {T.estimate} {listing.price} ₴ × {days} = <b>{estimate.toLocaleString(LOCALES[lang] || "uk-UA")} ₴</b>
+          <span style={{ color: "#70777D" }}>{T.estimateNote}</span>
         </div>
       )}
 
       <label style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: FONT, fontSize: 13, color: "#A3A8AD", cursor: "pointer" }}>
         <input type="checkbox" checked={operator} onChange={(e) => setOperator(e.target.checked)} style={{ accentColor: "#FF6A1A", width: 18, height: 18 }} />
-        Потрібна техніка з оператором
+        {T.withOp}
       </label>
 
-      <Field label="Коментар (необов'язково): що робитимете, адреса об'єкта">
+      <Field label={T.comment}>
         <textarea value={comment} onChange={(e) => setComment(e.target.value)} rows={2} style={{ ...inputStyle, resize: "vertical" }} />
       </Field>
 
       <button className="btn-premium-hover" type="submit" disabled={!canSend} style={{ ...primaryBtn, width: "100%", minHeight: 48, opacity: canSend ? 1 : 0.5, cursor: canSend ? "pointer" : "not-allowed" }}>
-        {busy ? "Надсилаємо..." : "Надіслати заявку на бронь"}
+        {busy ? T.sending : T.sendBook}
       </button>
       <div style={{ fontFamily: FONT, fontSize: 11.5, color: "#70777D" }}>
-        Диспетчер перевірить дати й підтвердить — зазвичай протягом години в робочий час. Контакт власника відкриється у вашому кабінеті після підтвердження.
+        {T.dispInfo}
       </div>
     </form>
   );
@@ -816,6 +819,8 @@ export function BookingForm({ listing, busyRanges, onSubmit, initialFrom = "", i
 const WEEKDAYS = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Нд"];
 
 export function AvailabilityCalendar({ ranges, months = 2, selectFrom, selectTo }) {
+  const lang = useLang();
+  const T = useTx();
   const today = todayLocal();
   const base = new Date();
   const blocks = [];
@@ -835,28 +840,28 @@ export function AvailabilityCalendar({ ranges, months = 2, selectFrom, selectTo 
         sel: !!(selectFrom && selectTo && iso >= selectFrom && iso <= selectTo),
       });
     }
-    blocks.push({ title: first.toLocaleDateString("uk-UA", { month: "long", year: "numeric" }), cells });
+    blocks.push({ title: first.toLocaleDateString(LOCALES[lang] || "uk-UA", { month: "long", year: "numeric" }), cells });
   }
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 14 }} aria-label="Календар зайнятості">
+    <div style={{ display: "flex", flexDirection: "column", gap: 14 }} aria-label={T.calLabel}>
       <div style={{ display: "flex", gap: 14, fontFamily: FONT, fontSize: 11.5, color: "#A3A8AD", flexWrap: "wrap" }}>
-        <span><span style={{ display: "inline-block", width: 10, height: 10, background: "rgba(201,107,90,0.55)", marginRight: 6, verticalAlign: "middle" }} />зайнято</span>
-        <span><span style={{ display: "inline-block", width: 10, height: 10, border: "1px solid #63696D", marginRight: 6, verticalAlign: "middle" }} />вільно</span>
-        {selectFrom && selectTo && <span><span style={{ display: "inline-block", width: 10, height: 10, border: "1px solid #FF6A1A", marginRight: 6, verticalAlign: "middle" }} />ваші дати</span>}
+        <span><span style={{ display: "inline-block", width: 10, height: 10, background: "rgba(201,107,90,0.55)", marginRight: 6, verticalAlign: "middle" }} />{T.busy}</span>
+        <span><span style={{ display: "inline-block", width: 10, height: 10, border: "1px solid #63696D", marginRight: 6, verticalAlign: "middle" }} />{T.free}</span>
+        {selectFrom && selectTo && <span><span style={{ display: "inline-block", width: 10, height: 10, border: "1px solid #FF6A1A", marginRight: 6, verticalAlign: "middle" }} />{T.yours}</span>}
       </div>
       <div style={{ display: "flex", gap: 18, flexWrap: "wrap" }}>
         {blocks.map((b) => (
           <div key={b.title} style={{ flex: "1 1 220px", minWidth: 210 }}>
             <div style={{ fontFamily: FONT, fontSize: 13, fontWeight: 600, marginBottom: 6, textTransform: "capitalize" }}>{b.title}</div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 2, fontFamily: FONT, fontSize: 11.5, textAlign: "center" }}>
-              {WEEKDAYS.map((w) => (
+              {T.weekdays.map((w) => (
                 <div key={w} style={{ color: "#70777D", padding: "2px 0" }}>{w}</div>
               ))}
               {b.cells.map((cell, i) =>
                 cell ? (
                   <div
                     key={cell.iso}
-                    title={cell.busy ? "Зайнято" : "Вільно"}
+                    title={cell.busy ? T.busyCap : T.freeCap}
                     data-busy={cell.busy ? "1" : "0"}
                     style={{
                       padding: "5px 0",
