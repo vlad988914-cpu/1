@@ -2911,7 +2911,7 @@ export default function EquipmentMarketplace() {
                 <source src="/logo/logo.webm" type="video/webm" />
               </video>
             ) : (
-              <img src="/logo/logo.png" alt="" draggable="false" />
+              <img src="/logo/logo.png" alt="ТехМайданчик" draggable="false" />
             )}
           </span>
           <span className="hdr-tagline"><Label><MorphingTagline text="біржа будтехніки" /></Label></span>
