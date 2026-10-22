@@ -305,7 +305,7 @@ const mixHex = (c1, c2, t) => c1.map((v, i) => Math.round(v + (c2[i] - v) * t));
 function SweepBand() {
   const svgRef = useRef(null);
   const pathRef = useRef(null);
-  const [geo, setGeo] = useState({ w: 0, h: 0, d: "", quads: [], eL: "", eR: "" });
+  const [geo, setGeo] = useState({ w: 0, h: 0, d: "", quads: [], eL: "", eR: "", eG: "", eH: "" });
   useEffect(() => {
     const host = svgRef.current && svgRef.current.parentElement;
     if (!host) return undefined;
@@ -325,22 +325,24 @@ function SweepBand() {
         const c = Math.cos(th);
         pts.push({ x, y, c, hw: maxHW * (0.16 + 0.84 * Math.abs(c)) });
       }
-      let d = "", eL = "", eR = "";
+      let d = "", eL = "", eR = "", eG = "", eH = "";
       const quads = [];
       pts.forEach((q, i) => {
         d += (i ? "L" : "M") + q.x.toFixed(1) + " " + q.y + " ";
         eL += (i ? "L" : "M") + (q.x - q.hw).toFixed(1) + " " + q.y + " ";
         eR += (i ? "L" : "M") + (q.x + q.hw).toFixed(1) + " " + q.y + " ";
+        eG += (i ? "L" : "M") + (q.x - q.hw * 0.42).toFixed(1) + " " + q.y + " ";
+        eH += (i ? "L" : "M") + (q.x + q.hw * 0.5).toFixed(1) + " " + q.y + " ";
         if (i) {
           const p0 = pts[i - 1];
           const f = (Math.abs(q.c) + Math.abs(p0.c)) / 2;
           const front = (q.c + p0.c) / 2 > 0;
-          const col = front ? mixHex([226, 90, 6], [255, 160, 44], f) : mixHex([176, 58, 3], [232, 108, 10], f);
+          const col = front ? mixHex([245, 176, 8], [255, 214, 60], f) : mixHex([220, 150, 6], [250, 188, 28], f);
           const fill = `rgb(${col[0]},${col[1]},${col[2]})`;
           quads.push({ fill, pts: `${(p0.x - p0.hw).toFixed(1)},${p0.y} ${(p0.x + p0.hw).toFixed(1)},${p0.y} ${(q.x + q.hw).toFixed(1)},${q.y} ${(q.x - q.hw).toFixed(1)},${q.y}` });
         }
       });
-      setGeo((g) => (g.w === w && Math.abs(g.h - h) < 4 ? g : { w, h, d, quads, eL, eR }));
+      setGeo((g) => (g.w === w && Math.abs(g.h - h) < 4 ? g : { w, h, d, quads, eL, eR, eG, eH }));
     };
     build();
     const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(build) : null;
@@ -372,13 +374,25 @@ function SweepBand() {
             <path ref={pathRef} d={geo.d} pathLength="1000" fill="none" stroke="#fff" strokeWidth="300" strokeLinejoin="round" strokeDasharray="1000 1000" strokeDashoffset="1000" />
           </mask>
           <g mask="url(#sweepMask)">
-            {geo.quads.map((q, i) => <polygon key={i} points={q.pts} fill={q.fill} stroke={q.fill} strokeWidth="0.8" />)}
-            <path d={geo.eL} fill="none" stroke="#FFE9A8" strokeOpacity="0.85" strokeWidth="1.6" strokeLinejoin="round" />
-            <path d={geo.eR} fill="none" stroke="#FFD27A" strokeOpacity="0.7" strokeWidth="1.2" strokeLinejoin="round" />
+            <g opacity="0.66">{geo.quads.map((q, i) => <polygon key={i} points={q.pts} fill={q.fill} stroke={q.fill} strokeWidth="0.8" />)}</g>
+            <path d={geo.eG} fill="none" stroke="#FFFFFF" strokeOpacity="0.4" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+            <path d={geo.eH} fill="none" stroke="#FFF6CF" strokeOpacity="0.22" strokeWidth="2" strokeLinejoin="round" />
+            <path d={geo.eL} fill="none" stroke="#FFFBE6" strokeOpacity="0.95" strokeWidth="1.8" strokeLinejoin="round" />
+            <path d={geo.eR} fill="none" stroke="#FFF1B8" strokeOpacity="0.8" strokeWidth="1.4" strokeLinejoin="round" />
           </g>
         </>
       )}
     </svg>
+  );
+}
+
+// ---- Фон: вертикальні «ребра» як у рифленого скла + повільне перетікання голубого в золотистий (≈2 хв туди, ≈2 хв назад) ----
+function FlutedBackdrop() {
+  return (
+    <>
+      <div className="bg-base" aria-hidden="true" />
+      <div className="bg-flutes" aria-hidden="true" />
+    </>
   );
 }
 
@@ -2272,12 +2286,13 @@ export default function EquipmentMarketplace() {
         position: "relative",
         isolation: "isolate",
         minHeight: "100vh",
-        background: "linear-gradient(165deg, #2C7FB3 0%, #1E5F8F 38%, #153F66 78%, #11334F 100%)",
+        background: "transparent",
         color: "#ffffff",
         fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
       }}
     >
       <FontLink />
+      <FlutedBackdrop />
       <SweepBand />
       <ScrollProgress />
       <SceneAura />
@@ -2649,8 +2664,13 @@ export default function EquipmentMarketplace() {
         }
 
 
-        .sweep-wave { position: absolute; left: 0; top: 0; z-index: -1; pointer-events: none; overflow: visible; --sw: 26; opacity: .5; filter: drop-shadow(0 6px 18px rgba(255,120,20,.3)); }
-        @media (max-width: 700px) { .sweep-wave { --sw: 16; opacity: .45; } }
+        .sweep-wave { position: absolute; left: 0; top: 0; z-index: -1; pointer-events: none; overflow: visible; --sw: 26; filter: drop-shadow(0 4px 16px rgba(255,205,60,.28)); }
+        @media (max-width: 700px) { .sweep-wave { --sw: 16; } }
+        .bg-base { position: fixed; inset: 0; z-index: -1; pointer-events: none; background: linear-gradient(165deg, #2C7FB3 0%, #1E5F8F 38%, #153F66 78%, #11334F 100%); animation: hueShift 480s ease-in-out infinite; will-change: filter; }
+        @keyframes hueShift { 0%, 25% { filter: hue-rotate(0deg); } 50%, 75% { filter: hue-rotate(-150deg) saturate(1.05); } 100% { filter: hue-rotate(0deg); } }
+        .bg-flutes { position: fixed; inset: 0; z-index: -1; pointer-events: none; background: repeating-linear-gradient(90deg, rgba(255,255,255,.16) 0, rgba(255,255,255,.05) 3px, rgba(0,0,0,0) 9px, rgba(0,0,0,.18) 20px, rgba(0,0,0,.27) 24px), radial-gradient(60% 50% at 88% 90%, rgba(255,236,200,.30), transparent 70%), radial-gradient(70% 45% at 8% 6%, rgba(255,110,60,.14), transparent 70%); -webkit-mask-image: linear-gradient(180deg, rgba(0,0,0,.5) 0%, #000 60%); mask-image: linear-gradient(180deg, rgba(0,0,0,.5) 0%, #000 60%); }
+        @media (max-width: 700px) { .bg-flutes { background-size: auto; } }
+        @media (prefers-reduced-motion: reduce) { .bg-base { animation: none; } }
         [data-scene] :is(h1, h2, h3, p, li) { text-shadow: 0 0 3px rgba(10, 35, 60, .8), 0 1px 12px rgba(10, 35, 60, .55); }
         .sticky-header {
           position: sticky;
