@@ -301,11 +301,12 @@ const FontLink = () => (
 );
 
 
-// ---- Жовта хвиляста стрічка: безперервно подовжується вниз при прокрутці вниз і вкорочується при прокрутці вгору ----
+// ---- Глянцева оранжева стрічка з перекрутом: безперервно подовжується вниз при прокрутці вниз і вкорочується вгору ----
+const mixHex = (c1, c2, t) => c1.map((v, i) => Math.round(v + (c2[i] - v) * t));
 function SweepBand() {
   const svgRef = useRef(null);
   const pathRef = useRef(null);
-  const [geo, setGeo] = useState({ w: 0, h: 0, d: "" });
+  const [geo, setGeo] = useState({ w: 0, h: 0, d: "", quads: [], eL: "", eR: "" });
   useEffect(() => {
     const host = svgRef.current && svgRef.current.parentElement;
     if (!host) return undefined;
@@ -315,13 +316,32 @@ function SweepBand() {
       const narrow = w < 700;
       const amp = w * (narrow ? 0.2 : 0.25);
       const period = narrow ? 760 : 1050;
+      const maxHW = narrow ? 20 : 36;
       const y0 = 160;
-      let d = "";
-      for (let y = y0; y <= h; y += 22) {
+      const step = 9;
+      const pts = [];
+      for (let y = y0; y <= h; y += step) {
         const x = w / 2 + amp * Math.sin(((y - y0) / period) * Math.PI * 2) * (0.75 + 0.25 * Math.sin((y - y0) / 2300));
-        d += (d ? "L" : "M") + x.toFixed(1) + " " + y + " ";
+        const th = ((y - y0) / (narrow ? 430 : 560)) * Math.PI * 2;
+        const c = Math.cos(th);
+        pts.push({ x, y, c, hw: maxHW * (0.16 + 0.84 * Math.abs(c)) });
       }
-      setGeo((g) => (g.w === w && Math.abs(g.h - h) < 4 ? g : { w, h, d }));
+      let d = "", eL = "", eR = "";
+      const quads = [];
+      pts.forEach((q, i) => {
+        d += (i ? "L" : "M") + q.x.toFixed(1) + " " + q.y + " ";
+        eL += (i ? "L" : "M") + (q.x - q.hw).toFixed(1) + " " + q.y + " ";
+        eR += (i ? "L" : "M") + (q.x + q.hw).toFixed(1) + " " + q.y + " ";
+        if (i) {
+          const p0 = pts[i - 1];
+          const f = (Math.abs(q.c) + Math.abs(p0.c)) / 2;
+          const front = (q.c + p0.c) / 2 > 0;
+          const col = front ? mixHex([226, 90, 6], [255, 160, 44], f) : mixHex([176, 58, 3], [232, 108, 10], f);
+          const fill = `rgb(${col[0]},${col[1]},${col[2]})`;
+          quads.push({ fill, pts: `${(p0.x - p0.hw).toFixed(1)},${p0.y} ${(p0.x + p0.hw).toFixed(1)},${p0.y} ${(q.x + q.hw).toFixed(1)},${q.y} ${(q.x - q.hw).toFixed(1)},${q.y}` });
+        }
+      });
+      setGeo((g) => (g.w === w && Math.abs(g.h - h) < 4 ? g : { w, h, d, quads, eL, eR }));
     };
     build();
     const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(build) : null;
@@ -347,14 +367,18 @@ function SweepBand() {
   }, [geo]);
   return (
     <svg ref={svgRef} className="sweep-wave" aria-hidden="true" width={geo.w || "100%"} height={geo.h || 0} viewBox={`0 0 ${geo.w || 1} ${geo.h || 1}`} preserveAspectRatio="none">
-      <defs>
-        <linearGradient id="sweepGrad" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2={geo.h || 1}>
-          <stop offset="0" stopColor="#FFD24A" />
-          <stop offset="0.5" stopColor="#FFB81C" />
-          <stop offset="1" stopColor="#FF8A1A" />
-        </linearGradient>
-      </defs>
-      {geo.d && <path ref={pathRef} d={geo.d} pathLength="1000" fill="none" stroke="url(#sweepGrad)" style={{ strokeWidth: "var(--sw)" }} strokeLinecap="round" strokeLinejoin="round" strokeDasharray="1000 1000" strokeDashoffset="1000" />}
+      {geo.d && (
+        <>
+          <mask id="sweepMask" maskUnits="userSpaceOnUse" x="0" y="0" width={geo.w} height={geo.h}>
+            <path ref={pathRef} d={geo.d} pathLength="1000" fill="none" stroke="#fff" strokeWidth="300" strokeLinejoin="round" strokeDasharray="1000 1000" strokeDashoffset="1000" />
+          </mask>
+          <g mask="url(#sweepMask)">
+            {geo.quads.map((q, i) => <polygon key={i} points={q.pts} fill={q.fill} stroke={q.fill} strokeWidth="0.8" />)}
+            <path d={geo.eL} fill="none" stroke="#FFE9A8" strokeOpacity="0.85" strokeWidth="1.6" strokeLinejoin="round" />
+            <path d={geo.eR} fill="none" stroke="#FFD27A" strokeOpacity="0.7" strokeWidth="1.2" strokeLinejoin="round" />
+          </g>
+        </>
+      )}
     </svg>
   );
 }
@@ -2672,7 +2696,7 @@ export default function EquipmentMarketplace() {
         }
 
 
-        .sweep-wave { position: absolute; left: 0; top: 0; z-index: -1; pointer-events: none; overflow: visible; --sw: 26; filter: drop-shadow(0 0 14px rgba(255,170,40,.45)); }
+        .sweep-wave { position: absolute; left: 0; top: 0; z-index: -1; pointer-events: none; overflow: visible; --sw: 26; filter: drop-shadow(0 6px 18px rgba(255,120,20,.45)); }
         @media (max-width: 700px) { .sweep-wave { --sw: 16; opacity: .85; } }
         .cursor-net { position: fixed; inset: 0; z-index: -1; pointer-events: none; opacity: 0; mix-blend-mode: screen; --mx: -999px; --my: -999px; -webkit-mask-image: radial-gradient(circle 300px at var(--mx) var(--my), #000 0%, rgba(0,0,0,.75) 38%, transparent 100%); mask-image: radial-gradient(circle 300px at var(--mx) var(--my), #000 0%, rgba(0,0,0,.75) 38%, transparent 100%); }
         .cursor-net video { width: 100%; height: 100%; object-fit: cover; filter: brightness(1.45) saturate(1.2) contrast(1.05); }
