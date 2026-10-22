@@ -971,7 +971,7 @@ const carouselArrowStyle = (side) => ({
   width: 30,
   height: 30,
   borderRadius: "50%",
-  border: "1px solid #A9BBC7",
+  border: "1px solid #587890",
   background: "#314A5D",
   color: "#ffffff",
   fontSize: 16,
@@ -2266,8 +2266,8 @@ export default function EquipmentMarketplace() {
           100% { transform: rotateX(360deg); }
         }
 
-        .brand-3d { display: inline-block; width: clamp(200px, 17vw, 300px); line-height: 0; align-self: center; margin: -6px 0 -10px; }
-        .brand-3d img, .brand-3d video { width: 100%; pointer-events: none; height: auto; display: block; user-select: none; }
+        .brand-3d { display: block; position: relative; overflow: hidden; width: clamp(200px, 17vw, 300px); aspect-ratio: 1400 / 205; line-height: 0; align-self: center; margin: 0; }
+        .brand-3d img, .brand-3d video { position: absolute; left: 0; top: -2.86%; width: 100%; pointer-events: none; height: auto; display: block; user-select: none; filter: brightness(1.55) contrast(0.8) saturate(1.1); }
         .logo-flip {
           position: relative;
           display: inline-grid;
@@ -2601,7 +2601,7 @@ export default function EquipmentMarketplace() {
           z-index: 1;
         }
 
-        .faq-item { border-bottom: 1px solid #A9BBC7; }
+        .faq-item { border-bottom: 1px solid #587890; }
         .faq-question {
           width: 100%;
           text-align: left;
@@ -2637,7 +2637,7 @@ export default function EquipmentMarketplace() {
           left: 0; right: 0; bottom: 0;
           z-index: 60;
           background: #314A5D;
-          border-top: 1px solid #A9BBC7;
+          border-top: 1px solid #587890;
           padding: 12px 16px;
           align-items: center;
           justify-content: space-between;
@@ -2685,7 +2685,7 @@ export default function EquipmentMarketplace() {
         .category-card {
           position: relative;
           background: linear-gradient(180deg, #314A5D 0%, #314A5D 100%);
-          border: 1px solid #A9BBC7;
+          border: 1px solid #587890;
           border-radius: 16px;
           padding: 26px 16px;
           text-align: center;
@@ -2745,14 +2745,14 @@ export default function EquipmentMarketplace() {
           height: 600px;
           max-height: 78vh;
           background: #314A5D;
-          border: 1px solid #A9BBC7;
+          border: 1px solid #587890;
           display: flex;
           flex-direction: column;
           box-shadow: 0 12px 40px rgba(0,0,0,.5);
         }
         .ai-panel-header {
           padding: 12px 14px;
-          border-bottom: 1px solid #A9BBC7;
+          border-bottom: 1px solid #587890;
           font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif;
           font-size: 12px;
           text-transform: uppercase;
@@ -2764,7 +2764,7 @@ export default function EquipmentMarketplace() {
         }
         .ai-voice-toggle {
           background: none;
-          border: 1px solid #A9BBC7;
+          border: 1px solid #587890;
           color: #C9D6DF;
           font-size: 13px;
           width: 26px;
@@ -2819,7 +2819,7 @@ export default function EquipmentMarketplace() {
           align-self: flex-start;
           background: #314A5D;
           color: #ffffff;
-          border: 1px solid #A9BBC7;
+          border: 1px solid #587890;
         }
         .ai-blocks {
           margin-top: 8px;
@@ -2868,7 +2868,7 @@ export default function EquipmentMarketplace() {
         }
         .ai-panel-input {
           display: flex;
-          border-top: 1px solid #A9BBC7;
+          border-top: 1px solid #587890;
         }
         .ai-panel-input input {
           flex: 1;
@@ -2895,7 +2895,7 @@ export default function EquipmentMarketplace() {
         className={`sticky-header has-forge${scrolled ? " is-scrolled" : ""}`}
         style={{
           "--hp": scrolled ? "12px" : "20px",
-          borderBottom: "1px solid #A9BBC7",
+          borderBottom: "1px solid #44627A",
           padding: scrolled ? "12px 24px" : "20px 24px",
           display: "flex",
           justifyContent: "space-between",
@@ -3064,7 +3064,7 @@ export default function EquipmentMarketplace() {
               }}
               aria-label={`Сповіщення${unreadCount ? ` (${unreadCount})` : ""}`}
               className={bellRing ? "mo-ring" : undefined}
-              style={{ position: "relative", background: "#314A5D", border: "1px solid #A9BBC7", width: 38, height: 38, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#ffffff" }}
+              style={{ position: "relative", background: "#314A5D", border: "1px solid #587890", width: 38, height: 38, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#ffffff" }}
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
@@ -3087,7 +3087,7 @@ export default function EquipmentMarketplace() {
                 alignItems: "center",
                 gap: 8,
                 background: "#314A5D",
-                border: "1px solid #A9BBC7",
+                border: "1px solid #587890",
                 padding: "8px 14px",
                 cursor: "pointer",
                 color: "#ffffff",
@@ -3555,7 +3555,7 @@ export default function EquipmentMarketplace() {
                       objectFit: "cover",
                       cursor: "pointer",
                       borderRadius: 6,
-                      border: i === detailPhotoIndex ? "2px solid #FF6A1A" : "1px solid #A9BBC7",
+                      border: i === detailPhotoIndex ? "2px solid #FF6A1A" : "1px solid #587890",
                     }}
                   />
                 ))}
@@ -5360,12 +5360,12 @@ function AddListingForm({ onSubmit, user, lang }) {
           <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
             {form.photos.map((p, i) => (
               <div key={i} style={{ position: "relative" }}>
-                <img src={p} alt={`Прев'ю ${i + 1}`} style={{ width: 84, height: 84, objectFit: "cover", border: "1px solid #A9BBC7" }} />
+                <img src={p} alt={`Прев'ю ${i + 1}`} style={{ width: 84, height: 84, objectFit: "cover", border: "1px solid #587890" }} />
                 <button
                   type="button"
                   onClick={() => removePhoto(i)}
                   aria-label="Прибрати фото"
-                  style={{ position: "absolute", top: -6, right: -6, width: 20, height: 20, borderRadius: "50%", background: "#2B4254", border: "1px solid #A9BBC7", color: "#F4F4F1", fontSize: 12, cursor: "pointer" }}
+                  style={{ position: "absolute", top: -6, right: -6, width: 20, height: 20, borderRadius: "50%", background: "#2B4254", border: "1px solid #587890", color: "#F4F4F1", fontSize: 12, cursor: "pointer" }}
                 >
                   ×
                 </button>
