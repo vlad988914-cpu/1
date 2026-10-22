@@ -406,7 +406,7 @@ function CursorNet() {
     };
     const onMove = (e) => {
       if (!started) { x = e.clientX; y = e.clientY; started = true; }
-      tx = e.clientX; ty = e.clientY; ta = 1;
+      tx = e.clientX; ty = e.clientY; ta = 0.26;
       if (v.paused) v.play().catch(() => {});
       clearTimeout(idleT);
       idleT = setTimeout(() => { ta = 0; if (!raf) raf = requestAnimationFrame(tick); }, 1400);
@@ -2698,8 +2698,8 @@ export default function EquipmentMarketplace() {
 
         .sweep-wave { position: absolute; left: 0; top: 0; z-index: -1; pointer-events: none; overflow: visible; --sw: 26; filter: drop-shadow(0 6px 18px rgba(255,120,20,.45)); }
         @media (max-width: 700px) { .sweep-wave { --sw: 16; opacity: .85; } }
-        .cursor-net { position: fixed; inset: 0; z-index: -1; pointer-events: none; opacity: 0; mix-blend-mode: screen; --mx: -999px; --my: -999px; -webkit-mask-image: radial-gradient(circle 300px at var(--mx) var(--my), #000 0%, rgba(0,0,0,.75) 38%, transparent 100%); mask-image: radial-gradient(circle 300px at var(--mx) var(--my), #000 0%, rgba(0,0,0,.75) 38%, transparent 100%); }
-        .cursor-net video { width: 100%; height: 100%; object-fit: cover; filter: brightness(1.45) saturate(1.2) contrast(1.05); }
+        .cursor-net { position: fixed; inset: 0; z-index: -1; pointer-events: none; opacity: 0; mix-blend-mode: screen; overflow: hidden; --mx: -999px; --my: -999px; -webkit-mask-image: radial-gradient(circle 190px at var(--mx) var(--my), #000 0%, rgba(0,0,0,.6) 45%, transparent 100%); mask-image: radial-gradient(circle 190px at var(--mx) var(--my), #000 0%, rgba(0,0,0,.6) 45%, transparent 100%); }
+        .cursor-net video { position: absolute; left: 0; top: 0; width: 420px; height: 747px; object-fit: cover; transform: translate(calc(var(--mx) - 210px), calc(var(--my) - 373px)); filter: brightness(1.1) saturate(1); }
         [data-scene] :is(h1, h2, h3, p, li) { text-shadow: 0 0 3px rgba(10, 35, 60, .8), 0 1px 12px rgba(10, 35, 60, .55); }
         .sticky-header {
           position: sticky;
