@@ -31,7 +31,7 @@
 }
 
 /* шапка лежит поверх сцени з яскравими кадрами: затемнене «скло», щоб текст і кнопки завжди читались */
-.sticky-header.has-forge { background: linear-gradient(180deg, rgba(50,76,95,.96), rgba(43,66,84,.96)); background-blend-mode: normal; }
+.sticky-header.has-forge { background: radial-gradient(70% 140% at 72% 100%, rgba(255,106,26,.22), rgba(255,106,26,0) 62%), linear-gradient(180deg, rgba(24,15,10,.99), rgba(9,7,6,.99)); background-blend-mode: normal; }
 @media (max-width: 700px) {
   .sticky-header.has-forge { padding: 10px 16px !important; gap: 8px 10px !important; }
   .sticky-header .hdr-how { display: none; }
@@ -96,9 +96,12 @@
   .cat-filters > .dt > input[type="date"] { width: 100%; box-sizing: border-box; min-height: 40px; }
   .cat-filters > span:nth-child(3) { display: none; }
 }
-@media (max-width: 819px) { .sticky-header.has-forge { background: rgba(43,66,84,.96); } }
+@media (max-width: 819px) { .sticky-header.has-forge { background: radial-gradient(70% 140% at 72% 100%, rgba(255,106,26,.22), rgba(255,106,26,0) 62%), linear-gradient(180deg, rgba(24,15,10,.99), rgba(9,7,6,.99)); } }
 
 /* застосунок на головному екрані: безпечні зони (виріз, home-індикатор) */
 .sticky-cta { padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px)) !important; }
 @media (max-width: 680px) { .ai-fab { bottom: calc(108px + env(safe-area-inset-bottom, 0px)) !important; } }
 @media (display-mode: standalone) { .sticky-header.has-forge { padding-top: calc(8px + env(safe-area-inset-top, 0px)) !important; } body { overscroll-behavior-y: none; } }
+
+/* шапка чорна з помаранчевим відтінком: скляні кнопки в тон */
+.sticky-header .hdr-nav [style*="36, 58, 74"] { background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.02) 40%, rgba(255,106,26,.10) 100%), rgba(20,14,10,.72) !important; }

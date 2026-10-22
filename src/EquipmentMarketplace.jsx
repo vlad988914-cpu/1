@@ -2267,7 +2267,7 @@ export default function EquipmentMarketplace() {
         }
 
         .brand-3d { display: block; position: relative; overflow: hidden; width: clamp(200px, 17vw, 300px); aspect-ratio: 1400 / 205; line-height: 0; align-self: center; margin: 0; }
-        .brand-3d img, .brand-3d video { position: absolute; left: 0; top: -2.86%; width: 100%; pointer-events: none; height: auto; display: block; user-select: none; filter: brightness(1.55) contrast(0.8) saturate(1.1); }
+        .brand-3d img, .brand-3d video { position: absolute; left: 0; top: -2.86%; width: 100%; pointer-events: none; height: auto; display: block; user-select: none; filter: brightness(1.3) contrast(0.9) saturate(1.1); }
         .logo-flip {
           position: relative;
           display: inline-grid;
@@ -2895,7 +2895,7 @@ export default function EquipmentMarketplace() {
         className={`sticky-header has-forge${scrolled ? " is-scrolled" : ""}`}
         style={{
           "--hp": scrolled ? "12px" : "20px",
-          borderBottom: "1px solid #44627A",
+          borderBottom: "1px solid rgba(255,122,48,.38)",
           padding: scrolled ? "12px 24px" : "20px 24px",
           display: "flex",
           justifyContent: "space-between",
@@ -2945,7 +2945,7 @@ export default function EquipmentMarketplace() {
               position: "relative",
               display: "flex",
               maxWidth: "100%",
-              background: "linear-gradient(160deg, #44627A 0%, #2B4254 55%, #243A4A 100%)",
+              background: "linear-gradient(160deg, #2A2320 0%, #171310 55%, #0F0C0A 100%)",
               padding: 6,
               borderRadius: 980,
               width: 272,
@@ -3028,13 +3028,13 @@ export default function EquipmentMarketplace() {
                   fontSize: 10.5,
                   padding: "6px 9px",
                   borderRadius: 8,
-                  border: "none",
-                  background: "#2B4254",
+                  border: lang === l ? "1px solid rgba(255,106,26,.55)" : "1px solid rgba(255,255,255,.08)",
+                  background: "#1A130E",
                   boxShadow:
                     lang === l
                       ? "inset 3px 3px 6px rgba(0,0,0,0.55), inset -2px -2px 4px rgba(255,255,255,0.03)"
                       : "3px 3px 6px rgba(0,0,0,0.4), -2px -2px 5px rgba(255,255,255,0.025)",
-                  color: "#C9D6DF",
+                  color: lang === l ? "#FFB27A" : "#C9C2BC",
                   cursor: "pointer",
                 }}
               >
