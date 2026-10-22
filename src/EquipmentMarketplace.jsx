@@ -359,6 +359,50 @@ function SweepBand() {
   );
 }
 
+// ---- Ефект курсора: мережа з відео проявляється там, де ведеш мишкою по порожньому місцю ----
+function CursorNet() {
+  const wrap = useRef(null);
+  const vid = useRef(null);
+  useEffect(() => {
+    const el = wrap.current;
+    const v = vid.current;
+    if (!el || !v) return undefined;
+    const fine = window.matchMedia && window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+    const calm = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (!fine || calm) { el.style.display = "none"; return undefined; }
+    let tx = 0, ty = 0, x = 0, y = 0, a = 0, ta = 0, raf = 0, idleT = 0, started = false;
+    const tick = () => {
+      raf = 0;
+      x += (tx - x) * 0.2; y += (ty - y) * 0.2; a += (ta - a) * 0.09;
+      el.style.setProperty("--mx", x.toFixed(1) + "px");
+      el.style.setProperty("--my", y.toFixed(1) + "px");
+      el.style.opacity = a.toFixed(3);
+      if (a > 0.01 || ta > 0) raf = requestAnimationFrame(tick);
+      else { v.pause(); }
+    };
+    const onMove = (e) => {
+      if (!started) { x = e.clientX; y = e.clientY; started = true; }
+      tx = e.clientX; ty = e.clientY; ta = 1;
+      if (v.paused) v.play().catch(() => {});
+      clearTimeout(idleT);
+      idleT = setTimeout(() => { ta = 0; if (!raf) raf = requestAnimationFrame(tick); }, 1400);
+      if (!raf) raf = requestAnimationFrame(tick);
+    };
+    const onLeave = () => { ta = 0; if (!raf) raf = requestAnimationFrame(tick); };
+    window.addEventListener("mousemove", onMove, { passive: true });
+    document.addEventListener("mouseleave", onLeave);
+    return () => { window.removeEventListener("mousemove", onMove); document.removeEventListener("mouseleave", onLeave); clearTimeout(idleT); if (raf) cancelAnimationFrame(raf); };
+  }, []);
+  return (
+    <div ref={wrap} className="cursor-net" aria-hidden="true">
+      <video ref={vid} muted loop playsInline preload="none" disablePictureInPicture>
+        <source src="/fx/net.webm" type="video/webm" />
+        <source src="/fx/net.mp4" type="video/mp4" />
+      </video>
+    </div>
+  );
+}
+
 // ---- Seed data ----
 const TYPES = [
   "Екскаватор",
@@ -2257,6 +2301,7 @@ export default function EquipmentMarketplace() {
       <FontLink />
       <KineticGrid fixed dim={0.55} />
       <SweepBand />
+      <CursorNet />
       <ScrollProgress />
       <SceneAura />
       <style>{`
@@ -2629,6 +2674,8 @@ export default function EquipmentMarketplace() {
 
         .sweep-wave { position: absolute; left: 0; top: 0; z-index: -1; pointer-events: none; overflow: visible; --sw: 26; filter: drop-shadow(0 0 14px rgba(255,170,40,.45)); }
         @media (max-width: 700px) { .sweep-wave { --sw: 16; opacity: .85; } }
+        .cursor-net { position: fixed; inset: 0; z-index: -1; pointer-events: none; opacity: 0; mix-blend-mode: screen; --mx: -999px; --my: -999px; -webkit-mask-image: radial-gradient(circle 300px at var(--mx) var(--my), #000 0%, rgba(0,0,0,.75) 38%, transparent 100%); mask-image: radial-gradient(circle 300px at var(--mx) var(--my), #000 0%, rgba(0,0,0,.75) 38%, transparent 100%); }
+        .cursor-net video { width: 100%; height: 100%; object-fit: cover; filter: brightness(1.45) saturate(1.2) contrast(1.05); }
         [data-scene] :is(h1, h2, h3, p, li) { text-shadow: 0 0 3px rgba(10, 35, 60, .8), 0 1px 12px rgba(10, 35, 60, .55); }
         .sticky-header {
           position: sticky;

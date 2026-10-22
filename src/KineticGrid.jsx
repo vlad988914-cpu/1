@@ -66,16 +66,6 @@ export default function KineticGrid({ accent = BRAND, fixed = false, dim = 1, st
         }
       }
       ctx.stroke();
-      for (let x = DOT; x < w; x += DOT * 2) {
-        for (let y = DOT; y < h; y += DOT * 2) {
-          const d = Math.hypot(mouse.x - x, mouse.y - y);
-          const k = d < RADIUS ? (1 - d / RADIUS) * mouse.a : 0;
-          if (k <= 0.02) continue;
-          const [px, py] = warp(x, y);
-          ctx.fillStyle = `rgba(255,201,56,${Math.min(0.95, (0.2 + k * 0.78) * Math.max(dim, 0.9))})`;
-          ctx.beginPath(); ctx.arc(px, py, 1.2 + k * 1.7, 0, 6.2832); ctx.fill();
-        }
-      }
     };
 
     const tick = () => {
