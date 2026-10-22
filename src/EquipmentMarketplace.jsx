@@ -301,30 +301,61 @@ const FontLink = () => (
 );
 
 
-// ---- Жовта діагональна смуга: їде вниз при прокрутці вниз і вгору при прокрутці вгору ----
+// ---- Жовта хвиляста стрічка: безперервно подовжується вниз при прокрутці вниз і вкорочується при прокрутці вгору ----
 function SweepBand() {
-  const ref = useRef(null);
+  const svgRef = useRef(null);
+  const pathRef = useRef(null);
+  const [geo, setGeo] = useState({ w: 0, h: 0, d: "" });
   useEffect(() => {
-    const el = ref.current;
-    if (!el) return undefined;
+    const host = svgRef.current && svgRef.current.parentElement;
+    if (!host) return undefined;
+    const build = () => {
+      const w = host.clientWidth;
+      const h = host.scrollHeight;
+      const narrow = w < 700;
+      const amp = w * (narrow ? 0.2 : 0.25);
+      const period = narrow ? 760 : 1050;
+      const y0 = 160;
+      let d = "";
+      for (let y = y0; y <= h; y += 22) {
+        const x = w / 2 + amp * Math.sin(((y - y0) / period) * Math.PI * 2) * (0.75 + 0.25 * Math.sin((y - y0) / 2300));
+        d += (d ? "L" : "M") + x.toFixed(1) + " " + y + " ";
+      }
+      setGeo((g) => (g.w === w && Math.abs(g.h - h) < 4 ? g : { w, h, d }));
+    };
+    build();
+    const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(build) : null;
+    if (ro) ro.observe(host);
+    window.addEventListener("resize", build);
+    return () => { if (ro) ro.disconnect(); window.removeEventListener("resize", build); };
+  }, []);
+  useEffect(() => {
+    const path = pathRef.current;
+    if (!path || !geo.h) return undefined;
     const calm = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     let raf = 0;
     const upd = () => {
       raf = 0;
-      const h = document.documentElement.scrollHeight - window.innerHeight;
-      const p = calm ? 0.3 : h > 0 ? Math.min(1, Math.max(0, window.scrollY / h)) : 0;
-      el.style.setProperty("--p", p.toFixed(4));
+      const reach = window.scrollY + window.innerHeight * 0.62;
+      const f = calm ? 1 : Math.min(1, Math.max(0, (reach - 160) / Math.max(1, geo.h - 160)));
+      path.style.strokeDashoffset = String(1000 * (1 - f));
     };
     const on = () => { if (!raf) raf = requestAnimationFrame(upd); };
     upd();
     window.addEventListener("scroll", on, { passive: true });
-    window.addEventListener("resize", on);
-    return () => { window.removeEventListener("scroll", on); window.removeEventListener("resize", on); if (raf) cancelAnimationFrame(raf); };
-  }, []);
+    return () => { window.removeEventListener("scroll", on); if (raf) cancelAnimationFrame(raf); };
+  }, [geo]);
   return (
-    <div ref={ref} className="sweep-band" aria-hidden="true">
-      <div className="sweep-band-in"><i /><i /></div>
-    </div>
+    <svg ref={svgRef} className="sweep-wave" aria-hidden="true" width={geo.w || "100%"} height={geo.h || 0} viewBox={`0 0 ${geo.w || 1} ${geo.h || 1}`} preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="sweepGrad" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2={geo.h || 1}>
+          <stop offset="0" stopColor="#FFD24A" />
+          <stop offset="0.5" stopColor="#FFB81C" />
+          <stop offset="1" stopColor="#FF8A1A" />
+        </linearGradient>
+      </defs>
+      {geo.d && <path ref={pathRef} d={geo.d} pathLength="1000" fill="none" stroke="url(#sweepGrad)" style={{ strokeWidth: "var(--sw)" }} strokeLinecap="round" strokeLinejoin="round" strokeDasharray="1000 1000" strokeDashoffset="1000" />}
+    </svg>
   );
 }
 
@@ -2596,13 +2627,9 @@ export default function EquipmentMarketplace() {
         }
 
 
-        .sweep-band { --bw: min(15vw, 210px); position: fixed; left: 50%; top: 0; width: 0; height: 0; z-index: -1; pointer-events: none; transform: translate3d(0, calc(-6vh + var(--p, 0) * 112vh), 0); will-change: transform; }
-        .sweep-band-in { position: absolute; left: calc(var(--bw) / -2); top: -45vh; width: var(--bw); height: 90vh; transform: rotate(33deg); display: flex; gap: calc(var(--bw) * .14); }
-        .sweep-band-in i { display: block; flex: 1 1 0; background: linear-gradient(180deg, #FFC21F, #FF9A1A); box-shadow: 0 0 70px rgba(255,170,40,.35); border-radius: 2px; }
-        .sweep-band-in i:last-child { flex: .2; background: #FFD76A; box-shadow: none; }
-        @media (max-width: 700px) { .sweep-band { --bw: 22vw; } .sweep-band-in { height: 70vh; top: -35vh; } .sweep-band-in i { opacity: .6; } }
+        .sweep-wave { position: absolute; left: 0; top: 0; z-index: -1; pointer-events: none; overflow: visible; --sw: 26; filter: drop-shadow(0 0 14px rgba(255,170,40,.45)); }
+        @media (max-width: 700px) { .sweep-wave { --sw: 16; opacity: .85; } }
         [data-scene] :is(h1, h2, h3, p, li) { text-shadow: 0 0 3px rgba(10, 35, 60, .8), 0 1px 12px rgba(10, 35, 60, .55); }
-        @media (prefers-reduced-motion: reduce) { .sweep-band { transition: none; } }
         .sticky-header {
           position: sticky;
           top: 0;
