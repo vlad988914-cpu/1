@@ -45,7 +45,7 @@
 }
 .ss-kicker { font: 600 12px/1 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif; letter-spacing: 0.2em; text-transform: uppercase; color: #ffb81c; margin-bottom: 18px; }
 .ss-title { font: 700 clamp(28px, min(3.6vw, 6.4vh), 56px)/1.04 -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif; letter-spacing: -0.01em; margin: 0 0 16px; color: #f4f4f1; text-transform: none; }
-.ss-text { font: 400 clamp(16px, 1.7vw, 22px)/1.45 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif; color: #a3a8ad; margin: 0; max-width: 460px; }
+.ss-text { font: 400 clamp(16px, 1.7vw, 22px)/1.45 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif; color: #C9D6DF; margin: 0; max-width: 460px; }
 .ss-cta {
   margin-top: 26px; padding: 12px 20px; min-height: 46px; border-radius: 12px; cursor: pointer;
   border: 1px solid rgba(255, 184, 28, 0.6); background: rgba(255, 184, 28, 0.1); color: #ffb81c;
@@ -58,14 +58,14 @@
   grid-column: 2; position: relative; height: 100%; border-radius: 18px; overflow: hidden;
   width: min(40vw, calc((100svh - var(--ss-hdr, 96px) - 18px) * var(--ss-aspect, 0.569)));
   box-shadow: 0 30px 90px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.07);
-  background: #0c0e10;
+  background: #243A4A;
 }
-.ss-media { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: 50% 50%; display: block; background: #0c0e10; }
-.ss-vignette { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 45%, transparent 60%, rgba(5, 6, 8, 0.45) 100%); }
+.ss-media { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: 50% 50%; display: block; background: #243A4A; }
+.ss-vignette { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 45%, transparent 60%, rgba(30,48,62, 0.45) 100%); }
 .ss-chip {
   position: absolute; left: 14px; bottom: 14px; padding: 7px 12px; border-radius: 980px;
   font: 600 11.5px/1 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif; letter-spacing: 0.14em; text-transform: uppercase; color: #fff;
-  background: rgba(14, 16, 20, 0.55); border: 1px solid rgba(255, 255, 255, 0.1); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+  background: rgba(36,58,74, 0.55); border: 1px solid rgba(255, 255, 255, 0.1); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
 }
 .ss-loading { position: absolute; inset: 0; background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, 0.05) 50%, transparent 70%); background-size: 200% 100%; animation: ss-shimmer 1.4s linear infinite; pointer-events: none; }
 @keyframes ss-shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
@@ -80,12 +80,12 @@
   .ss-rail-col { display: none; }
   .ss-media { object-fit: cover; object-position: 50% 42%; }
   .ss-stage { position: absolute; inset: 0; width: 100% !important; height: 100%; border-radius: 0; box-shadow: none; }
-  .ss-vignette { background: linear-gradient(180deg, rgba(5, 6, 8, 0.45) 0%, transparent 22%, transparent 48%, rgba(5, 6, 8, 0.85) 100%); }
+  .ss-vignette { background: linear-gradient(180deg, rgba(30,48,62, 0.45) 0%, transparent 22%, transparent 48%, rgba(30,48,62, 0.85) 100%); }
   .ss-chip { display: none; }
   .ss-caps-col { position: absolute; z-index: 3; left: 12px; right: 12px; bottom: 150px; display: block; } /* выше нижней плашки заявки и кнопки помощника */
   .ss-rail { display: none; }
   .ss-caps { min-height: 190px; }
-  .ss-cap { top: auto; bottom: 0; transform: translate3d(0, 24px, 0); padding: 18px 20px 20px; border-radius: 16px; background: rgba(14, 16, 20, 0.58); border: 1px solid rgba(255, 255, 255, 0.1); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); }
+  .ss-cap { top: auto; bottom: 0; transform: translate3d(0, 24px, 0); padding: 18px 20px 20px; border-radius: 16px; background: rgba(36,58,74, 0.58); border: 1px solid rgba(255, 255, 255, 0.1); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); }
   .ss-cap[data-on] { transform: translate3d(0, 0, 0); }
   .ss-title { font-size: clamp(28px, 8vw, 40px); }
   .ss-kicker { margin-bottom: 10px; }
@@ -133,13 +133,13 @@
 .ss-spec dd, .ss-spec dt { margin: 0; }
 .ss-spec-main { display: flex; flex-direction: column; gap: 6px; padding-bottom: 14px; }
 .ss-spec-main dd { display: flex; align-items: baseline; gap: 10px; order: 1; }
-.ss-spec-main dt { order: 2; font: 600 11.5px/1.2 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif; letter-spacing: 0.16em; text-transform: uppercase; color: #a3a8ad; }
+.ss-spec-main dt { order: 2; font: 600 11.5px/1.2 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif; letter-spacing: 0.16em; text-transform: uppercase; color: #C9D6DF; }
 .ss-spec-main b { font: 700 clamp(44px, min(5.4vw, 9.5vh), 84px)/0.95 -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif; color: #ffb81c; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
 .ss-unit { font: 600 clamp(18px, 2.2vw, 28px)/1 -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif; color: #f4f4f1; }
 .ss-spec-row { display: flex; flex-direction: row-reverse; justify-content: space-between; align-items: baseline; gap: 16px; padding: 11px 0; border-top: 1px solid rgba(255, 255, 255, 0.1); }
-.ss-spec-row dt { font: 400 14px/1.3 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif; color: #a3a8ad; }
+.ss-spec-row dt { font: 400 14px/1.3 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif; color: #C9D6DF; }
 .ss-spec-row dd { font: 600 16px/1.2 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif; color: #f4f4f1; white-space: nowrap; font-variant-numeric: tabular-nums; }
-.ss-spec-row .ss-unit { font-size: 14px; margin-left: 4px; color: #a3a8ad; }
+.ss-spec-row .ss-unit { font-size: 14px; margin-left: 4px; color: #C9D6DF; }
 .ss-spec-row b { font: inherit; }
 .ss-note { margin: 14px 0 0; max-width: 400px; font: 400 11.5px/1.4 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif; color: #70777d; }
 @media (max-height: 700px) { .ss-spec-row:nth-child(n+3), .ss-note { display: none; } .ss-specs { margin-top: 14px; } .ss-spec-main b { font-size: clamp(36px, 8vh, 56px); } }
@@ -156,9 +156,9 @@
 /* ───── телефон: проста сторінка без ефекту «липкої» перемотки ───── */
 .ss-simple { background: transparent; margin-top: 0; }
 .sm-hero { position: relative; min-height: min(calc(100svh - 150px), 560px); display: flex; align-items: flex-end; padding: 0 12px 84px; background-size: cover; background-position: 50% 28%; background-repeat: no-repeat; }
-.sm-hero::before { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(5,6,8,.25) 0%, transparent 30%, rgba(5,6,8,.78) 100%); }
-.sm-hero-in { position: relative; z-index: 1; width: 100%; box-sizing: border-box; padding: 16px 18px 18px; border-radius: 16px; background: rgba(14,16,20,.62); border: 1px solid rgba(255,255,255,.1); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); }
-.sm-card { margin: 12px 12px 0; border-radius: 18px; overflow: hidden; background: #101316; border: 1px solid rgba(255,255,255,.08); }
+.sm-hero::before { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(30,48,62,.25) 0%, transparent 30%, rgba(30,48,62,.78) 100%); }
+.sm-hero-in { position: relative; z-index: 1; width: 100%; box-sizing: border-box; padding: 16px 18px 18px; border-radius: 16px; background: rgba(36,58,74,.62); border: 1px solid rgba(255,255,255,.1); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); }
+.sm-card { margin: 12px 12px 0; border-radius: 18px; overflow: hidden; background: #243A4A; border: 1px solid rgba(255,255,255,.08); }
 .sm-card .sm-body { padding-top: 20px; }
 .sm-body { padding: 16px 18px 20px; }
 .sm-card .ss-title { font-size: clamp(26px, 8vw, 34px); margin: 4px 0 6px; }
@@ -172,18 +172,18 @@
 .oc { position: fixed; left: 12px; bottom: calc(96px + env(safe-area-inset-bottom, 0px)); width: 176px; z-index: 55; opacity: 0; transform: translateY(12px) scale(.96); pointer-events: none;
   transition: opacity .3s var(--mo-ease-out, ease-out), transform .3s var(--mo-ease-out, ease-out); }
 .oc[data-show="1"] { opacity: 1; transform: none; pointer-events: auto; }
-.oc-frame { position: relative; aspect-ratio: 4 / 3; border-radius: 18px; overflow: hidden; background: #0c0e10;
+.oc-frame { position: relative; aspect-ratio: 4 / 3; border-radius: 18px; overflow: hidden; background: #243A4A;
   border: 1px solid rgba(255, 196, 130, 0.5);
   box-shadow: inset 0 1.5px 0 rgba(255,255,255,.35), 0 12px 24px -8px rgba(255,106,26,.55), 0 4px 12px rgba(0,0,0,.55); }
 .oc-media { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
 .oc-svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
 .oc-part line { stroke: rgba(255,255,255,.4); stroke-width: .7; stroke-linecap: round; stroke-dasharray: 1.6 1.4; transition: stroke .25s ease, stroke-width .25s ease; }
-.oc-part circle { fill: rgba(255,255,255,.55); stroke: rgba(14,16,20,.7); stroke-width: .6; transition: fill .25s ease; }
+.oc-part circle { fill: rgba(255,255,255,.55); stroke: rgba(36,58,74,.7); stroke-width: .6; transition: fill .25s ease; }
 .oc-part[data-on="1"] line { stroke: #FFB52E; stroke-width: 1.1; stroke-dasharray: none; filter: drop-shadow(0 0 1.5px rgba(255,106,26,.9)); }
 .oc-part[data-on="1"] circle { fill: #FF6A1A; stroke: #fff; stroke-width: .9; }
 .oc-chip { position: absolute; padding: 5px 9px; border-radius: 980px; font: 600 10.5px/1 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif; color: #d5d8db; cursor: pointer;
-  background: linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,.03) 45%), rgba(14,16,20,.7); border: 1px solid rgba(255,255,255,.26);
+  background: linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,.03) 45%), rgba(36,58,74,.7); border: 1px solid rgba(255,255,255,.26);
   -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); box-shadow: inset 0 1px 0 rgba(255,255,255,.3), 0 4px 8px -4px rgba(0,0,0,.6); }
-.oc-chip[data-on="1"] { color: #fff; border-color: rgba(255,196,130,.8); background: linear-gradient(180deg, rgba(255,255,255,.22), rgba(255,255,255,.04) 45%), linear-gradient(90deg, rgba(255,106,26,.6), rgba(255,181,46,.45)), rgba(14,16,20,.7); box-shadow: inset 0 1px 0 rgba(255,255,255,.4), 0 5px 12px -4px rgba(255,106,26,.7); }
+.oc-chip[data-on="1"] { color: #fff; border-color: rgba(255,196,130,.8); background: linear-gradient(180deg, rgba(255,255,255,.22), rgba(255,255,255,.04) 45%), linear-gradient(90deg, rgba(255,106,26,.6), rgba(255,181,46,.45)), rgba(36,58,74,.7); box-shadow: inset 0 1px 0 rgba(255,255,255,.4), 0 5px 12px -4px rgba(255,106,26,.7); }
 @media (max-width: 360px) { .oc { width: 168px; } }
 @media (prefers-reduced-motion: reduce) { .oc { transition: none; } }

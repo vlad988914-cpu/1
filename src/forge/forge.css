@@ -31,7 +31,7 @@
 }
 
 /* шапка лежит поверх сцени з яскравими кадрами: затемнене «скло», щоб текст і кнопки завжди читались */
-.sticky-header.has-forge { background: rgba(9, 10, 12, 0.66); background-blend-mode: normal; }
+.sticky-header.has-forge { background: rgba(36,58,74, 0.66); background-blend-mode: normal; }
 @media (max-width: 700px) {
   .sticky-header.has-forge { padding: 10px 16px !important; gap: 8px 10px !important; }
   .sticky-header .hdr-how { display: none; }
@@ -89,14 +89,14 @@
 .cat-filters .dt { position: relative; display: inline-block; }
 .cat-filters .dt-ph { display: none; }
 @supports (-webkit-touch-callout: none) {
-  .cat-filters .dt-ph { display: block; position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #8A9097; font: 13px/1 -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif; pointer-events: none; z-index: 1; }
+  .cat-filters .dt-ph { display: block; position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #B8C8D3; font: 13px/1 -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif; pointer-events: none; z-index: 1; }
 }
 @media (max-width: 700px) {
   .cat-filters > .dt { flex: 1 1 0; min-width: 0; }
   .cat-filters > .dt > input[type="date"] { width: 100%; box-sizing: border-box; min-height: 40px; }
   .cat-filters > span:nth-child(3) { display: none; }
 }
-@media (max-width: 819px) { .sticky-header.has-forge { background: rgba(9, 10, 12, 0.93); } }
+@media (max-width: 819px) { .sticky-header.has-forge { background: rgba(36,58,74, 0.93); } }
 
 /* застосунок на головному екрані: безпечні зони (виріз, home-індикатор) */
 .sticky-cta { padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px)) !important; }

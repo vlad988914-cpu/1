@@ -11,7 +11,7 @@ export const Plate = ({ children, style, className, onClick }) => (
       position: "relative",
       border: "1px solid rgba(255,255,255,0.08)",
       borderRadius: 16,
-      background: "#15181A",
+      background: "#314A5D",
       boxShadow: "0 1px 2px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.25)",
       ...style,
     }}
@@ -21,7 +21,7 @@ export const Plate = ({ children, style, className, onClick }) => (
 );
 
 export const Label = ({ children }) => (
-  <div style={{ display: "flex", alignItems: "center", gap: 7, fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 11, letterSpacing: "0.01em", color: "#A3A8AD" }}>
+  <div style={{ display: "flex", alignItems: "center", gap: 7, fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 11, letterSpacing: "0.01em", color: "#C9D6DF" }}>
     <span style={{ width: 11, height: 1.4, background: "#FF6A1A", flexShrink: 0 }} />
     {children}
   </div>
@@ -35,7 +35,7 @@ export const badgeStyle = {
 };
 
 export const miniBtn = (color) => ({
-  background: "linear-gradient(180deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.02) 45%, rgba(255,255,255,0.05) 100%), rgba(14,16,20,0.58)",
+  background: "linear-gradient(180deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.02) 45%, rgba(255,255,255,0.05) 100%), rgba(36,58,74,0.58)",
   border: `1px solid ${color}`,
   color,
   borderRadius: 980,
@@ -57,7 +57,7 @@ export function ErrorText({ children }) {
 export function Field({ label, children, style }) {
   return (
     <label style={{ display: "flex", flexDirection: "column", gap: 6, ...style }}>
-      <span style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 10.5, letterSpacing: "0.08em", textTransform: "none", color: "#A3A8AD" }}>
+      <span style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 10.5, letterSpacing: "0.08em", textTransform: "none", color: "#C9D6DF" }}>
         {label}
       </span>
       {children}
@@ -70,7 +70,7 @@ import "./liquid.css";
 // Liquid glass: темне скло, кольорова кромка, блик зверху, кольорове світіння знизу
 const LG_FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif";
 export const lgGlass = (rgb, fill = 0.16) => ({
-  background: `linear-gradient(180deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.03) 40%, rgba(${rgb},${fill}) 100%), rgba(14,16,20,0.58)`,
+  background: `linear-gradient(180deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.03) 40%, rgba(${rgb},${fill}) 100%), rgba(36,58,74,0.58)`,
   border: `1px solid rgba(${rgb},0.6)`,
   boxShadow: `inset 0 1.5px 0 rgba(255,255,255,0.38), inset 0 -9px 14px -7px rgba(${rgb},0.55), inset 0 0 0 1px rgba(255,255,255,0.05), 0 10px 20px -9px rgba(${rgb},0.65), 0 2px 5px rgba(0,0,0,0.45)`,
   backdropFilter: "blur(10px) saturate(1.5)",
@@ -79,7 +79,7 @@ export const lgGlass = (rgb, fill = 0.16) => ({
 
 export const primaryBtn = {
   ...lgGlass("255,106,26", 0.5),
-  background: "linear-gradient(180deg, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0.04) 42%, rgba(255,181,46,0.0) 100%), linear-gradient(90deg, rgba(255,106,26,0.62), rgba(255,181,46,0.46)), rgba(14,16,20,0.6)",
+  background: "linear-gradient(180deg, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0.04) 42%, rgba(255,181,46,0.0) 100%), linear-gradient(90deg, rgba(255,106,26,0.62), rgba(255,181,46,0.46)), rgba(36,58,74,0.6)",
   border: "1px solid rgba(255,196,130,0.7)",
   color: "#ffffff",
   textShadow: "0 1px 2px rgba(0,0,0,0.55)",
@@ -109,9 +109,9 @@ export const smallBtn = {
 };
 
 export const selectStyle = {
-  background: "#191C1F",
+  background: "#314A5D",
   color: "#ffffff",
-  border: "1px solid #7D848A",
+  border: "1px solid #A9BBC7",
   borderRadius: 8,
   padding: "9px 12px",
   fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
@@ -119,9 +119,9 @@ export const selectStyle = {
 };
 
 export const inputStyle = {
-  background: "#191C1F",
+  background: "#314A5D",
   color: "#ffffff",
-  border: "1px solid #7D848A",
+  border: "1px solid #A9BBC7",
   borderRadius: 8,
   padding: "10px 12px",
   fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
@@ -175,7 +175,7 @@ export function Modal({ children, onClose, title, splitLeft, wide }) {
       style={{
         position: "fixed",
         inset: 0,
-        background: "rgba(10,9,8,.7)",
+        background: "rgba(36,58,74,.7)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -191,7 +191,7 @@ export function Modal({ children, onClose, title, splitLeft, wide }) {
         aria-modal="true"
         aria-labelledby={titleId}
         style={{
-          background: "#15181A",
+          background: "#314A5D",
           border: "1px solid #48484a",
           width: "100%",
           maxWidth: splitLeft ? 760 : wide ? 640 : 460,
@@ -204,8 +204,8 @@ export function Modal({ children, onClose, title, splitLeft, wide }) {
           <div
             style={{
               flex: "0 0 280px",
-              background: "linear-gradient(180deg, #191C1F, #08090A)",
-              borderRight: "1px solid #202428",
+              background: "linear-gradient(180deg, #314A5D, #2B4254)",
+              borderRight: "1px solid #44627A",
               padding: 28,
               display: "flex",
               flexDirection: "column",
@@ -227,7 +227,7 @@ export function Modal({ children, onClose, title, splitLeft, wide }) {
             ref={closeBtnRef}
             onClick={requestClose}
             aria-label="Закрити"
-            style={{ background: "none", border: "none", color: "#A3A8AD", fontSize: 20, cursor: "pointer", padding: 10, margin: -10 }}
+            style={{ background: "none", border: "none", color: "#C9D6DF", fontSize: 20, cursor: "pointer", padding: 10, margin: -10 }}
           >
             ×
           </button>

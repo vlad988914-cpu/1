@@ -184,7 +184,7 @@ input:not([type="checkbox"]):not([type="radio"]):focus, select:focus, textarea:f
 /* ───── 7. Счётчики ───── */
 .mo-stats { display: flex; gap: 10px 36px; justify-content: center; flex-wrap: wrap; margin-bottom: 10px; }
 .mo-stat b { font: 700 22px/1 -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif; color: #f4f4f1; font-variant-numeric: tabular-nums; }
-.mo-stat span { display: block; margin-top: 4px; font: 11.5px/1.2 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif; color: #a3a8ad; letter-spacing: 0.04em; }
+.mo-stat span { display: block; margin-top: 4px; font: 11.5px/1.2 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif; color: #C9D6DF; letter-spacing: 0.04em; }
 
 /* ───── 8. Тонкая полоса прогресса прокрутки ───── */
 .mo-progress {
