@@ -374,11 +374,11 @@ function SweepBand() {
             <path ref={pathRef} d={geo.d} pathLength="1000" fill="none" stroke="#fff" strokeWidth="300" strokeLinejoin="round" strokeDasharray="1000 1000" strokeDashoffset="1000" />
           </mask>
           <g mask="url(#sweepMask)">
-            <g opacity="0.66">{geo.quads.map((q, i) => <polygon key={i} points={q.pts} fill={q.fill} stroke={q.fill} strokeWidth="0.8" />)}</g>
-            <path d={geo.eG} fill="none" stroke="#FFFFFF" strokeOpacity="0.4" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+            <g opacity="0.28">{geo.quads.map((q, i) => <polygon key={i} points={q.pts} fill={q.fill} stroke={q.fill} strokeWidth="0.8" />)}</g>
+            <path d={geo.eG} fill="none" stroke="#FFFFFF" strokeOpacity="0.5" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
             <path d={geo.eH} fill="none" stroke="#FFF6CF" strokeOpacity="0.22" strokeWidth="2" strokeLinejoin="round" />
-            <path d={geo.eL} fill="none" stroke="#FFFBE6" strokeOpacity="0.95" strokeWidth="1.8" strokeLinejoin="round" />
-            <path d={geo.eR} fill="none" stroke="#FFF1B8" strokeOpacity="0.8" strokeWidth="1.4" strokeLinejoin="round" />
+            <path d={geo.eL} fill="none" stroke="#FFE27A" strokeOpacity="0.95" strokeWidth="1.8" strokeLinejoin="round" />
+            <path d={geo.eR} fill="none" stroke="#FFD24A" strokeOpacity="0.85" strokeWidth="1.4" strokeLinejoin="round" />
           </g>
         </>
       )}
@@ -2664,7 +2664,7 @@ export default function EquipmentMarketplace() {
         }
 
 
-        .sweep-wave { position: absolute; left: 0; top: 0; z-index: -1; pointer-events: none; overflow: visible; --sw: 26; filter: drop-shadow(0 4px 16px rgba(255,205,60,.28)); }
+        .sweep-wave { position: absolute; left: 0; top: 0; z-index: -1; pointer-events: none; overflow: visible; --sw: 26; filter: drop-shadow(0 0 14px rgba(255,205,60,.4)); }
         @media (max-width: 700px) { .sweep-wave { --sw: 16; } }
         .bg-base { position: fixed; inset: 0; z-index: -1; pointer-events: none; background: linear-gradient(165deg, #2C7FB3 0%, #1E5F8F 38%, #153F66 78%, #11334F 100%); animation: hueShift 480s ease-in-out infinite; will-change: filter; }
         @keyframes hueShift { 0%, 25% { filter: hue-rotate(0deg); } 50%, 75% { filter: hue-rotate(-150deg) saturate(1.05); } 100% { filter: hue-rotate(0deg); } }
