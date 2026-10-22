@@ -31,7 +31,7 @@ function WantedCard({ item, index = 0, user, onRespond, onUnpublish, onSignIn })
           <RoleTag kind="rent" />
           <Label>{item.req_type}</Label>
         </span>
-        <span style={{ fontFamily: FONT, fontSize: 11.5, color: item.req_responses > 0 ? GREEN : "#70777D", border: `1px solid ${item.req_responses > 0 ? GREEN : "#2a2e32"}`, padding: "2px 8px" }}>
+        <span style={{ fontFamily: FONT, fontSize: 11.5, color: item.req_responses > 0 ? GREEN : "#8A9097", border: `1px solid ${item.req_responses > 0 ? GREEN : "#2a2e32"}`, padding: "2px 8px" }}>
           {item.req_responses > 0 ? `Відгуків: ${item.req_responses}` : "Поки без відгуків"}
         </span>
       </div>
@@ -52,7 +52,7 @@ function WantedCard({ item, index = 0, user, onRespond, onUnpublish, onSignIn })
           {item.req_comment}
         </div>
       )}
-      <div style={{ fontFamily: FONT, fontSize: 11.5, color: "#70777D" }}>
+      <div style={{ fontFamily: FONT, fontSize: 11.5, color: "#8A9097" }}>
         Автор: {item.req_author} · {ago(item.req_created_at)}
       </div>
 
@@ -77,7 +77,7 @@ function WantedCard({ item, index = 0, user, onRespond, onUnpublish, onSignIn })
             </button>
           )
         ) : user.role === "dispatcher" ? null : (
-          <span style={{ fontFamily: FONT, fontSize: 11.5, color: "#70777D" }}>Відгукуватись можуть власники техніки</span>
+          <span style={{ fontFamily: FONT, fontSize: 11.5, color: "#8A9097" }}>Відгукуватись можуть власники техніки</span>
         )}
       </div>
     </Plate>
@@ -120,7 +120,7 @@ export function WantedBoard({ items, user, onPublish, onRespond, onUnpublish, on
             ))}
           </select>
         )}
-        <span style={{ fontFamily: FONT, fontSize: 12.5, color: "#70777D" }}>{items.length > 0 ? `${tx.now}: ${items.length}` : ""}</span>
+        <span style={{ fontFamily: FONT, fontSize: 12.5, color: "#8A9097" }}>{items.length > 0 ? `${tx.now}: ${items.length}` : ""}</span>
       </div>
 
       {loaded && list.length === 0 && (
@@ -237,7 +237,7 @@ export function RespondForm({ request, myListings, busyRanges, onSubmit, onAddLi
       <button className="btn-premium-hover" type="submit" disabled={!canSend} style={{ ...primaryBtn, width: "100%", minHeight: 48, opacity: canSend ? 1 : 0.5, cursor: canSend ? "pointer" : "not-allowed" }}>
         {busy ? "Надсилаємо..." : "Надіслати пропозицію"}
       </button>
-      <div style={{ fontFamily: FONT, fontSize: 11.5, color: "#70777D" }}>
+      <div style={{ fontFamily: FONT, fontSize: 11.5, color: "#8A9097" }}>
         Клієнт побачить вашу техніку, ціну й коментар (без вашого телефону). Якщо він обере вашу пропозицію, диспетчер підтвердить оренду — і тоді відкриються контакти.
       </div>
     </form>
@@ -248,8 +248,8 @@ export function RespondForm({ request, myListings, busyRanges, onSubmit, onAddLi
 const RESPONSE_STATE = {
   sent: { text: "Чекає вибору клієнта", color: AMBER },
   chosen: { text: "Клієнт обрав вашу техніку — диспетчер підтверджує", color: GREEN },
-  declined: { text: "Не обрано або заявку закрито", color: "#70777D" },
-  withdrawn: { text: "Ви забрали відгук", color: "#70777D" },
+  declined: { text: "Не обрано або заявку закрито", color: "#8A9097" },
+  withdrawn: { text: "Ви забрали відгук", color: "#8A9097" },
 };
 
 export function OwnerResponses({ items, onWithdraw, onRefresh }) {

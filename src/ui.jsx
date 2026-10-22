@@ -111,7 +111,7 @@ export const smallBtn = {
 export const selectStyle = {
   background: "#191C1F",
   color: "#ffffff",
-  border: "1px solid #63696D",
+  border: "1px solid #7D848A",
   borderRadius: 8,
   padding: "9px 12px",
   fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
@@ -121,7 +121,7 @@ export const selectStyle = {
 export const inputStyle = {
   background: "#191C1F",
   color: "#ffffff",
-  border: "1px solid #63696D",
+  border: "1px solid #7D848A",
   borderRadius: 8,
   padding: "10px 12px",
   fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",

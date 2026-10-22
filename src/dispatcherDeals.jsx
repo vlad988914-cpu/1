@@ -80,13 +80,13 @@ const OFFER_LABEL = {
   proposed: { text: "очікує відповіді клієнта", color: AMBER },
   accepted: { text: "клієнт підтвердив", color: GREEN },
   declined: { text: "клієнт відхилив", color: RED },
-  expired: { text: "час вийшов", color: "#70777D" },
-  withdrawn: { text: "знято", color: "#70777D" },
+  expired: { text: "час вийшов", color: "#8A9097" },
+  withdrawn: { text: "знято", color: "#8A9097" },
 };
 const BOOKING_LABEL = {
   reserved: { text: "резерв — потрібне ваше підтвердження", color: AMBER },
   confirmed: { text: "оренду підтверджено", color: GREEN },
-  completed: { text: "завершена", color: "#70777D" },
+  completed: { text: "завершена", color: "#8A9097" },
   cancelled: { text: "скасовано", color: RED },
 };
 
@@ -109,7 +109,7 @@ export function EventLog({ events }) {
     <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
       {events.map((ev) => (
         <div key={ev.id} style={{ fontSize: 11.5, fontFamily: FONT, color: "#A3A8AD", display: "flex", gap: 8 }}>
-          <span style={{ color: "#70777D", whiteSpace: "nowrap" }}>{fmtDateTime(ev.created_at)}</span>
+          <span style={{ color: "#8A9097", whiteSpace: "nowrap" }}>{fmtDateTime(ev.created_at)}</span>
           <span>{eventText(ev)}</span>
         </div>
       ))}
@@ -156,7 +156,7 @@ export function DealsSection({ req, listings, users = [], allBookings, onPropose
   const wantedListing = req.listingId ? listings.find((l) => l.id === req.listingId) : null;
 
   return (
-    <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px dashed #63696D" }}>
+    <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px dashed #7D848A" }}>
       {/* Відгуки власників на заявку з дошки */}
       {!closed && !req.listingId && liveResponses(req).length > 0 && (
         <div style={{ marginBottom: 14 }}>
@@ -178,7 +178,7 @@ export function DealsSection({ req, listings, users = [], allBookings, onPropose
             </div>
           )}
           <WantedActions req={req} listing={wantedListing} allBookings={allBookings} onConfirm={(r) => onManual(r.id, r.listingId, r.dateFrom, r.dateTo)} onDecline={onDecline} />
-          <div style={{ fontFamily: FONT, fontSize: 11.5, color: "#70777D" }}>
+          <div style={{ fontFamily: FONT, fontSize: 11.5, color: "#8A9097" }}>
             Після підтвердження клієнт і власник одразу бачать контакти одне одного. Або запропонуйте іншу техніку нижче.
           </div>
         </div>
@@ -289,7 +289,7 @@ export function DealsSection({ req, listings, users = [], allBookings, onPropose
                       <button
                         disabled={blocked || !datesOk || busyKey === key}
                         onClick={() => run(key, () => onPropose(req.id, l.id, from, to))}
-                        style={{ ...smallBtn, borderColor: blocked || !datesOk ? "#3a3f44" : "#FF6A1A", color: blocked || !datesOk ? "#70777D" : "#FF6A1A", cursor: blocked || !datesOk ? "not-allowed" : "pointer" }}
+                        style={{ ...smallBtn, borderColor: blocked || !datesOk ? "#3a3f44" : "#FF6A1A", color: blocked || !datesOk ? "#8A9097" : "#FF6A1A", cursor: blocked || !datesOk ? "not-allowed" : "pointer" }}
                       >
                         Запропонувати клієнту
                       </button>
@@ -297,7 +297,7 @@ export function DealsSection({ req, listings, users = [], allBookings, onPropose
                       <button
                         disabled={blocked || !datesOk || busyKey === key}
                         onClick={() => run(key, () => onManual(req.id, l.id, from, to))}
-                        style={{ ...smallBtn, borderColor: blocked || !datesOk ? "#3a3f44" : GREEN, color: blocked || !datesOk ? "#70777D" : GREEN, cursor: blocked || !datesOk ? "not-allowed" : "pointer" }}
+                        style={{ ...smallBtn, borderColor: blocked || !datesOk ? "#3a3f44" : GREEN, color: blocked || !datesOk ? "#8A9097" : GREEN, cursor: blocked || !datesOk ? "not-allowed" : "pointer" }}
                       >
                         Підтвердити за телефоном
                       </button>
@@ -488,7 +488,7 @@ export function UsersBoard({ users: allUsers, requests, bookings, listings, curr
             <div style={{ color: "#A3A8AD" }}>
               {u.phone && u.phone !== "—" ? <a href={`tel:${String(u.phone).replace(/[^\d+]/g, "")}`} style={{ color: "#F4F4F1" }}>{u.phone}</a> : "телефон не вказано"} · {u.email}
             </div>
-            <div style={{ color: "#70777D" }}>
+            <div style={{ color: "#8A9097" }}>
               Зареєстровано {fmtDate(String(u.created_at).slice(0, 10))} · заявок: {reqCount} · активних оренд: {rentCount}
             </div>
             {!isStaff(u) && (
@@ -596,7 +596,7 @@ const hoursAgo = (iso) => {
 };
 
 function PhoneLink({ value }) {
-  if (!value || value === "—") return <span style={{ color: "#70777D" }}>телефон не вказано</span>;
+  if (!value || value === "—") return <span style={{ color: "#8A9097" }}>телефон не вказано</span>;
   return <a href={telHref(value)} style={{ color: "#F4F4F1" }}>{value}</a>;
 }
 
@@ -679,7 +679,7 @@ export function PairsBoard({ requests, listings, offers, bookings, users, onConf
           <div key={row.key} style={{ border: `1px solid ${st.color === "#A3A8AD" ? "#2a2e32" : st.color}`, padding: "12px 14px", display: "flex", flexDirection: "column", gap: 10, fontFamily: FONT, fontSize: 12.5 }}>
             <div style={{ display: "flex", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
               <span style={{ color: st.color, fontWeight: 600 }}>{st.text}</span>
-              {row.req && <span style={{ color: "#70777D" }}>заявка №{row.req.id}{row.req.createdAt ? ` · ${hoursAgo(row.req.createdAt)}` : ""}</span>}
+              {row.req && <span style={{ color: "#8A9097" }}>заявка №{row.req.id}{row.req.createdAt ? ` · ${hoursAgo(row.req.createdAt)}` : ""}</span>}
             </div>
 
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))", gap: 14 }}>
@@ -747,7 +747,7 @@ export function PairsBoard({ requests, listings, offers, bookings, users, onConf
                 {row.state === "responses" && (
                   <ResponsesBlock req={row.req} listings={listings} users={users} allBookings={bookings} onConfirm={(listingId, f, t) => onManual(row.req.id, listingId, f, t)} />
                 )}
-                {row.req && row.req.isPublic && row.state !== "responses" && <div style={{ color: "#70777D" }}>Заявка вивішена на дошці запитів</div>}
+                {row.req && row.req.isPublic && row.state !== "responses" && <div style={{ color: "#8A9097" }}>Заявка вивішена на дошці запитів</div>}
               </div>
             )}
           </div>

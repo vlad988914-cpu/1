@@ -72,7 +72,7 @@ function EquipmentPhoto({ listing, height = 150 }) {
   return photo ? (
     <img src={photo} alt={listing.brand} style={{ width: "100%", height, objectFit: "cover", display: "block", borderRadius: 10, background: "#0e1012" }} />
   ) : (
-    <div style={{ height: 70, borderRadius: 10, background: "#0e1012", border: "1px dashed #2a2e32", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: FONT, fontSize: 12, color: "#70777D" }}>
+    <div style={{ height: 70, borderRadius: 10, background: "#0e1012", border: "1px dashed #2a2e32", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: FONT, fontSize: 12, color: "#8A9097" }}>
       {listing?.type || "Техніка"}
     </div>
   );
@@ -99,9 +99,9 @@ const DECLINE_REASONS = ["Не підходить ціна", "Не підход�
 const OFFER_STATUS = {
   proposed: { text: "Очікує вашої відповіді", color: AMBER },
   accepted: { text: "Ви підтвердили", color: GREEN },
-  declined: { text: "Ви відхилили", color: "#70777D" },
-  expired: { text: "Час на відповідь минув", color: "#70777D" },
-  withdrawn: { text: "Знято диспетчером", color: "#70777D" },
+  declined: { text: "Ви відхилили", color: "#8A9097" },
+  expired: { text: "Час на відповідь минув", color: "#8A9097" },
+  withdrawn: { text: "Знято диспетчером", color: "#8A9097" },
 };
 
 function OfferCard({ offer, onRespond }) {
@@ -133,7 +133,7 @@ function OfferCard({ offer, onRespond }) {
         <span style={{ color: "#A3A8AD" }}>Період: </span>
         {fmtPeriod(offer.date_from, offer.date_to)}
       </div>
-      <div style={{ fontFamily: FONT, fontSize: 11.5, color: "#70777D" }}>Відповісти до {fmtDateTime(offer.expires_at)}</div>
+      <div style={{ fontFamily: FONT, fontSize: 11.5, color: "#8A9097" }}>Відповісти до {fmtDateTime(offer.expires_at)}</div>
 
       {!declining ? (
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 4 }}>
@@ -177,7 +177,7 @@ const REQUEST_INFO = {
   offered: { step: 2, text: "Вам запропоновано техніку — відповідь на вкладці «Пропозиції»", color: AMBER },
   booked: { step: 3, text: "Ви підтвердили — очікуємо підтвердження диспетчера", color: AMBER },
   taken: { step: 4, text: "Оренду підтверджено", color: GREEN },
-  expired: { step: 0, text: "Заявка закрита без результату", color: "#70777D" },
+  expired: { step: 0, text: "Заявка закрита без результату", color: "#8A9097" },
   cancelled: { step: 0, text: "Заявку скасовано", color: RED },
 };
 
@@ -223,7 +223,7 @@ function RequestCard({ req, onCancel, onTogglePublic, onChoose }) {
           {REQUEST_STEPS.map((name, i) => (
             <div key={name} style={{ flex: 1 }}>
               <div style={{ height: 4, borderRadius: 2, background: i < info.step ? (req.status === "taken" ? GREEN : "#FF6A1A") : "#2a2e32" }} />
-              <div style={{ fontFamily: FONT, fontSize: 10.5, color: i < info.step ? "#F4F4F1" : "#70777D", marginTop: 4 }}>{name}</div>
+              <div style={{ fontFamily: FONT, fontSize: 10.5, color: i < info.step ? "#F4F4F1" : "#8A9097", marginTop: 4 }}>{name}</div>
             </div>
           ))}
         </div>
@@ -232,7 +232,7 @@ function RequestCard({ req, onCancel, onTogglePublic, onChoose }) {
 
       {onTogglePublic && CANCELABLE.includes(req.status) && !req.listing_id && (
         <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-          <span style={{ fontFamily: FONT, fontSize: 12, color: req.is_public ? GREEN : "#70777D" }}>
+          <span style={{ fontFamily: FONT, fontSize: 12, color: req.is_public ? GREEN : "#8A9097" }}>
             {req.is_public ? "● Заявку видно на дошці запитів" : "Заявка не вивішена на дошці"}
           </span>
           <button onClick={() => onTogglePublic(req.id, !req.is_public)} style={{ ...smallBtn, padding: "5px 12px", fontSize: 12 }}>
@@ -311,7 +311,7 @@ function RequestCard({ req, onCancel, onTogglePublic, onChoose }) {
             </button>
           </div>
         ) : (
-          <button onClick={() => setAsking(true)} style={{ background: "none", border: "none", color: "#70777D", cursor: "pointer", fontFamily: FONT, fontSize: 12, textDecoration: "underline", padding: 0, alignSelf: "flex-start" }}>
+          <button onClick={() => setAsking(true)} style={{ background: "none", border: "none", color: "#8A9097", cursor: "pointer", fontFamily: FONT, fontSize: 12, textDecoration: "underline", padding: 0, alignSelf: "flex-start" }}>
             Скасувати заявку
           </button>
         ))}
@@ -323,7 +323,7 @@ const PHASE_INFO = {
   reserved: { text: "Резерв — очікує підтвердження диспетчера", color: AMBER },
   confirmed: { text: "Оренду підтверджено", color: GREEN },
   active: { text: "Оренда триває", color: GREEN },
-  completed: { text: "Завершена", color: "#70777D" },
+  completed: { text: "Завершена", color: "#8A9097" },
   cancelled: { text: "Скасована", color: RED },
 };
 
@@ -541,18 +541,18 @@ const KIND_COLOR = {
   offer_proposed: AMBER,
   offer_accepted: GREEN,
   offer_declined: RED,
-  offer_expired: "#70777D",
+  offer_expired: "#8A9097",
   offer_conflict: RED,
   booking_reserved: AMBER,
   booking_confirmed: GREEN,
   booking_cancelled: RED,
   request_declined: AMBER,
-  request_cancelled: "#70777D",
+  request_cancelled: "#8A9097",
   role_changed: GREEN,
   new_user: AMBER,
   wanted_response: AMBER,
   response_chosen: GREEN,
-  response_closed: "#70777D",
+  response_closed: "#8A9097",
 };
 
 export function NotificationsPanel({ items, onOpenItem, onMarkAll }) {
@@ -573,7 +573,7 @@ export function NotificationsPanel({ items, onOpenItem, onMarkAll }) {
             textAlign: "left",
             background: n.read_at ? "transparent" : "rgba(255,106,26,0.07)",
             border: "1px solid #2a2e32",
-            borderLeft: `3px solid ${KIND_COLOR[n.kind] || "#70777D"}`,
+            borderLeft: `3px solid ${KIND_COLOR[n.kind] || "#8A9097"}`,
             color: "#F4F4F1",
             padding: "10px 12px",
             cursor: "pointer",
@@ -585,7 +585,7 @@ export function NotificationsPanel({ items, onOpenItem, onMarkAll }) {
         >
           <span style={{ fontSize: 13, fontWeight: n.read_at ? 400 : 600 }}>{n.title}</span>
           {n.body && <span style={{ fontSize: 12, color: "#A3A8AD" }}>{n.body}</span>}
-          <span style={{ fontSize: 11, color: "#70777D" }}>{fmtDateTime(n.created_at)}</span>
+          <span style={{ fontSize: 11, color: "#8A9097" }}>{fmtDateTime(n.created_at)}</span>
         </button>
       ))}
     </div>
@@ -596,8 +596,8 @@ export function NotificationsPanel({ items, onOpenItem, onMarkAll }) {
 const INBOX_STATUS = {
   sent: { text: "Очікує вашої відповіді", color: "#FFB52E" },
   accepted: { text: "Ви прийняли", color: "#6fae6f" },
-  rejected: { text: "Ви відмовились", color: "#70777D" },
-  expired: { text: "Заявку взяв інший власник", color: "#70777D" },
+  rejected: { text: "Ви відмовились", color: "#8A9097" },
+  expired: { text: "Заявку взяв інший власник", color: "#8A9097" },
 };
 
 // Кабінет власника: запити від диспетчера з кнопками «Прийняти» / «Відмовитись».
@@ -641,7 +641,7 @@ export function OwnerInbox({ items, onRespond, onRefresh }) {
         const st = INBOX_STATUS[x.dispatch_status] || INBOX_STATUS.sent;
         const link = contactLink(x.req_contact);
         return (
-          <div key={x.dispatch_id} style={{ border: "1px solid #63696D", padding: "14px 14px", display: "flex", flexDirection: "column", gap: 8 }}>
+          <div key={x.dispatch_id} style={{ border: "1px solid #7D848A", padding: "14px 14px", display: "flex", flexDirection: "column", gap: 8 }}>
             <div style={{ display: "flex", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
               <Label>Заявка #{x.request_id}</Label>
               <span style={{ fontFamily: font, fontSize: 11.5, color: st.color }}>{st.text}</span>
@@ -791,7 +791,7 @@ export function BookingForm({ listing, busyRanges, onSubmit, initialFrom = "", i
       {estimate !== null && !clash && (
         <div style={{ fontFamily: FONT, fontSize: 13 }}>
           {T.estimate} {listing.price} ₴ × {days} = <b>{estimate.toLocaleString(LOCALES[lang] || "uk-UA")} ₴</b>
-          <span style={{ color: "#70777D" }}>{T.estimateNote}</span>
+          <span style={{ color: "#8A9097" }}>{T.estimateNote}</span>
         </div>
       )}
 
@@ -807,7 +807,7 @@ export function BookingForm({ listing, busyRanges, onSubmit, initialFrom = "", i
       <button className="btn-premium-hover" type="submit" disabled={!canSend} style={{ ...primaryBtn, width: "100%", minHeight: 48, opacity: canSend ? 1 : 0.5, cursor: canSend ? "pointer" : "not-allowed" }}>
         {busy ? T.sending : T.sendBook}
       </button>
-      <div style={{ fontFamily: FONT, fontSize: 11.5, color: "#70777D" }}>
+      <div style={{ fontFamily: FONT, fontSize: 11.5, color: "#8A9097" }}>
         {T.dispInfo}
       </div>
     </form>
@@ -846,7 +846,7 @@ export function AvailabilityCalendar({ ranges, months = 2, selectFrom, selectTo 
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }} aria-label={T.calLabel}>
       <div style={{ display: "flex", gap: 14, fontFamily: FONT, fontSize: 11.5, color: "#A3A8AD", flexWrap: "wrap" }}>
         <span><span style={{ display: "inline-block", width: 10, height: 10, background: "rgba(201,107,90,0.55)", marginRight: 6, verticalAlign: "middle" }} />{T.busy}</span>
-        <span><span style={{ display: "inline-block", width: 10, height: 10, border: "1px solid #63696D", marginRight: 6, verticalAlign: "middle" }} />{T.free}</span>
+        <span><span style={{ display: "inline-block", width: 10, height: 10, border: "1px solid #7D848A", marginRight: 6, verticalAlign: "middle" }} />{T.free}</span>
         {selectFrom && selectTo && <span><span style={{ display: "inline-block", width: 10, height: 10, border: "1px solid #FF6A1A", marginRight: 6, verticalAlign: "middle" }} />{T.yours}</span>}
       </div>
       <div style={{ display: "flex", gap: 18, flexWrap: "wrap" }}>
@@ -855,7 +855,7 @@ export function AvailabilityCalendar({ ranges, months = 2, selectFrom, selectTo 
             <div style={{ fontFamily: FONT, fontSize: 13, fontWeight: 600, marginBottom: 6, textTransform: "capitalize" }}>{b.title}</div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 2, fontFamily: FONT, fontSize: 11.5, textAlign: "center" }}>
               {T.weekdays.map((w) => (
-                <div key={w} style={{ color: "#70777D", padding: "2px 0" }}>{w}</div>
+                <div key={w} style={{ color: "#8A9097", padding: "2px 0" }}>{w}</div>
               ))}
               {b.cells.map((cell, i) =>
                 cell ? (

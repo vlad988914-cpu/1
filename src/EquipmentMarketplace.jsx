@@ -971,7 +971,7 @@ const carouselArrowStyle = (side) => ({
   width: 30,
   height: 30,
   borderRadius: "50%",
-  border: "1px solid #63696D",
+  border: "1px solid #7D848A",
   background: "#15181A",
   color: "#ffffff",
   fontSize: 16,
@@ -2308,7 +2308,7 @@ export default function EquipmentMarketplace() {
         .road-fill {
           position: absolute;
           inset: 0;
-          background: linear-gradient(90deg, #70777D, #A3A8AD);
+          background: linear-gradient(90deg, #8A9097, #A3A8AD);
           transform-origin: left center;
           transform: scaleX(0);
           animation: roadGrow 8s ease-in-out infinite;
@@ -2440,7 +2440,7 @@ export default function EquipmentMarketplace() {
         .section-divider .num {
           font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif;
           font-size: 11px;
-          color: #70777D;
+          color: #8A9097;
           flex-shrink: 0;
         }
         .section-divider .line {
@@ -2601,7 +2601,7 @@ export default function EquipmentMarketplace() {
           z-index: 1;
         }
 
-        .faq-item { border-bottom: 1px solid #63696D; }
+        .faq-item { border-bottom: 1px solid #7D848A; }
         .faq-question {
           width: 100%;
           text-align: left;
@@ -2637,7 +2637,7 @@ export default function EquipmentMarketplace() {
           left: 0; right: 0; bottom: 0;
           z-index: 60;
           background: #15181A;
-          border-top: 1px solid #63696D;
+          border-top: 1px solid #7D848A;
           padding: 12px 16px;
           align-items: center;
           justify-content: space-between;
@@ -2685,7 +2685,7 @@ export default function EquipmentMarketplace() {
         .category-card {
           position: relative;
           background: linear-gradient(180deg, #15181A 0%, #15181A 100%);
-          border: 1px solid #63696D;
+          border: 1px solid #7D848A;
           border-radius: 16px;
           padding: 26px 16px;
           text-align: center;
@@ -2745,14 +2745,14 @@ export default function EquipmentMarketplace() {
           height: 600px;
           max-height: 78vh;
           background: #15181A;
-          border: 1px solid #63696D;
+          border: 1px solid #7D848A;
           display: flex;
           flex-direction: column;
           box-shadow: 0 12px 40px rgba(0,0,0,.5);
         }
         .ai-panel-header {
           padding: 12px 14px;
-          border-bottom: 1px solid #63696D;
+          border-bottom: 1px solid #7D848A;
           font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif;
           font-size: 12px;
           text-transform: uppercase;
@@ -2764,7 +2764,7 @@ export default function EquipmentMarketplace() {
         }
         .ai-voice-toggle {
           background: none;
-          border: 1px solid #63696D;
+          border: 1px solid #7D848A;
           color: #A3A8AD;
           font-size: 13px;
           width: 26px;
@@ -2819,7 +2819,7 @@ export default function EquipmentMarketplace() {
           align-self: flex-start;
           background: #191C1F;
           color: #ffffff;
-          border: 1px solid #63696D;
+          border: 1px solid #7D848A;
         }
         .ai-blocks {
           margin-top: 8px;
@@ -2843,7 +2843,7 @@ export default function EquipmentMarketplace() {
           align-items: center;
         }
         .ai-block summary::-webkit-details-marker { display: none; }
-        .ai-block summary::after { content: "+"; color: #70777D; font-size: 15px; }
+        .ai-block summary::after { content: "+"; color: #8A9097; font-size: 15px; }
         .ai-block[open] summary::after { content: "–"; }
         .ai-block ul, .ai-block ol {
           margin: 2px 0 8px;
@@ -2868,7 +2868,7 @@ export default function EquipmentMarketplace() {
         }
         .ai-panel-input {
           display: flex;
-          border-top: 1px solid #63696D;
+          border-top: 1px solid #7D848A;
         }
         .ai-panel-input input {
           flex: 1;
@@ -2895,7 +2895,7 @@ export default function EquipmentMarketplace() {
         className={`sticky-header has-forge${scrolled ? " is-scrolled" : ""}`}
         style={{
           "--hp": scrolled ? "12px" : "20px",
-          borderBottom: "1px solid #63696D",
+          borderBottom: "1px solid #7D848A",
           padding: scrolled ? "12px 24px" : "20px 24px",
           display: "flex",
           justifyContent: "space-between",
@@ -3064,7 +3064,7 @@ export default function EquipmentMarketplace() {
               }}
               aria-label={`Сповіщення${unreadCount ? ` (${unreadCount})` : ""}`}
               className={bellRing ? "mo-ring" : undefined}
-              style={{ position: "relative", background: "#191C1F", border: "1px solid #63696D", width: 38, height: 38, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#ffffff" }}
+              style={{ position: "relative", background: "#191C1F", border: "1px solid #7D848A", width: 38, height: 38, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#ffffff" }}
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
@@ -3087,7 +3087,7 @@ export default function EquipmentMarketplace() {
                 alignItems: "center",
                 gap: 8,
                 background: "#191C1F",
-                border: "1px solid #63696D",
+                border: "1px solid #7D848A",
                 padding: "8px 14px",
                 cursor: "pointer",
                 color: "#ffffff",
@@ -3243,7 +3243,7 @@ export default function EquipmentMarketplace() {
           <div className="mo-steps mo-io" style={{ display: "flex", flexWrap: "wrap", gap: 24 }}>
             {[t("step_1"), t("step_2"), t("step_3"), t("step_4"), t("step_5")].map((step, i) => (
               <div key={i} className="mo-step" style={{ "--i": i, flex: "1 1 150px", minWidth: 140 }}>
-                <div style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 12, color: "#70777D" }}>
+                <div style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 12, color: "#8A9097" }}>
                   {String(i + 1).padStart(2, "0")}
                 </div>
                 <div className="mo-dash" style={{ width: 20, height: 1.4, background: "#FF6A1A", margin: "8px 0 10px" }} />
@@ -3472,7 +3472,7 @@ export default function EquipmentMarketplace() {
             gap: 10,
           }}
         >
-          <span style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 11, color: "#70777D" }}>
+          <span style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 11, color: "#8A9097" }}>
             © {new Date().getFullYear()} ТехМайданчик
           </span>
           <button
@@ -3486,7 +3486,7 @@ export default function EquipmentMarketplace() {
             style={{
               background: "none",
               border: "none",
-              color: "#70777D",
+              color: "#8A9097",
               fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
               fontSize: 11,
               cursor: "pointer",
@@ -3555,7 +3555,7 @@ export default function EquipmentMarketplace() {
                       objectFit: "cover",
                       cursor: "pointer",
                       borderRadius: 6,
-                      border: i === detailPhotoIndex ? "2px solid #FF6A1A" : "1px solid #63696D",
+                      border: i === detailPhotoIndex ? "2px solid #FF6A1A" : "1px solid #7D848A",
                     }}
                   />
                 ))}
@@ -3563,8 +3563,8 @@ export default function EquipmentMarketplace() {
             )}
 
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <span className={detailListing.available ? "status-dot-available" : ""} style={{ width: 6, height: 6, borderRadius: "50%", background: detailListing.available ? "#5FA876" : "#70777D" }} />
-              <span style={{ fontSize: 11, color: "#70777D" }}>{detailListing.available ? t("status_available") : t("status_busy")}</span>
+              <span className={detailListing.available ? "status-dot-available" : ""} style={{ width: 6, height: 6, borderRadius: "50%", background: detailListing.available ? "#5FA876" : "#8A9097" }} />
+              <span style={{ fontSize: 11, color: "#8A9097" }}>{detailListing.available ? t("status_available") : t("status_busy")}</span>
             </div>
 
             <div>
@@ -3652,7 +3652,7 @@ export default function EquipmentMarketplace() {
             </button>
 
             {detailListing.ownerId && user && (user.id === detailListing.ownerId || user.role === "dispatcher") && (
-              <div style={{ display: "flex", gap: 8, paddingTop: 4, borderTop: "1px dashed #63696D" }}>
+              <div style={{ display: "flex", gap: 8, paddingTop: 4, borderTop: "1px dashed #7D848A" }}>
                 <button type="button" onClick={() => toggleAvailability(detailListing)} style={{ ...smallBtn, flex: 1 }}>
                   {detailListing.available ? "Позначити зайнятою" : "Позначити вільною"}
                 </button>
@@ -4014,7 +4014,7 @@ function DispatcherRequests({ requests, owners, users, listings, allBookings, on
     <div className="dispatcher-layout" style={{ padding: "8px 24px 48px", display: "flex", gap: 20 }}>
       <div className="dispatcher-sidebar" style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 160, flexShrink: 0 }}>
         <button onClick={onRefresh} style={{ ...smallBtn, marginBottom: 8 }}>Оновити</button>
-        <div style={{ fontSize: 11, color: "#70777D", padding: "0 12px 8px", fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif" }}>
+        <div style={{ fontSize: 11, color: "#8A9097", padding: "0 12px 8px", fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif" }}>
           Власників у базі: {owners.length}
         </div>
         {categories.map((c) => {
@@ -4051,14 +4051,14 @@ function DispatcherRequests({ requests, owners, users, listings, allBookings, on
                 }}
               />
               <span style={{ flex: 1 }}>{c.label}</span>
-              <span style={{ fontSize: 11, color: "#70777D" }}>{count}</span>
+              <span style={{ fontSize: 11, color: "#8A9097" }}>{count}</span>
             </button>
           );
         })}
       </div>
       <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 16, minWidth: 0 }}>
         {filtered.length === 0 ? (
-          <div style={{ fontSize: 13, color: "#70777D" }}>Немає заявок у цій категорії.</div>
+          <div style={{ fontSize: 13, color: "#8A9097" }}>Немає заявок у цій категорії.</div>
         ) : (
           filtered.map((req) => (
             <RequestDispatchCard key={req.id} req={req} owners={owners} users={users} listings={listings} allBookings={allBookings} onDispatch={onDispatch} onOwnerAction={onOwnerAction} onPropose={onPropose} onManual={onManual} onConfirm={onConfirm} onCancel={onCancel} onDecline={onDecline} user={user} />
@@ -4079,7 +4079,7 @@ const STATUS_COLOR = {
   sent: "#c9a83f",
   accepted: "#6fae6f",
   rejected: "#c96b5a",
-  expired: "#70777D",
+  expired: "#8A9097",
 };
 
 // ---- Client-facing request status panel ----
@@ -4140,7 +4140,7 @@ function StarRating({ value, onChange, readOnly }) {
           onClick={() => !readOnly && onChange?.(n)}
           style={{
             cursor: readOnly ? "default" : "pointer",
-            color: n <= value ? "#FF6A1A" : "#63696D",
+            color: n <= value ? "#FF6A1A" : "#7D848A",
             fontSize: 16,
           }}
         >
@@ -4158,7 +4158,7 @@ function ReviewBox({ req, onSubmit }) {
   const ownerName = acceptedEntry?.ownerName || "виконавець";
 
   return (
-    <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px dashed #63696D" }}>
+    <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px dashed #7D848A" }}>
       <Label>Оцініть роботу «{ownerName}»</Label>
       <div style={{ marginTop: 6 }}>
         <StarRating value={rating} onChange={setRating} />
@@ -4265,14 +4265,14 @@ function RequestDispatchCard({ req, owners, users, listings, allBookings, onDisp
 
       {/* Contacted owners with live status + action buttons for pending ones */}
       {contactedOwners.length > 0 && (
-        <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px dashed #63696D" }}>
+        <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px dashed #7D848A" }}>
           <Label>Кому надіслано</Label>
           <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 8 }}>
             {contactedOwners.map((o) => {
               const st = req.ownerStatuses[String(o.id)];
               return (
                 <div key={o.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 12.5, fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif" }}>
-                  <span>{o.name} <span style={{ color: "#70777D" }}>· {o.phone}</span></span>
+                  <span>{o.name} <span style={{ color: "#8A9097" }}>· {o.phone}</span></span>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     <span style={{ color: STATUS_COLOR[st] }}>{STATUS_LABEL[st]}</span>
                     {st === "sent" && (
@@ -4297,7 +4297,7 @@ function RequestDispatchCard({ req, owners, users, listings, allBookings, onDisp
 
       {/* Запит власникам: запасний шлях, коли в каталозі немає підходящої техніки */}
       {!["taken", "booked"].includes(req.status) && (
-        <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px dashed #63696D" }}>
+        <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px dashed #7D848A" }}>
           <Label>{contactedOwners.length === 0 ? "Запитати у власників (якщо немає підходящої техніки)" : "Запитати у власників ще"}</Label>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 8 }}>
             {suggestedUncontacted.length === 0 && otherUncontacted.length === 0 && (
@@ -4325,7 +4325,7 @@ function RequestDispatchCard({ req, owners, users, listings, allBookings, onDisp
 
       {/* History log */}
       {(req.log.length > 0 || (req.events || []).length > 0) && (
-        <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px dashed #63696D" }}>
+        <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px dashed #7D848A" }}>
           <button
             onClick={() => setShowHistory((s) => !s)}
             style={{ background: "none", border: "none", color: "#A3A8AD", cursor: "pointer", fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 11, letterSpacing: "0.08em", textTransform: "none", padding: 0 }}
@@ -4341,7 +4341,7 @@ function RequestDispatchCard({ req, owners, users, listings, allBookings, onDisp
             <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 4 }}>
               {req.log.map((l, i) => (
                 <div key={i} style={{ fontSize: 11.5, fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", color: "#A3A8AD", display: "flex", gap: 8 }}>
-                  <span style={{ color: "#70777D" }}>{l.time}</span>
+                  <span style={{ color: "#8A9097" }}>{l.time}</span>
                   <span>
                     {l.ownerName} —{" "}
                     <span style={{ color: STATUS_COLOR[l.action === "sent" ? "sent" : l.action === "auto-expired" ? "expired" : l.action] }}>
@@ -4374,7 +4374,7 @@ function OwnerChip({ owner, checked, onToggle, highlighted }) {
         alignItems: "center",
         gap: 7,
         padding: "7px 12px",
-        border: `1px solid ${checked ? "#FF6A1A" : "#63696D"}`,
+        border: `1px solid ${checked ? "#FF6A1A" : "#7D848A"}`,
         background: checked ? "rgba(255,90,31,0.1)" : "transparent",
         cursor: "pointer",
         fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
@@ -4453,7 +4453,7 @@ function TelegramLogin({ role, onDone }) {
         </div>
       )}
       {msg && <ErrorText>{msg}</ErrorText>}
-      <div style={{ fontFamily: font, fontSize: 11.5, color: "#70777D", textAlign: "center" }}>Без пароля й листів: підтвердіть номер у Telegram за 10 секунд</div>
+      <div style={{ fontFamily: font, fontSize: 11.5, color: "#8A9097", textAlign: "center" }}>Без пароля й листів: підтвердіть номер у Telegram за 10 секунд</div>
     </div>
   );
 }
@@ -4529,7 +4529,7 @@ function AuthForm({ onSubmit, onTelegramDone }) {
         </Field>
       )}
       <TelegramLogin role={mode === "signup" ? form.role : "client"} onDone={onTelegramDone} />
-      <div style={{ display: "flex", alignItems: "center", gap: 10, fontFamily: font, fontSize: 12, color: "#70777D" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, fontFamily: font, fontSize: 12, color: "#8A9097" }}>
         <span style={{ flex: 1, height: 1, background: "#2f3439" }} />або за email<span style={{ flex: 1, height: 1, background: "#2f3439" }} />
       </div>
 
@@ -4618,7 +4618,7 @@ function ProfileForm({ user, onSave, onLogout }) {
 
   return (
     <div>
-      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18, paddingBottom: 16, borderBottom: "1px dashed #63696D" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18, paddingBottom: 16, borderBottom: "1px dashed #7D848A" }}>
         <span style={{ width: 44, height: 44, borderRadius: "50%", background: "#FF6A1A", color: "#08090A", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 18, fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif" }}>
           {form.name.trim().charAt(0).toUpperCase()}
         </span>
@@ -5360,12 +5360,12 @@ function AddListingForm({ onSubmit, user, lang }) {
           <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
             {form.photos.map((p, i) => (
               <div key={i} style={{ position: "relative" }}>
-                <img src={p} alt={`Прев'ю ${i + 1}`} style={{ width: 84, height: 84, objectFit: "cover", border: "1px solid #63696D" }} />
+                <img src={p} alt={`Прев'ю ${i + 1}`} style={{ width: 84, height: 84, objectFit: "cover", border: "1px solid #7D848A" }} />
                 <button
                   type="button"
                   onClick={() => removePhoto(i)}
                   aria-label="Прибрати фото"
-                  style={{ position: "absolute", top: -6, right: -6, width: 20, height: 20, borderRadius: "50%", background: "#08090A", border: "1px solid #63696D", color: "#F4F4F1", fontSize: 12, cursor: "pointer" }}
+                  style={{ position: "absolute", top: -6, right: -6, width: 20, height: 20, borderRadius: "50%", background: "#08090A", border: "1px solid #7D848A", color: "#F4F4F1", fontSize: 12, cursor: "pointer" }}
                 >
                   ×
                 </button>
@@ -5564,7 +5564,7 @@ function RequestForm({ onSubmit, user, initial, t, lang }) {
         <input type="checkbox" checked={!!form.isPublic} onChange={(e) => setForm((f) => ({ ...f, isPublic: e.target.checked }))} style={{ accentColor: "#FF6A1A", width: 18, height: 18, marginTop: 2 }} />
         <span>
           Вивісити заявку на «Дошці оголошень» — власники зможуть запропонувати свою техніку
-          <span style={{ display: "block", fontSize: 11.5, color: "#70777D", marginTop: 2 }}>
+          <span style={{ display: "block", fontSize: 11.5, color: "#8A9097", marginTop: 2 }}>
             Усі побачать: тип техніки, регіон, дати, ціну, коментар і ваше ім'я (без прізвища). Телефон не показується — не пишіть його в коментарі.
           </span>
         </span>
@@ -5598,7 +5598,7 @@ function RequestForm({ onSubmit, user, initial, t, lang }) {
 function StepLabel({ n, of, text }) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4 }}>
-      <span style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 11, color: "#70777D" }}>
+      <span style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 11, color: "#8A9097" }}>
         {String(n).padStart(2, "0")} / {String(of).padStart(2, "0")}
       </span>
       <span style={{ flex: 1, height: 1, background: "#202428" }} />

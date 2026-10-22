@@ -89,7 +89,7 @@
 .cat-filters .dt { position: relative; display: inline-block; }
 .cat-filters .dt-ph { display: none; }
 @supports (-webkit-touch-callout: none) {
-  .cat-filters .dt-ph { display: block; position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #70777D; font: 13px/1 -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif; pointer-events: none; z-index: 1; }
+  .cat-filters .dt-ph { display: block; position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #8A9097; font: 13px/1 -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif; pointer-events: none; z-index: 1; }
 }
 @media (max-width: 700px) {
   .cat-filters > .dt { flex: 1 1 0; min-width: 0; }
