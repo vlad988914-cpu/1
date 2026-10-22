@@ -103,7 +103,7 @@ function write(path, html) { const d = join(ROOT, path); mkdirSync(d, { recursiv
   const body = `<p>ТехМайданчик — біржа, де власники будівельної техніки та замовники знаходять одне одного. Оберіть тип техніки й місто або залиште заявку — диспетчер підбере варіант під вашу роботу.</p>
 ${cta()}<h2>Техніка в оренду</h2><ul class="grid">${CATS.map((c) => `<li><a href="/orenda/${c.slug}/">Оренда ${c.gen}</a></li>`).join("")}</ul>
 <h2>За містами</h2>${CITIES.map((ci) => `<h3>${ci.name}</h3><ul class="grid">${CATS.map((c) => `<li><a href="/orenda/${c.slug}-${ci.slug}/">${c.name} ${ci.loc}</a></li>`).join("")}</ul>`).join("")}${howto}`;
-  write("/orenda/", page({ path: "/orenda/", title: "Оренда будівельної техніки в Україні та Миколаєві — ТехМайданчик", desc: "Оренда екскаваторів, міні-екскаваторів, навантажувачів, самоскидів, кранів, котків, бульдозерів, грейдерів і гідромолотів. Залиште заявку — диспетчер підбере техніку.", h1: "Оренда будівельної техніки", body, crumbs: [["Головна", "/"], ["Оренда техніки", "/orenda/"]], ld: [] }));
+  write("/orenda/", page({ path: "/orenda/", title: "Оренда будівельної техніки в Україні — ТехМайданчик", desc: "Оренда екскаваторів, міні-екскаваторів, навантажувачів, самоскидів, кранів, котків, бульдозерів, грейдерів і гідромолотів. Залиште заявку — диспетчер підбере техніку.", h1: "Оренда будівельної техніки", body, crumbs: [["Головна", "/"], ["Оренда техніки", "/orenda/"]], ld: [] }));
 }
 // категорії
 for (const c of CATS) {
@@ -156,7 +156,7 @@ Object.keys(cnt).forEach(function(id){var e=document.querySelector('[data-avail=
 }).catch(function(){box.innerHTML='<p class="ms">Не вдалося завантажити оголошення. Оновіть сторінку.</p>'});
 var h=location.hash.slice(1);if(h){var d=document.getElementById(h);if(d&&d.tagName==="DETAILS"){d.open=true;setTimeout(function(){d.scrollIntoView()},100)}}})();</script>`;
   const ld = g.models.length ? { "@type": "ItemList", name: g.name, itemListElement: g.models.map((m, i) => ({ "@type": "ListItem", position: i + 1, name: m.name, url: `${SITE}${path}#${m.id}` })) } : null;
-  write(path, page({ path, title: `${g.name} в оренду: оголошення, характеристики — ТехМайданчик`.slice(0, 70), desc: (g.models.length ? `${g.name} в оренду: ${g.models.map((m) => m.name).join(", ")}. Оголошення власників, характеристики за даними виробників, календар вільних дат і бронювання.` : `${g.name} в оренду: оголошення власників, календар вільних дат і бронювання. Залиште заявку — диспетчер ТехМайданчика підбере техніку й підтвердить.`).slice(0, 160), h1: g.h1, body, crumbs: [["Головна", "/"], ["Каталог техніки", "/katalog/"], [g.name, path]], ld: ld ? [ld] : [], back: true }));
+  write(path, page({ path, title: `${g.name} в оренду — ТехМайданчик`, desc: (g.models.length ? `${g.name} в оренду: ${g.models.map((m) => m.name).join(", ")}. Оголошення власників, характеристики за даними виробників, календар вільних дат і бронювання.` : `${g.name} в оренду: оголошення власників, календар вільних дат і бронювання. Залиште заявку — диспетчер ТехМайданчика підбере техніку й підтвердить.`).slice(0, 160), h1: g.h1, body, crumbs: [["Головна", "/"], ["Каталог техніки", "/katalog/"], [g.name, path]], ld: ld ? [ld] : [], back: true }));
 }
 // сторінки окремих моделей: /katalog/<категорія>/<модель>/ — для запитів «Cat M320 характеристики»
 for (const g of GROUPS) {
@@ -184,7 +184,7 @@ if(!rows.length){box.innerHTML='<p class="ms">Оголошень цієї мод
 box.innerHTML='<ul class="models">'+rows.map(function(r){return '<li><a class="orow" href="/?model='+MID+'&sel='+r.id+'&from='+encodeURIComponent(from)+'"><span><b>'+esc(r.brand)+'</b><br><span class="mb">'+esc(r.region)+' · '+(r.available?"доступна":"зараз зайнята")+'</span></span><span class="op">'+(Number(r.price)>0?esc(r.price)+" ₴/"+esc(r.unit):"Договірна")+'</span><span class="mm">Дати й бронь →</span></a></li>'}).join("")+'</ul>'
 }).catch(function(){box.innerHTML='<p class="ms">Не вдалося завантажити оголошення. Оновіть сторінку.</p>'})})();</script>`;
     const ld = [{ "@type": "Product", name: m.name, brand: { "@type": "Brand", name: m.brand }, category: g.type, description: `${m.brand} ${m.name}: ${m.key.join(", ")}.`, url: `${SITE}${path}`, image: `${SITE}/story/poster.jpg` }];
-    const title = `${m.name} — характеристики та оренда | ТехМайданчик`.slice(0, 70);
+    const title = (`${m.name} — характеристики та оренда | ТехМайданчик`.length <= 60 ? `${m.name} — характеристики та оренда | ТехМайданчик` : `${m.name} — характеристики, оренда`);
     const desc = `${m.brand} ${m.name}: ${m.key.join(", ")}. Технічні характеристики за даними виробника, оголошення власників, календар вільних дат і бронювання.`.slice(0, 160);
     write(path, page({ path, title, desc, h1: `${m.name}: характеристики та оренда`, body, crumbs: [["Головна", "/"], ["Каталог техніки", "/katalog/"], [g.name, gp], [m.name, path]], ld, back: true }));
   }

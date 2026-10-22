@@ -2635,7 +2635,7 @@ export default function EquipmentMarketplace() {
           display: none;
           position: fixed;
           left: 0; right: 0; bottom: 0;
-          z-index: 60;
+          z-index: 45;
           background: #314A5D;
           border-top: 1px solid #587890;
           padding: 12px 16px;
@@ -2724,7 +2724,7 @@ export default function EquipmentMarketplace() {
           position: fixed;
           right: 20px;
           bottom: 90px;
-          z-index: 70;
+          z-index: 45;
           width: 52px;
           height: 52px;
           border-radius: 50%;
