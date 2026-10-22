@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { useLang, useTx, LOCALES } from "./lang.js";
 import { Label, Field, ErrorText, primaryBtn, smallBtn, inputStyle } from "./ui.jsx";
 
-const FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif";
+const FONT = "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif";
 const fmt = (iso, lang = "uk") => { try { return new Date(iso).toLocaleDateString(LOCALES[lang] || "uk-UA", { day: "numeric", month: "long", year: "numeric" }); } catch { return ""; } };
 
 export function ListingReviews({ items, available, user, isOwnerOfListing, onSubmit, onDelete, onSignIn }) {

@@ -7,14 +7,14 @@ import { OwnerResponses } from "./wanted.jsx";
 import { SlidingTabs } from "./motion/index.jsx";
 import { useLang, useTx, LOCALES, trType, trUnit } from "./lang.js";
 
-const FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif";
+const FONT = "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif";
 const GREEN = "#6fae6f";
 const RED = "#c96b5a";
 const AMBER = "#FFB52E";
 
 const confirmBtn = {
   ...primaryBtn,
-  background: "linear-gradient(180deg, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0.04) 42%, rgba(255,255,255,0) 100%), linear-gradient(90deg, rgba(62,154,92,0.62), rgba(111,174,111,0.46)), rgba(36,58,74,0.6)",
+  background: "linear-gradient(180deg, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0.04) 42%, rgba(255,255,255,0) 100%), linear-gradient(90deg, rgba(62,154,92,0.62), rgba(111,174,111,0.46)), rgba(19,63,99,0.6)",
   border: "1px solid rgba(150,215,160,0.7)",
   boxShadow: "inset 0 1.5px 0 rgba(255,255,255,0.4), inset 0 -9px 14px -7px rgba(111,174,111,0.6), 0 10px 20px -9px rgba(111,174,111,0.7), 0 2px 5px rgba(0,0,0,0.45)",
   minHeight: 48,
@@ -34,7 +34,7 @@ const declineBtn = {
 
 function Tabs({ tabs, value, onChange }) {
   return (
-    <div role="tablist" style={{ borderBottom: "1px solid #44627A", marginBottom: 14 }}>
+    <div role="tablist" style={{ borderBottom: "1px solid #3279AB", marginBottom: 14 }}>
       <SlidingTabs
         tabs={tabs}
         value={value}
@@ -44,7 +44,7 @@ function Tabs({ tabs, value, onChange }) {
           <>
             {t.label}
             {t.count > 0 && (
-              <span key={t.count} className="mo-badge-pop" style={{ display: "inline-block", marginLeft: 6, background: t.alert ? "#FF6A1A" : "#4D6C84", color: t.alert ? "#2B4254" : "#F4F4F1", borderRadius: 980, padding: "1px 7px", fontSize: 11, fontWeight: 600 }}>
+              <span key={t.count} className="mo-badge-pop" style={{ display: "inline-block", marginLeft: 6, background: t.alert ? "#FF6A1A" : "#3F7FAD", color: t.alert ? "#184A74" : "#F4F4F1", borderRadius: 980, padding: "1px 7px", fontSize: 11, fontWeight: 600 }}>
                 {t.count}
               </span>
             )}
@@ -70,9 +70,9 @@ const Empty = ({ children }) => (
 function EquipmentPhoto({ listing, height = 150 }) {
   const photo = listing?.photos && listing.photos[0];
   return photo ? (
-    <img src={photo} alt={listing.brand} style={{ width: "100%", height, objectFit: "cover", display: "block", borderRadius: 10, background: "#243A4A" }} />
+    <img src={photo} alt={listing.brand} style={{ width: "100%", height, objectFit: "cover", display: "block", borderRadius: 10, background: "#133F63" }} />
   ) : (
-    <div style={{ height: 70, borderRadius: 10, background: "#243A4A", border: "1px dashed #4D6C84", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: FONT, fontSize: 12, color: "#B8C8D3" }}>
+    <div style={{ height: 70, borderRadius: 10, background: "#133F63", border: "1px dashed #3F7FAD", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: FONT, fontSize: 12, color: "#B8C8D3" }}>
       {listing?.type || "Техніка"}
     </div>
   );
@@ -222,7 +222,7 @@ function RequestCard({ req, onCancel, onTogglePublic, onChoose }) {
         <div style={{ display: "flex", gap: 4, marginTop: 4 }} aria-label="Хід заявки">
           {REQUEST_STEPS.map((name, i) => (
             <div key={name} style={{ flex: 1 }}>
-              <div style={{ height: 4, borderRadius: 2, background: i < info.step ? (req.status === "taken" ? GREEN : "#FF6A1A") : "#4D6C84" }} />
+              <div style={{ height: 4, borderRadius: 2, background: i < info.step ? (req.status === "taken" ? GREEN : "#FF6A1A") : "#3F7FAD" }} />
               <div style={{ fontFamily: FONT, fontSize: 10.5, color: i < info.step ? "#F4F4F1" : "#B8C8D3", marginTop: 4 }}>{name}</div>
             </div>
           ))}
@@ -242,13 +242,13 @@ function RequestCard({ req, onCancel, onTogglePublic, onChoose }) {
       )}
 
       {responses.length > 0 && (
-        <div style={{ borderTop: "1px dashed #587890", paddingTop: 10, display: "flex", flexDirection: "column", gap: 10 }}>
+        <div style={{ borderTop: "1px dashed #4C8CB9", paddingTop: 10, display: "flex", flexDirection: "column", gap: 10 }}>
           <Label>Відгуки власників ({responses.length})</Label>
           {responses.map((r) => {
             const l = r.listing;
             const specs = Object.entries(l.specs || {}).filter(([, v]) => v && v !== "—").slice(0, 3);
             return (
-              <div key={r.id} style={{ border: `1px solid ${r.status === "chosen" ? GREEN : "#4D6C84"}`, padding: "10px 12px", display: "flex", flexDirection: "column", gap: 6 }}>
+              <div key={r.id} style={{ border: `1px solid ${r.status === "chosen" ? GREEN : "#3F7FAD"}`, padding: "10px 12px", display: "flex", flexDirection: "column", gap: 6 }}>
                 <EquipmentPhoto listing={l} height={110} />
                 <div style={{ fontFamily: FONT, fontSize: 15, fontWeight: 600 }}>{l.brand}</div>
                 <div style={{ fontFamily: FONT, fontSize: 12.5, color: "#C9D6DF" }}>
@@ -572,7 +572,7 @@ export function NotificationsPanel({ items, onOpenItem, onMarkAll }) {
           style={{
             textAlign: "left",
             background: n.read_at ? "transparent" : "rgba(255,106,26,0.07)",
-            border: "1px solid #4D6C84",
+            border: "1px solid #3F7FAD",
             borderLeft: `3px solid ${KIND_COLOR[n.kind] || "#B8C8D3"}`,
             color: "#F4F4F1",
             padding: "10px 12px",
@@ -604,7 +604,7 @@ const INBOX_STATUS = {
 // Телефон клієнта приходить із бази лише після того, як власник прийняв заявку.
 export function OwnerInbox({ items, onRespond, onRefresh }) {
   const [busyId, setBusyId] = useState(null);
-  const font = "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif";
+  const font = "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif";
 
   const act = async (id, action) => {
     setBusyId(id);
@@ -641,7 +641,7 @@ export function OwnerInbox({ items, onRespond, onRefresh }) {
         const st = INBOX_STATUS[x.dispatch_status] || INBOX_STATUS.sent;
         const link = contactLink(x.req_contact);
         return (
-          <div key={x.dispatch_id} style={{ border: "1px solid #A9BBC7", padding: "14px 14px", display: "flex", flexDirection: "column", gap: 8 }}>
+          <div key={x.dispatch_id} style={{ border: "1px solid #8FB6D3", padding: "14px 14px", display: "flex", flexDirection: "column", gap: 8 }}>
             <div style={{ display: "flex", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
               <Label>Заявка #{x.request_id}</Label>
               <span style={{ fontFamily: font, fontSize: 11.5, color: st.color }}>{st.text}</span>
@@ -846,7 +846,7 @@ export function AvailabilityCalendar({ ranges, months = 2, selectFrom, selectTo 
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }} aria-label={T.calLabel}>
       <div style={{ display: "flex", gap: 14, fontFamily: FONT, fontSize: 11.5, color: "#C9D6DF", flexWrap: "wrap" }}>
         <span><span style={{ display: "inline-block", width: 10, height: 10, background: "rgba(201,107,90,0.55)", marginRight: 6, verticalAlign: "middle" }} />{T.busy}</span>
-        <span><span style={{ display: "inline-block", width: 10, height: 10, border: "1px solid #A9BBC7", marginRight: 6, verticalAlign: "middle" }} />{T.free}</span>
+        <span><span style={{ display: "inline-block", width: 10, height: 10, border: "1px solid #8FB6D3", marginRight: 6, verticalAlign: "middle" }} />{T.free}</span>
         {selectFrom && selectTo && <span><span style={{ display: "inline-block", width: 10, height: 10, border: "1px solid #FF6A1A", marginRight: 6, verticalAlign: "middle" }} />{T.yours}</span>}
       </div>
       <div style={{ display: "flex", gap: 18, flexWrap: "wrap" }}>

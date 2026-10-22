@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { Plate, Label, Field, ErrorText, RoleTag, primaryBtn, smallBtn, selectStyle, inputStyle } from "./ui.jsx";
 import { fmtDate, daysInclusive, rangesOverlap, todayLocal, unitLabel, BUDGET_UNITS } from "./services/deals.js";
 
-const FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif";
+const FONT = "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif";
 const GREEN = "#6fae6f";
 const RED = "#c96b5a";
 const AMBER = "#FFB52E";
@@ -31,7 +31,7 @@ function WantedCard({ item, index = 0, user, onRespond, onUnpublish, onSignIn })
           <RoleTag kind="rent" />
           <Label>{item.req_type}</Label>
         </span>
-        <span style={{ fontFamily: FONT, fontSize: 11.5, color: item.req_responses > 0 ? GREEN : "#B8C8D3", border: `1px solid ${item.req_responses > 0 ? GREEN : "#4D6C84"}`, padding: "2px 8px" }}>
+        <span style={{ fontFamily: FONT, fontSize: 11.5, color: item.req_responses > 0 ? GREEN : "#B8C8D3", border: `1px solid ${item.req_responses > 0 ? GREEN : "#3F7FAD"}`, padding: "2px 8px" }}>
           {item.req_responses > 0 ? `Відгуків: ${item.req_responses}` : "Поки без відгуків"}
         </span>
       </div>
@@ -101,7 +101,7 @@ export function WantedBoard({ items, user, onPublish, onRespond, onUnpublish, on
 
   return (
     <div style={{ padding: "8px 24px 48px", maxWidth: 1100, margin: "0 auto" }}>
-      <h2 style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif", fontSize: 24, textTransform: "none", margin: "0 0 6px" }}>
+      <h2 style={{ fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif", fontSize: 24, textTransform: "none", margin: "0 0 6px" }}>
         {tx.title}
       </h2>
       <p style={{ fontFamily: FONT, fontSize: 13.5, color: "#C9D6DF", margin: "0 0 14px", maxWidth: 680 }}>

@@ -11,7 +11,7 @@ export const Plate = ({ children, style, className, onClick }) => (
       position: "relative",
       border: "1px solid rgba(255,255,255,0.08)",
       borderRadius: 16,
-      background: "#314A5D",
+      background: "#1F5683",
       boxShadow: "0 1px 2px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.25)",
       ...style,
     }}
@@ -21,21 +21,21 @@ export const Plate = ({ children, style, className, onClick }) => (
 );
 
 export const Label = ({ children }) => (
-  <div style={{ display: "flex", alignItems: "center", gap: 7, fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 11, letterSpacing: "0.01em", color: "#C9D6DF" }}>
+  <div style={{ display: "flex", alignItems: "center", gap: 7, fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 11, letterSpacing: "0.01em", color: "#C9D6DF" }}>
     <span style={{ width: 11, height: 1.4, background: "#FF6A1A", flexShrink: 0 }} />
     {children}
   </div>
 );
 
 export const badgeStyle = {
-  fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
+  fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
   fontSize: 11,
   padding: "5px 10px",
   height: "fit-content",
 };
 
 export const miniBtn = (color) => ({
-  background: "linear-gradient(180deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.02) 45%, rgba(255,255,255,0.05) 100%), rgba(36,58,74,0.58)",
+  background: "linear-gradient(180deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.02) 45%, rgba(255,255,255,0.05) 100%), rgba(19,63,99,0.58)",
   border: `1px solid ${color}`,
   color,
   borderRadius: 980,
@@ -50,14 +50,14 @@ export const miniBtn = (color) => ({
 
 export function ErrorText({ children }) {
   return (
-    <span style={{ color: "#c96b5a", fontSize: 11, fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif" }}>{children}</span>
+    <span style={{ color: "#c96b5a", fontSize: 11, fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif" }}>{children}</span>
   );
 }
 
 export function Field({ label, children, style }) {
   return (
     <label style={{ display: "flex", flexDirection: "column", gap: 6, ...style }}>
-      <span style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 10.5, letterSpacing: "0.08em", textTransform: "none", color: "#C9D6DF" }}>
+      <span style={{ fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 10.5, letterSpacing: "0.08em", textTransform: "none", color: "#C9D6DF" }}>
         {label}
       </span>
       {children}
@@ -68,9 +68,9 @@ export function Field({ label, children, style }) {
 import "./liquid.css";
 
 // Liquid glass: темне скло, кольорова кромка, блик зверху, кольорове світіння знизу
-const LG_FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif";
+const LG_FONT = "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif";
 export const lgGlass = (rgb, fill = 0.16) => ({
-  background: `linear-gradient(180deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.03) 40%, rgba(${rgb},${fill}) 100%), rgba(36,58,74,0.58)`,
+  background: `linear-gradient(180deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.03) 40%, rgba(${rgb},${fill}) 100%), rgba(19,63,99,0.58)`,
   border: `1px solid rgba(${rgb},0.6)`,
   boxShadow: `inset 0 1.5px 0 rgba(255,255,255,0.38), inset 0 -9px 14px -7px rgba(${rgb},0.55), inset 0 0 0 1px rgba(255,255,255,0.05), 0 10px 20px -9px rgba(${rgb},0.65), 0 2px 5px rgba(0,0,0,0.45)`,
   backdropFilter: "blur(10px) saturate(1.5)",
@@ -79,7 +79,7 @@ export const lgGlass = (rgb, fill = 0.16) => ({
 
 export const primaryBtn = {
   ...lgGlass("255,106,26", 0.5),
-  background: "linear-gradient(180deg, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0.04) 42%, rgba(255,181,46,0.0) 100%), linear-gradient(90deg, rgba(255,106,26,0.62), rgba(255,181,46,0.46)), rgba(36,58,74,0.6)",
+  background: "linear-gradient(180deg, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0.04) 42%, rgba(255,181,46,0.0) 100%), linear-gradient(90deg, rgba(255,106,26,0.62), rgba(255,181,46,0.46)), rgba(19,63,99,0.6)",
   border: "1px solid rgba(255,196,130,0.7)",
   color: "#ffffff",
   textShadow: "0 1px 2px rgba(0,0,0,0.55)",
@@ -109,22 +109,22 @@ export const smallBtn = {
 };
 
 export const selectStyle = {
-  background: "#314A5D",
+  background: "#1F5683",
   color: "#ffffff",
-  border: "1px solid #A9BBC7",
+  border: "1px solid #8FB6D3",
   borderRadius: 8,
   padding: "9px 12px",
-  fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
+  fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
   fontSize: 13,
 };
 
 export const inputStyle = {
-  background: "#314A5D",
+  background: "#1F5683",
   color: "#ffffff",
-  border: "1px solid #A9BBC7",
+  border: "1px solid #8FB6D3",
   borderRadius: 8,
   padding: "10px 12px",
-  fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
+  fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
   fontSize: 14,
   outline: "none",
 };
@@ -175,7 +175,7 @@ export function Modal({ children, onClose, title, splitLeft, wide }) {
       style={{
         position: "fixed",
         inset: 0,
-        background: "rgba(36,58,74,.7)",
+        background: "rgba(19,63,99,.7)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -191,7 +191,7 @@ export function Modal({ children, onClose, title, splitLeft, wide }) {
         aria-modal="true"
         aria-labelledby={titleId}
         style={{
-          background: "#314A5D",
+          background: "#1F5683",
           border: "1px solid #48484a",
           width: "100%",
           maxWidth: splitLeft ? 760 : wide ? 640 : 460,
@@ -204,8 +204,8 @@ export function Modal({ children, onClose, title, splitLeft, wide }) {
           <div
             style={{
               flex: "0 0 280px",
-              background: "linear-gradient(180deg, #314A5D, #2B4254)",
-              borderRight: "1px solid #44627A",
+              background: "linear-gradient(180deg, #1F5683, #184A74)",
+              borderRight: "1px solid #3279AB",
               padding: 28,
               display: "flex",
               flexDirection: "column",
@@ -213,14 +213,14 @@ export function Modal({ children, onClose, title, splitLeft, wide }) {
             }}
             className="auth-split-left"
           >
-            <div style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif", fontSize: 26, fontWeight: 600, lineHeight: 1.15 }}>
+            <div style={{ fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif", fontSize: 26, fontWeight: 600, lineHeight: 1.15 }}>
               ТЕХНІКА<br />ПОЧИНАЄТЬСЯ<br />З ПРАВИЛЬНОГО<br /><span style={{ color: "#FF6A1A" }}>ЗАПИТУ.</span>
             </div>
           </div>
         )}
         <div style={{ padding: 24, flex: 1 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
-          <h2 id={titleId} style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif", textTransform: "none", fontSize: 18, margin: 0 }}>
+          <h2 id={titleId} style={{ fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif", textTransform: "none", fontSize: 18, margin: 0 }}>
             {title}
           </h2>
           <button
@@ -248,7 +248,7 @@ export function RoleTag({ kind, style }) {
     <span
       style={{
         display: "inline-block",
-        fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
+        fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
         fontSize: 10.5,
         fontWeight: 700,
         letterSpacing: "0.06em",

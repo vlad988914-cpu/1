@@ -296,9 +296,37 @@ function useTranslate(lang) {
 const FontLink = () => (
   <link
     rel="stylesheet"
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
   />
 );
+
+
+// ---- Жовта діагональна смуга: їде вниз при прокрутці вниз і вгору при прокрутці вгору ----
+function SweepBand() {
+  const ref = useRef(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return undefined;
+    const calm = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    let raf = 0;
+    const upd = () => {
+      raf = 0;
+      const h = document.documentElement.scrollHeight - window.innerHeight;
+      const p = calm ? 0.3 : h > 0 ? Math.min(1, Math.max(0, window.scrollY / h)) : 0;
+      el.style.setProperty("--p", p.toFixed(4));
+    };
+    const on = () => { if (!raf) raf = requestAnimationFrame(upd); };
+    upd();
+    window.addEventListener("scroll", on, { passive: true });
+    window.addEventListener("resize", on);
+    return () => { window.removeEventListener("scroll", on); window.removeEventListener("resize", on); if (raf) cancelAnimationFrame(raf); };
+  }, []);
+  return (
+    <div ref={ref} className="sweep-band" aria-hidden="true">
+      <div className="sweep-band-in"><i /><i /></div>
+    </div>
+  );
+}
 
 // ---- Seed data ----
 const TYPES = [
@@ -446,7 +474,7 @@ function FaqAccordion({ items }) {
         <div key={i} className="faq-item">
           <button className="faq-question" onClick={() => setOpenIndex(openIndex === i ? null : i)}>
             <span>{item.q}</span>
-            <span style={{ color: "#FF6A1A", fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", flexShrink: 0 }}>
+            <span style={{ color: "#FF6A1A", fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", flexShrink: 0 }}>
               {openIndex === i ? "−" : "+"}
             </span>
           </button>
@@ -740,7 +768,7 @@ const CAN_KEYS = /глибина|виліт|висота|вантажопідй�
 
 function ModelPage({ model, listings, user, ratings, busyRanges, selectedId, onSelect, onClose, onRate, onBook, onRequest, onSignIn, reviews, onReviewSubmit, onReviewDelete }) {
   const g = model.group;
-  const FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif";
+  const FONT = "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif";
   const lang = useLang();
   const T = TX[lang] || TX.uk;
   const info = trInfo(g.type, EQUIPMENT_INFO[g.type], lang);
@@ -769,18 +797,18 @@ function ModelPage({ model, listings, user, ratings, busyRanges, selectedId, onS
           </span>
         </div>
         <div className="mk" style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 12 }}>
-          {model.key.map((k) => <span key={k} style={{ fontFamily: FONT, fontSize: 13, padding: "4px 12px", border: "1px solid #587890", borderRadius: 980, color: "#FFB81C", background: "#2B4254" }}>{trVal(k, lang)}</span>)}
+          {model.key.map((k) => <span key={k} style={{ fontFamily: FONT, fontSize: 13, padding: "4px 12px", border: "1px solid #4C8CB9", borderRadius: 980, color: "#FFB81C", background: "#184A74" }}>{trVal(k, lang)}</span>)}
         </div>
       </div>
 
       <section style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         <h2 style={h2}>{T.can}</h2>
         {info && <p style={{ margin: 0, fontFamily: FONT, fontSize: 14.5, lineHeight: 1.6, color: "#E3EBF0" }}>{info.definition}</p>}
-        {info && <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>{info.uses.map((u) => <span key={u} style={{ fontFamily: FONT, fontSize: 13, padding: "5px 12px", border: "1px solid #587890", borderRadius: 980 }}>{u}</span>)}</div>}
+        {info && <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>{info.uses.map((u) => <span key={u} style={{ fontFamily: FONT, fontSize: 13, padding: "5px 12px", border: "1px solid #4C8CB9", borderRadius: 980 }}>{u}</span>)}</div>}
         {tiles.length > 0 && (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 10, marginTop: 4 }}>
             {tiles.map(([k, v]) => (
-              <div key={k} style={{ border: "1px solid #44627A", borderRadius: 14, padding: "12px 14px", background: "#243A4A" }}>
+              <div key={k} style={{ border: "1px solid #3279AB", borderRadius: 14, padding: "12px 14px", background: "#133F63" }}>
                 <div style={{ fontFamily: FONT, fontSize: 12, color: "#C9D6DF" }}>{trLabel(k, lang)}</div>
                 <div style={{ fontFamily: FONT, fontSize: 17, fontWeight: 700, marginTop: 4 }}>{trVal(v.split(" (")[0], lang)}</div>
               </div>
@@ -791,9 +819,9 @@ function ModelPage({ model, listings, user, ratings, busyRanges, selectedId, onS
 
       <section style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         <h2 style={h2}>{T.specs}</h2>
-        <div style={{ border: "1px solid #44627A", borderRadius: 16, background: "#243A4A", padding: "4px 16px" }}>
+        <div style={{ border: "1px solid #3279AB", borderRadius: 16, background: "#133F63", padding: "4px 16px" }}>
           {model.specs.map(([k, v], i) => (
-            <div key={k} style={{ display: "flex", justifyContent: "space-between", gap: 16, padding: "10px 0", borderTop: i ? "1px solid #44627A" : "none", fontFamily: FONT, fontSize: 14.5 }}>
+            <div key={k} style={{ display: "flex", justifyContent: "space-between", gap: 16, padding: "10px 0", borderTop: i ? "1px solid #3279AB" : "none", fontFamily: FONT, fontSize: 14.5 }}>
               <span style={{ color: "#C9D6DF" }}>{trLabel(k, lang)}</span>
               <span style={{ textAlign: "right" }}>{trVal(v, lang)}</span>
             </div>
@@ -805,7 +833,7 @@ function ModelPage({ model, listings, user, ratings, busyRanges, selectedId, onS
       <section ref={bookRef} id="booking" style={{ display: "flex", flexDirection: "column", gap: 12, scrollMarginTop: 80 }}>
         <h2 style={h2}>{T.calBook}</h2>
         {!sel ? (
-          <div style={{ border: "1px solid #587890", borderRadius: 14, padding: 16, fontFamily: FONT, fontSize: 14, color: "#E3EBF0", lineHeight: 1.55 }}>
+          <div style={{ border: "1px solid #4C8CB9", borderRadius: 14, padding: 16, fontFamily: FONT, fontSize: 14, color: "#E3EBF0", lineHeight: 1.55 }}>
             {T.noSel}
           </div>
         ) : (
@@ -817,7 +845,7 @@ function ModelPage({ model, listings, user, ratings, busyRanges, selectedId, onS
                 ))}
               </div>
             )}
-            <div style={{ border: "1px solid #44627A", borderRadius: 16, padding: 14, background: "#243A4A", display: "flex", flexDirection: "column", gap: 10 }}>
+            <div style={{ border: "1px solid #3279AB", borderRadius: 16, padding: 14, background: "#133F63", display: "flex", flexDirection: "column", gap: 10 }}>
               <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap", fontFamily: FONT }}>
                 <div>
                   <div style={{ fontWeight: 700, fontSize: 16 }}>{sel.brand}</div>
@@ -843,7 +871,7 @@ function ModelPage({ model, listings, user, ratings, busyRanges, selectedId, onS
       </section>
 
       {sel && (
-        <div style={{ paddingTop: 8, borderTop: "1px solid #44627A" }}>
+        <div style={{ paddingTop: 8, borderTop: "1px solid #3279AB" }}>
           <ListingReviews items={reviews.items} available={reviews.ok} user={user} isOwnerOfListing={isOwn} onSubmit={onReviewSubmit} onDelete={onReviewDelete} onSignIn={() => onSignIn(T.signInReviewMsg)} />
         </div>
       )}
@@ -971,8 +999,8 @@ const carouselArrowStyle = (side) => ({
   width: 30,
   height: 30,
   borderRadius: "50%",
-  border: "1px solid #587890",
-  background: "#314A5D",
+  border: "1px solid #4C8CB9",
+  background: "#1F5683",
   color: "#ffffff",
   fontSize: 16,
   cursor: "pointer",
@@ -989,7 +1017,7 @@ function Stars({ value = 0, size = 14, onPick, mine = 0 }) {
   const shown = hover || mine || value;
   const star = (i) => {
     const fill = Math.max(0, Math.min(1, shown - (i - 1)));
-    const sty = { width: size, height: size, display: "inline-block", position: "relative", fontSize: size, lineHeight: 1, color: "#587890" };
+    const sty = { width: size, height: size, display: "inline-block", position: "relative", fontSize: size, lineHeight: 1, color: "#4C8CB9" };
     return (
       <span key={i} style={sty} aria-hidden="true">
         ★
@@ -1011,7 +1039,7 @@ function Stars({ value = 0, size = 14, onPick, mine = 0 }) {
 }
 function RatingLine({ stat, size = 13 }) {
   const T = TX[useLang()] || TX.uk;
-  const font = "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+  const font = "'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
   if (!stat || !stat.count) {
     return <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11.5, color: "#7d8387", fontFamily: font }}><Stars value={0} size={size} />{T.noRatings}</span>;
   }
@@ -1057,9 +1085,9 @@ function VideoPeek({ video, children }) {
     <span ref={ref} onMouseEnter={show} onMouseLeave={hide} style={{ display: "inline-block", cursor: canHover ? "zoom-in" : undefined }}>
       {children}
       {pos && typeof document !== "undefined" && createPortal(
-        <div className="video-peek" style={{ position: "fixed", left: pos.x, top: pos.y, width: W, zIndex: 9999, pointerEvents: "none", background: "#243A4A", border: "1px solid #587890", borderRadius: 14, overflow: "hidden", boxShadow: "0 18px 50px rgba(0,0,0,.6)" }}>
+        <div className="video-peek" style={{ position: "fixed", left: pos.x, top: pos.y, width: W, zIndex: 9999, pointerEvents: "none", background: "#133F63", border: "1px solid #4C8CB9", borderRadius: 14, overflow: "hidden", boxShadow: "0 18px 50px rgba(0,0,0,.6)" }}>
           <video src={video.src} poster={video.poster} autoPlay muted loop playsInline preload="auto" style={{ display: "block", width: W, height: H, objectFit: "cover", background: "#000" }} />
-          <div style={{ padding: "6px 12px", fontSize: 11.5, color: "#C9D6DF", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>Відео техніки</div>
+          <div style={{ padding: "6px 12px", fontSize: 11.5, color: "#C9D6DF", fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>Відео техніки</div>
         </div>, document.body)}
     </span>
   );
@@ -2190,13 +2218,14 @@ export default function EquipmentMarketplace() {
         position: "relative",
         isolation: "isolate",
         minHeight: "100vh",
-        background: "#2B4254",
+        background: "linear-gradient(165deg, #2C7FB3 0%, #1E5F8F 38%, #153F66 78%, #11334F 100%)",
         color: "#ffffff",
-        fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
+        fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
       }}
     >
       <FontLink />
       <KineticGrid fixed dim={0.55} />
+      <SweepBand />
       <ScrollProgress />
       <SceneAura />
       <style>{`
@@ -2372,7 +2401,7 @@ export default function EquipmentMarketplace() {
           justify-content: center;
           gap: 6px;
           background: #ffffff;
-          color: #2B4254;
+          color: #184A74;
           border: 1px solid rgba(0,0,0,0.1);
           border-radius: 980px;
           font-size: 13px;
@@ -2380,10 +2409,10 @@ export default function EquipmentMarketplace() {
           cursor: pointer;
           white-space: nowrap;
           transition: background-color 0.2s ease, color 0.2s ease;
-          font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif;
+          font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif;
         }
         .hero-pill:hover {
-          background: #2B4254;
+          background: #184A74;
           color: #ffffff;
         }
         .hero-pill-outline {
@@ -2393,7 +2422,7 @@ export default function EquipmentMarketplace() {
         }
         .hero-pill-outline:hover {
           background: #ffffff;
-          color: #2B4254;
+          color: #184A74;
         }
 
         :root {
@@ -2438,7 +2467,7 @@ export default function EquipmentMarketplace() {
           margin-bottom: 20px;
         }
         .section-divider .num {
-          font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif;
+          font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif;
           font-size: 11px;
           color: #B8C8D3;
           flex-shrink: 0;
@@ -2446,10 +2475,10 @@ export default function EquipmentMarketplace() {
         .section-divider .line {
           flex: 1;
           height: 1px;
-          background: #44627A;
+          background: #3279AB;
         }
         .section-divider .title {
-          font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif;
+          font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif;
           font-size: 11px;
           letter-spacing: 0.04em;
           color: #C9D6DF;
@@ -2540,15 +2569,15 @@ export default function EquipmentMarketplace() {
           border-radius: 999px;
           border: none;
           cursor: pointer;
-          color: #2B4254;
-          font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif;
+          color: #184A74;
+          font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif;
           font-size: 13px;
           font-weight: 700;
           letter-spacing: 0.03em;
           text-transform: uppercase;
           padding: 13px 24px;
           background:
-            linear-gradient(180deg, rgba(43,66,84,0) 45%, rgba(43,66,84,0.18) 100%),
+            linear-gradient(180deg, rgba(24,74,116,0) 45%, rgba(24,74,116,0.18) 100%),
             linear-gradient(90deg, rgba(255,224,138,0.9) 0%, rgba(255,176,32,0.95) 45%, rgba(255,90,31,0.95) 100%);
           box-shadow: 0 6px 22px rgba(255,144,32,0.3), inset 0 1px 0 rgba(255,255,255,0.45);
         }
@@ -2566,6 +2595,14 @@ export default function EquipmentMarketplace() {
           mask-composite: exclude;
         }
 
+
+        .sweep-band { --bw: min(15vw, 210px); position: fixed; left: 50%; top: 0; width: 0; height: 0; z-index: -1; pointer-events: none; transform: translate3d(0, calc(-6vh + var(--p, 0) * 112vh), 0); will-change: transform; }
+        .sweep-band-in { position: absolute; left: calc(var(--bw) / -2); top: -45vh; width: var(--bw); height: 90vh; transform: rotate(33deg); display: flex; gap: calc(var(--bw) * .14); }
+        .sweep-band-in i { display: block; flex: 1 1 0; background: linear-gradient(180deg, #FFC21F, #FF9A1A); box-shadow: 0 0 70px rgba(255,170,40,.35); border-radius: 2px; }
+        .sweep-band-in i:last-child { flex: .2; background: #FFD76A; box-shadow: none; }
+        @media (max-width: 700px) { .sweep-band { --bw: 22vw; } .sweep-band-in { height: 70vh; top: -35vh; } .sweep-band-in i { opacity: .6; } }
+        [data-scene] :is(h1, h2, h3, p, li) { text-shadow: 0 0 3px rgba(10, 35, 60, .8), 0 1px 12px rgba(10, 35, 60, .55); }
+        @media (prefers-reduced-motion: reduce) { .sweep-band { transition: none; } }
         .sticky-header {
           position: sticky;
           top: 0;
@@ -2601,7 +2638,7 @@ export default function EquipmentMarketplace() {
           z-index: 1;
         }
 
-        .faq-item { border-bottom: 1px solid #587890; }
+        .faq-item { border-bottom: 1px solid #4C8CB9; }
         .faq-question {
           width: 100%;
           text-align: left;
@@ -2609,7 +2646,7 @@ export default function EquipmentMarketplace() {
           border: none;
           color: #ffffff;
           padding: 16px 4px;
-          font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif;
+          font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif;
           font-size: 14.5px;
           font-weight: 500;
           cursor: pointer;
@@ -2636,8 +2673,8 @@ export default function EquipmentMarketplace() {
           position: fixed;
           left: 0; right: 0; bottom: 0;
           z-index: 45;
-          background: #314A5D;
-          border-top: 1px solid #587890;
+          background: #1F5683;
+          border-top: 1px solid #4C8CB9;
           padding: 12px 16px;
           align-items: center;
           justify-content: space-between;
@@ -2651,7 +2688,7 @@ export default function EquipmentMarketplace() {
           body { padding-bottom: 0; }
         }
         .skeleton {
-          background: linear-gradient(90deg, #314A5D 25%, #314A5D 50%, #314A5D 75%);
+          background: linear-gradient(90deg, #1F5683 25%, #1F5683 50%, #1F5683 75%);
           background-size: 200% 100%;
           border-radius: 16px;
           border: 1px solid rgba(255,255,255,0.06);
@@ -2684,8 +2721,8 @@ export default function EquipmentMarketplace() {
 
         .category-card {
           position: relative;
-          background: linear-gradient(180deg, #314A5D 0%, #314A5D 100%);
-          border: 1px solid #587890;
+          background: linear-gradient(180deg, #1F5683 0%, #1F5683 100%);
+          border: 1px solid #4C8CB9;
           border-radius: 16px;
           padding: 26px 16px;
           text-align: center;
@@ -2712,7 +2749,7 @@ export default function EquipmentMarketplace() {
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          background: radial-gradient(circle at 50% 0%, rgba(255,176,32,0.15), rgba(43,66,84,0.97) 60%);
+          background: radial-gradient(circle at 50% 0%, rgba(255,176,32,0.15), rgba(24,74,116,0.97) 60%);
           transform: translateY(100%);
           transition: transform 0.3s cubic-bezier(0.16,1,0.3,1);
           padding: 16px;
@@ -2729,7 +2766,7 @@ export default function EquipmentMarketplace() {
           height: 52px;
           border-radius: 50%;
           background: #FF6A1A;
-          color: #2B4254;
+          color: #184A74;
           border: none;
           font-size: 20px;
           cursor: pointer;
@@ -2744,16 +2781,16 @@ export default function EquipmentMarketplace() {
           max-width: calc(100vw - 40px);
           height: 600px;
           max-height: 78vh;
-          background: #314A5D;
-          border: 1px solid #587890;
+          background: #1F5683;
+          border: 1px solid #4C8CB9;
           display: flex;
           flex-direction: column;
           box-shadow: 0 12px 40px rgba(0,0,0,.5);
         }
         .ai-panel-header {
           padding: 12px 14px;
-          border-bottom: 1px solid #587890;
-          font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif;
+          border-bottom: 1px solid #4C8CB9;
+          font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif;
           font-size: 12px;
           text-transform: uppercase;
           letter-spacing: 0.06em;
@@ -2764,7 +2801,7 @@ export default function EquipmentMarketplace() {
         }
         .ai-voice-toggle {
           background: none;
-          border: 1px solid #587890;
+          border: 1px solid #4C8CB9;
           color: #C9D6DF;
           font-size: 13px;
           width: 26px;
@@ -2812,14 +2849,14 @@ export default function EquipmentMarketplace() {
         .ai-bubble.user {
           align-self: flex-end;
           background: #FF6A1A;
-          color: #2B4254;
+          color: #184A74;
         }
         .ai-bubble.assistant {
           max-width: 96%;
           align-self: flex-start;
-          background: #314A5D;
+          background: #1F5683;
           color: #ffffff;
-          border: 1px solid #587890;
+          border: 1px solid #4C8CB9;
         }
         .ai-blocks {
           margin-top: 8px;
@@ -2828,7 +2865,7 @@ export default function EquipmentMarketplace() {
           gap: 2px;
         }
         .ai-block {
-          border-top: 1px solid #4D6C84;
+          border-top: 1px solid #3F7FAD;
           padding: 2px 0;
         }
         .ai-block summary {
@@ -2860,7 +2897,7 @@ export default function EquipmentMarketplace() {
           background: none;
           border: 1px solid #FF6A1A;
           color: #FF6A1A;
-          font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif;
+          font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif;
           font-size: 11px;
           padding: 6px 10px;
           cursor: pointer;
@@ -2868,7 +2905,7 @@ export default function EquipmentMarketplace() {
         }
         .ai-panel-input {
           display: flex;
-          border-top: 1px solid #587890;
+          border-top: 1px solid #4C8CB9;
         }
         .ai-panel-input input {
           flex: 1;
@@ -2876,13 +2913,13 @@ export default function EquipmentMarketplace() {
           border: none;
           color: #ffffff;
           padding: 10px 12px;
-          font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif;
+          font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif;
           font-size: 13px;
           outline: none;
         }
         .ai-panel-input button {
           background: #FF6A1A;
-          color: #2B4254;
+          color: #184A74;
           border: none;
           width: 44px;
           cursor: pointer;
@@ -2929,7 +2966,7 @@ export default function EquipmentMarketplace() {
             border: "none",
             cursor: "pointer",
             color: "#C9D6DF",
-            fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
+            fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
             fontSize: 13,
             transition: "color 0.2s ease",
           }}
@@ -2987,7 +3024,7 @@ export default function EquipmentMarketplace() {
                   alignItems: "center",
                   justifyContent: "center",
                   gap: 6,
-                  fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
+                  fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
                   fontSize: 12,
                   letterSpacing: "0.06em",
                   textTransform: "none",
@@ -3024,7 +3061,7 @@ export default function EquipmentMarketplace() {
                   display: "flex",
                   alignItems: "center",
                   gap: 5,
-                  fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
+                  fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
                   fontSize: 10.5,
                   padding: "6px 9px",
                   borderRadius: 8,
@@ -3064,14 +3101,14 @@ export default function EquipmentMarketplace() {
               }}
               aria-label={`Сповіщення${unreadCount ? ` (${unreadCount})` : ""}`}
               className={bellRing ? "mo-ring" : undefined}
-              style={{ position: "relative", background: "#314A5D", border: "1px solid #587890", width: 38, height: 38, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#ffffff" }}
+              style={{ position: "relative", background: "#1F5683", border: "1px solid #4C8CB9", width: 38, height: 38, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#ffffff" }}
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
                 <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
               </svg>
               {unreadCount > 0 && (
-                <span key={unreadCount} className="mo-badge-pop" style={{ position: "absolute", top: -7, right: -7, background: "#FF6A1A", color: "#2B4254", borderRadius: 980, fontSize: 10.5, fontWeight: 700, minWidth: 18, height: 18, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 4px" }}>
+                <span key={unreadCount} className="mo-badge-pop" style={{ position: "absolute", top: -7, right: -7, background: "#FF6A1A", color: "#184A74", borderRadius: 980, fontSize: 10.5, fontWeight: 700, minWidth: 18, height: 18, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 4px" }}>
                   {unreadCount > 99 ? "99+" : unreadCount}
                 </span>
               )}
@@ -3086,16 +3123,16 @@ export default function EquipmentMarketplace() {
                 display: "flex",
                 alignItems: "center",
                 gap: 8,
-                background: "#314A5D",
-                border: "1px solid #587890",
+                background: "#1F5683",
+                border: "1px solid #4C8CB9",
                 padding: "8px 14px",
                 cursor: "pointer",
                 color: "#ffffff",
-                fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
+                fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
                 fontSize: 12,
               }}
             >
-              <span style={{ width: 20, height: 20, borderRadius: "50%", background: "#FF6A1A", color: "#2B4254", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 11 }}>
+              <span style={{ width: 20, height: 20, borderRadius: "50%", background: "#FF6A1A", color: "#184A74", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 11 }}>
                 {user.name.trim().charAt(0).toUpperCase()}
               </span>
               <span style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", lineHeight: 1.15 }}>
@@ -3126,7 +3163,7 @@ export default function EquipmentMarketplace() {
             style={{
               "--i": 0,
               display: "inline-block",
-              fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
+              fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
               fontSize: 11,
               letterSpacing: "0.14em",
               textTransform: "none",
@@ -3158,7 +3195,7 @@ export default function EquipmentMarketplace() {
           </div>
           <h1
             style={{
-              fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif",
+              fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif",
               fontWeight: 600,
               fontSize: "clamp(28px, 5vw, 44px)",
               lineHeight: 1.15,
@@ -3234,16 +3271,16 @@ export default function EquipmentMarketplace() {
       {/* 3D viewer temporarily removed — revisit later */}
 
       {/* How it works — the request workflow, as a technical process line */}
-      <section id="how-it-works" data-scene style={{ padding: "104px 24px 48px", marginTop: -56, borderBottom: "1px solid #44627A" }}>
+      <section id="how-it-works" data-scene style={{ padding: "104px 24px 48px", marginTop: -56, borderBottom: "1px solid #3279AB" }}>
         <div style={{ maxWidth: 900, margin: "0 auto" }}>
           <SectionDivider n={2} of={5} title={t("how_it_works_label")} />
-          <h2 style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif", fontSize: 24, margin: "0 0 32px" }}>
+          <h2 style={{ fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif", fontSize: 24, margin: "0 0 32px" }}>
             {t("how_it_works_title")}
           </h2>
           <div className="mo-steps mo-io" style={{ display: "flex", flexWrap: "wrap", gap: 24 }}>
             {[t("step_1"), t("step_2"), t("step_3"), t("step_4"), t("step_5")].map((step, i) => (
               <div key={i} className="mo-step" style={{ "--i": i, flex: "1 1 150px", minWidth: 140 }}>
-                <div style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 12, color: "#B8C8D3" }}>
+                <div style={{ fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 12, color: "#B8C8D3" }}>
                   {String(i + 1).padStart(2, "0")}
                 </div>
                 <div className="mo-dash" style={{ width: 20, height: 1.4, background: "#FF6A1A", margin: "8px 0 10px" }} />
@@ -3255,7 +3292,7 @@ export default function EquipmentMarketplace() {
       </section>
 
       {/* Honest placeholder instead of mock trust signals */}
-      <div data-scene style={{ padding: "22px 24px 20px", borderBottom: "1px solid #44627A", textAlign: "center" }}>
+      <div data-scene style={{ padding: "22px 24px 20px", borderBottom: "1px solid #3279AB", textAlign: "center" }}>
         {listings.filter((l) => l.ownerId).length > 0 && (
           <div className="mo-stats">
             {[
@@ -3272,7 +3309,7 @@ export default function EquipmentMarketplace() {
             ); })}
           </div>
         )}
-        <span style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 12, color: "#C9D6DF", letterSpacing: "0.04em" }}>
+        <span style={{ fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 12, color: "#C9D6DF", letterSpacing: "0.04em" }}>
           {t("trust_line")}
         </span>
       </div>
@@ -3282,7 +3319,7 @@ export default function EquipmentMarketplace() {
         {role === "client" && <SectionDivider n={3} of={5} title="КАТАЛОГ ТЕХНІКИ" />}
         <h2
           style={{
-            fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif",
+            fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif",
             fontWeight: 600,
             fontSize: "clamp(24px, 4vw, 38px)",
             textTransform: "none",
@@ -3410,7 +3447,7 @@ export default function EquipmentMarketplace() {
       {/* FAQ */}
       <div data-scene style={{ padding: "8px 24px 64px", maxWidth: 640, margin: "0 auto" }}>
         <SectionDivider n={5} of={5} title={t("faq_label").toUpperCase()} />
-        <h2 style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif", fontSize: 22, textTransform: "none", margin: "0 0 12px" }}>
+        <h2 style={{ fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif", fontSize: 22, textTransform: "none", margin: "0 0 12px" }}>
           {t("faq_title")}
         </h2>
         <FaqAccordion items={t("faq_items")} />
@@ -3419,7 +3456,7 @@ export default function EquipmentMarketplace() {
       </div>
 
       {/* Footer */}
-      <footer className="site-footer" style={{ borderTop: "1px solid #44627A", padding: "32px 24px", marginTop: 8 }}>
+      <footer className="site-footer" style={{ borderTop: "1px solid #3279AB", padding: "32px 24px", marginTop: 8 }}>
         <div
           style={{
             maxWidth: 1000,
@@ -3431,7 +3468,7 @@ export default function EquipmentMarketplace() {
           }}
         >
           <div>
-            <div style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif", fontWeight: 700, fontSize: 16, textTransform: "none" }}>
+            <div style={{ fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif", fontWeight: 700, fontSize: 16, textTransform: "none" }}>
               ТЕХ<span style={{ color: "#FF6A1A" }}>МАЙДАНЧИК</span>
             </div>
             <p style={{ color: "#C9D6DF", fontSize: 12, marginTop: 8, maxWidth: 260, lineHeight: 1.6 }}>
@@ -3464,7 +3501,7 @@ export default function EquipmentMarketplace() {
             maxWidth: 1000,
             margin: "24px auto 0",
             paddingTop: 16,
-            borderTop: "1px solid #44627A",
+            borderTop: "1px solid #3279AB",
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
@@ -3472,7 +3509,7 @@ export default function EquipmentMarketplace() {
             gap: 10,
           }}
         >
-          <span style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 11, color: "#B8C8D3" }}>
+          <span style={{ fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 11, color: "#B8C8D3" }}>
             © {new Date().getFullYear()} ТехМайданчик
           </span>
           <button
@@ -3487,7 +3524,7 @@ export default function EquipmentMarketplace() {
               background: "none",
               border: "none",
               color: "#B8C8D3",
-              fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
+              fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
               fontSize: 11,
               cursor: "pointer",
               textDecoration: "underline",
@@ -3524,7 +3561,7 @@ export default function EquipmentMarketplace() {
               <RoleTag kind="lease" />
               <RatingLine stat={ratings[detailListing.id]} size={16} />
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", fontSize: 13, color: "#C9D6DF", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", fontSize: 13, color: "#C9D6DF", fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
               <span>{user && user.id && detailListing.ownerId === user.id ? "Це ваша техніка" : "Ваша оцінка:"}</span>
               {!(user && user.id && detailListing.ownerId === user.id) && (
                 <Stars value={0} size={20} mine={(ratings[detailListing.id] && ratings[detailListing.id].mine) || 0} onPick={(n) => handleRate(detailListing, n)} />
@@ -3555,7 +3592,7 @@ export default function EquipmentMarketplace() {
                       objectFit: "cover",
                       cursor: "pointer",
                       borderRadius: 6,
-                      border: i === detailPhotoIndex ? "2px solid #FF6A1A" : "1px solid #587890",
+                      border: i === detailPhotoIndex ? "2px solid #FF6A1A" : "1px solid #4C8CB9",
                     }}
                   />
                 ))}
@@ -3569,7 +3606,7 @@ export default function EquipmentMarketplace() {
 
             <div>
               <Label>{tType(detailListing.type, lang)}</Label>
-              <div style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif", fontSize: 22, fontWeight: 600 }}>
+              <div style={{ fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif", fontSize: 22, fontWeight: 600 }}>
                 {detailListing.brand}
               </div>
               <div style={{ fontSize: 13, color: "#C9D6DF", marginTop: 2 }}>{detailListing.region}</div>
@@ -3585,14 +3622,14 @@ export default function EquipmentMarketplace() {
                   <Label>{t("guide_uses_label")}</Label>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
                     {trInfo(detailListing.type, EQUIPMENT_INFO[detailListing.type], lang).uses.map((u) => (
-                      <span key={u} style={{ fontSize: 12, padding: "4px 10px", borderRadius: 980, border: "1px solid #587890", color: "#FFB52E" }}>{u}</span>
+                      <span key={u} style={{ fontSize: 12, padding: "4px 10px", borderRadius: 980, border: "1px solid #4C8CB9", color: "#FFB52E" }}>{u}</span>
                     ))}
                   </div>
                 </div>
               </div>
             )}
 
-            <div style={{ borderTop: "1px solid #44627A", borderBottom: "1px solid #44627A", padding: "12px 0" }}>
+            <div style={{ borderTop: "1px solid #3279AB", borderBottom: "1px solid #3279AB", padding: "12px 0" }}>
               <Label>{lang === "ru" ? "Параметры" : lang === "en" ? "Parameters" : "Параметри"}</Label>
               <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 8 }}>
                 {[[lang === "ru" ? "Тип" : lang === "en" ? "Type" : "Тип", tType(detailListing.type, lang)], [lang === "ru" ? "Регион" : lang === "en" ? "Region" : "Регіон", detailListing.region], ...Object.entries(detailListing.specs).filter(([k, v]) => v && v !== "—" && !k.startsWith("_")).map(([k, v]) => [trLabel(k, lang), trVal(v, lang)])].map(([k, v]) => (
@@ -3606,7 +3643,7 @@ export default function EquipmentMarketplace() {
 
             <div
               style={{
-                fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif",
+                fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif",
                 fontSize: 26,
                 fontWeight: 600,
                 background: "linear-gradient(90deg, #FF6A1A, #FFB52E)",
@@ -3652,7 +3689,7 @@ export default function EquipmentMarketplace() {
             </button>
 
             {detailListing.ownerId && user && (user.id === detailListing.ownerId || user.role === "dispatcher") && (
-              <div style={{ display: "flex", gap: 8, paddingTop: 4, borderTop: "1px dashed #A9BBC7" }}>
+              <div style={{ display: "flex", gap: 8, paddingTop: 4, borderTop: "1px dashed #8FB6D3" }}>
                 <button type="button" onClick={() => toggleAvailability(detailListing)} style={{ ...smallBtn, flex: 1 }}>
                   {detailListing.available ? "Позначити зайнятою" : "Позначити вільною"}
                 </button>
@@ -3662,7 +3699,7 @@ export default function EquipmentMarketplace() {
               </div>
             )}
 
-            <div style={{ paddingTop: 8, borderTop: "1px solid #44627A" }}>
+            <div style={{ paddingTop: 8, borderTop: "1px solid #3279AB" }}>
               <ListingReviews
                 items={listingReviews.items}
                 available={listingReviews.ok}
@@ -3821,7 +3858,7 @@ export default function EquipmentMarketplace() {
       />
 
       <div className="sticky-cta">
-        <span style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 12.5, color: "#C9D6DF" }}>
+        <span style={{ fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 12.5, color: "#C9D6DF" }}>
           {role === "owner" ? "Готові здати техніку?" : "Потрібна техніка зараз?"}
         </span>
         <button
@@ -3843,9 +3880,9 @@ export default function EquipmentMarketplace() {
             left: "50%",
             transform: "translateX(-50%)",
             background: "#FF6A1A",
-            color: "#2B4254",
+            color: "#184A74",
             padding: "10px 18px",
-            fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
+            fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
             fontSize: 12.5,
             fontWeight: 700,
             letterSpacing: "0.02em",
@@ -3918,11 +3955,11 @@ function DispatcherPanel(props) {
       tabs: [["users", "Користувачі", unseenUsers > 0 ? unseenUsers : users.length]],
     },
   ];
-  const sansFont = "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif";
+  const sansFont = "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif";
   const quiet = (key) => (key === "users" && unseenUsers === 0) || key === "clients" || key === "owners";
   return (
     <div>
-      <div role="tablist" aria-label="Розділи диспетчерської" style={{ display: "flex", flexWrap: "wrap", gap: "10px 30px", padding: "0 24px", borderBottom: "1px solid #44627A", margin: "0 0 14px" }}>
+      <div role="tablist" aria-label="Розділи диспетчерської" style={{ display: "flex", flexWrap: "wrap", gap: "10px 30px", padding: "0 24px", borderBottom: "1px solid #3279AB", margin: "0 0 14px" }}>
         {groups.map((g) => (
           <div key={g.title} role="presentation" style={{ display: "flex", flexDirection: "column" }}>
             <div style={{ fontFamily: sansFont, fontSize: 12.5, fontWeight: 700, letterSpacing: "0.09em", textTransform: "uppercase", color: g.color, padding: "4px 14px 0", borderTop: `2px solid ${g.color}` }}>
@@ -3937,7 +3974,7 @@ function DispatcherPanel(props) {
                 <>
                   {tab.label}
                   {tab.count > 0 && (
-                    <span style={{ marginLeft: 6, background: quiet(tab.key) ? "#4D6C84" : "#FF6A1A", color: quiet(tab.key) ? "#F4F4F1" : "#2B4254", borderRadius: 980, padding: "1px 7px", fontSize: 11, fontWeight: 600 }}>
+                    <span style={{ marginLeft: 6, background: quiet(tab.key) ? "#3F7FAD" : "#FF6A1A", color: quiet(tab.key) ? "#F4F4F1" : "#184A74", borderRadius: 980, padding: "1px 7px", fontSize: 11, fontWeight: 600 }}>
                       {tab.key === "users" && unseenUsers > 0 ? "+" : ""}
                       {tab.count}
                     </span>
@@ -4001,7 +4038,7 @@ function DispatcherRequests({ requests, owners, users, listings, allBookings, on
     return (
       <div style={{ padding: "8px 24px 48px" }}>
         <Plate style={{ padding: "24px", maxWidth: 480 }}>
-          <div style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 13, color: "#C9D6DF" }}>
+          <div style={{ fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 13, color: "#C9D6DF" }}>
             Заявок поки немає. Щойно клієнт залишить заявку через форму — вона з'явиться тут для диспетчеризації.
           </div>
           <button onClick={onRefresh} style={{ ...smallBtn, marginTop: 12 }}>Оновити</button>
@@ -4014,7 +4051,7 @@ function DispatcherRequests({ requests, owners, users, listings, allBookings, on
     <div className="dispatcher-layout" style={{ padding: "8px 24px 48px", display: "flex", gap: 20 }}>
       <div className="dispatcher-sidebar" style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 160, flexShrink: 0 }}>
         <button onClick={onRefresh} style={{ ...smallBtn, marginBottom: 8 }}>Оновити</button>
-        <div style={{ fontSize: 11, color: "#B8C8D3", padding: "0 12px 8px", fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif" }}>
+        <div style={{ fontSize: 11, color: "#B8C8D3", padding: "0 12px 8px", fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif" }}>
           Власників у базі: {owners.length}
         </div>
         {categories.map((c) => {
@@ -4028,10 +4065,10 @@ function DispatcherRequests({ requests, owners, users, listings, allBookings, on
                 display: "flex",
                 alignItems: "center",
                 gap: 8,
-                background: active ? "#314A5D" : "transparent",
+                background: active ? "#1F5683" : "transparent",
                 border: "none",
                 color: active ? "#F4F4F1" : "#C9D6DF",
-                fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
+                fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
                 fontSize: 13,
                 padding: "9px 12px",
                 cursor: "pointer",
@@ -4140,7 +4177,7 @@ function StarRating({ value, onChange, readOnly }) {
           onClick={() => !readOnly && onChange?.(n)}
           style={{
             cursor: readOnly ? "default" : "pointer",
-            color: n <= value ? "#FF6A1A" : "#A9BBC7",
+            color: n <= value ? "#FF6A1A" : "#8FB6D3",
             fontSize: 16,
           }}
         >
@@ -4158,7 +4195,7 @@ function ReviewBox({ req, onSubmit }) {
   const ownerName = acceptedEntry?.ownerName || "виконавець";
 
   return (
-    <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px dashed #A9BBC7" }}>
+    <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px dashed #8FB6D3" }}>
       <Label>Оцініть роботу «{ownerName}»</Label>
       <div style={{ marginTop: 6 }}>
         <StarRating value={rating} onChange={setRating} />
@@ -4234,10 +4271,10 @@ function RequestDispatchCard({ req, owners, users, listings, allBookings, onDisp
               ? "потрібна увага"
               : "нова"}
           </Label>
-          <div style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif", fontSize: 18, fontWeight: 600, marginTop: 2 }}>
+          <div style={{ fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif", fontSize: 18, fontWeight: 600, marginTop: 2 }}>
             {req.type} — {req.region}
           </div>
-          <div style={{ fontSize: 12.5, color: "#C9D6DF", marginTop: 4, fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif" }}>
+          <div style={{ fontSize: 12.5, color: "#C9D6DF", marginTop: 4, fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif" }}>
             Бюджет: {req.budget || "—"} ₴ · Період: {req.dateFrom ? (req.dateTo ? `${deals.fmtDate(req.dateFrom)} — ${deals.fmtDate(req.dateTo)}` : deals.fmtDate(req.dateFrom)) : "не вказано"}{req.withOperator ? " · з оператором" : ""} · Контакт: {req.contact}{req.hasAccount ? "" : " (без акаунта)"}
           </div>
           {req.comment && (
@@ -4252,26 +4289,26 @@ function RequestDispatchCard({ req, owners, users, listings, allBookings, onDisp
       </div>
 
       {req.status === "booked" && (
-        <div style={{ marginTop: 12, padding: "8px 12px", background: "rgba(255,181,46,0.1)", border: "1px solid #FFB52E", fontSize: 12, color: "#FFB52E", fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif" }}>
+        <div style={{ marginTop: 12, padding: "8px 12px", background: "rgba(255,181,46,0.1)", border: "1px solid #FFB52E", fontSize: 12, color: "#FFB52E", fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif" }}>
           Клієнт підтвердив техніку. Підтвердьте оренду в блоці «Угода» нижче — після цього клієнт і власник отримають контакти.
         </div>
       )}
 
       {needsAttention && (
-        <div style={{ marginTop: 12, padding: "8px 12px", background: "rgba(201,107,90,0.1)", border: "1px solid #c96b5a", fontSize: 12, color: "#e0a89c", fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif" }}>
+        <div style={{ marginTop: 12, padding: "8px 12px", background: "rgba(201,107,90,0.1)", border: "1px solid #c96b5a", fontSize: 12, color: "#e0a89c", fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif" }}>
           Усі, кому надсилали, відмовились. Оберіть інших власників нижче.
         </div>
       )}
 
       {/* Contacted owners with live status + action buttons for pending ones */}
       {contactedOwners.length > 0 && (
-        <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px dashed #A9BBC7" }}>
+        <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px dashed #8FB6D3" }}>
           <Label>Кому надіслано</Label>
           <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 8 }}>
             {contactedOwners.map((o) => {
               const st = req.ownerStatuses[String(o.id)];
               return (
-                <div key={o.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 12.5, fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif" }}>
+                <div key={o.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 12.5, fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif" }}>
                   <span>{o.name} <span style={{ color: "#B8C8D3" }}>· {o.phone}</span></span>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     <span style={{ color: STATUS_COLOR[st] }}>{STATUS_LABEL[st]}</span>
@@ -4297,7 +4334,7 @@ function RequestDispatchCard({ req, owners, users, listings, allBookings, onDisp
 
       {/* Запит власникам: запасний шлях, коли в каталозі немає підходящої техніки */}
       {!["taken", "booked"].includes(req.status) && (
-        <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px dashed #A9BBC7" }}>
+        <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px dashed #8FB6D3" }}>
           <Label>{contactedOwners.length === 0 ? "Запитати у власників (якщо немає підходящої техніки)" : "Запитати у власників ще"}</Label>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 8 }}>
             {suggestedUncontacted.length === 0 && otherUncontacted.length === 0 && (
@@ -4325,10 +4362,10 @@ function RequestDispatchCard({ req, owners, users, listings, allBookings, onDisp
 
       {/* History log */}
       {(req.log.length > 0 || (req.events || []).length > 0) && (
-        <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px dashed #A9BBC7" }}>
+        <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px dashed #8FB6D3" }}>
           <button
             onClick={() => setShowHistory((s) => !s)}
-            style={{ background: "none", border: "none", color: "#C9D6DF", cursor: "pointer", fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 11, letterSpacing: "0.08em", textTransform: "none", padding: 0 }}
+            style={{ background: "none", border: "none", color: "#C9D6DF", cursor: "pointer", fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 11, letterSpacing: "0.08em", textTransform: "none", padding: 0 }}
           >
             {showHistory ? "▲ Сховати історію" : `▼ Історія (${req.log.length + (req.events || []).length})`}
           </button>
@@ -4340,7 +4377,7 @@ function RequestDispatchCard({ req, owners, users, listings, allBookings, onDisp
           {showHistory && (
             <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 4 }}>
               {req.log.map((l, i) => (
-                <div key={i} style={{ fontSize: 11.5, fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", color: "#C9D6DF", display: "flex", gap: 8 }}>
+                <div key={i} style={{ fontSize: 11.5, fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", color: "#C9D6DF", display: "flex", gap: 8 }}>
                   <span style={{ color: "#B8C8D3" }}>{l.time}</span>
                   <span>
                     {l.ownerName} —{" "}
@@ -4374,10 +4411,10 @@ function OwnerChip({ owner, checked, onToggle, highlighted }) {
         alignItems: "center",
         gap: 7,
         padding: "7px 12px",
-        border: `1px solid ${checked ? "#FF6A1A" : "#A9BBC7"}`,
+        border: `1px solid ${checked ? "#FF6A1A" : "#8FB6D3"}`,
         background: checked ? "rgba(255,90,31,0.1)" : "transparent",
         cursor: "pointer",
-        fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
+        fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
         fontSize: 12,
       }}
     >
@@ -4438,7 +4475,7 @@ function TelegramLogin({ role, onDone }) {
       fail("Немає зв'язку з сервером. Спробуйте ще раз.");
     }
   };
-  const font = "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif";
+  const font = "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif";
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
       {state !== "waiting" ? (
@@ -4467,7 +4504,7 @@ function AuthForm({ onSubmit, onTelegramDone }) {
   const [loading, setLoading] = useState(false);
   const [showPw, setShowPw] = useState(false);
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
-  const font = "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif";
+  const font = "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif";
 
   const validate = () => {
     const e = {};
@@ -4530,7 +4567,7 @@ function AuthForm({ onSubmit, onTelegramDone }) {
       )}
       <TelegramLogin role={mode === "signup" ? form.role : "client"} onDone={onTelegramDone} />
       <div style={{ display: "flex", alignItems: "center", gap: 10, fontFamily: font, fontSize: 12, color: "#B8C8D3" }}>
-        <span style={{ flex: 1, height: 1, background: "#587890" }} />або за email<span style={{ flex: 1, height: 1, background: "#587890" }} />
+        <span style={{ flex: 1, height: 1, background: "#4C8CB9" }} />або за email<span style={{ flex: 1, height: 1, background: "#4C8CB9" }} />
       </div>
 
       {mode === "signup" && (
@@ -4618,12 +4655,12 @@ function ProfileForm({ user, onSave, onLogout }) {
 
   return (
     <div>
-      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18, paddingBottom: 16, borderBottom: "1px dashed #A9BBC7" }}>
-        <span style={{ width: 44, height: 44, borderRadius: "50%", background: "#FF6A1A", color: "#2B4254", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 18, fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18, paddingBottom: 16, borderBottom: "1px dashed #8FB6D3" }}>
+        <span style={{ width: 44, height: 44, borderRadius: "50%", background: "#FF6A1A", color: "#184A74", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 18, fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif" }}>
           {form.name.trim().charAt(0).toUpperCase()}
         </span>
         <div>
-          <div style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif", fontSize: 17, fontWeight: 600 }}>{form.name}</div>
+          <div style={{ fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif", fontSize: 17, fontWeight: 600 }}>{form.name}</div>
           <Label>{form.role === "owner" ? "Власник техніки" : form.role === "dispatcher" ? "Диспетчер" : "Клієнт"}{form.org ? ` · ${form.org}` : ""}</Label>
         </div>
       </div>
@@ -5005,7 +5042,7 @@ function AiAssistant({ user, onPrefillRequest, onViewListing, listings, t, open,
                       gap: 10,
                       marginTop: 8,
                       padding: 10,
-                      background: "#314A5D",
+                      background: "#1F5683",
                       borderRadius: 12,
                       cursor: "pointer",
                     }}
@@ -5032,7 +5069,7 @@ function AiAssistant({ user, onPrefillRequest, onViewListing, listings, t, open,
                           alignItems: "center",
                           gap: 10,
                           padding: 8,
-                          background: "#314A5D",
+                          background: "#1F5683",
                           borderRadius: 10,
                           cursor: "pointer",
                         }}
@@ -5088,7 +5125,7 @@ function AiAssistant({ user, onPrefillRequest, onViewListing, listings, t, open,
                 borderRadius: 980,
                 color: "#d5d8db",
                 cursor: "pointer",
-                fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
+                fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
               };
               return (
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 6 }}>
@@ -5248,7 +5285,7 @@ function DraftBanner({ draft }) {
         gap: 8,
         fontSize: 12,
         color: "#FFB52E",
-        fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
+        fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
       }}
     >
       <span>Відновлено вашу незавершену чернетку</span>
@@ -5346,11 +5383,11 @@ function AddListingForm({ onSubmit, user, lang }) {
     <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
       <DraftBanner draft={draft} />
       {user ? (
-        <div style={{ fontSize: 12, color: "#6fae6f", fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif" }}>
+        <div style={{ fontSize: 12, color: "#6fae6f", fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif" }}>
           ✓ Дані підтягнуто з кабінету — {user.org || user.name}
         </div>
       ) : (
-        <div style={{ fontSize: 12, color: "#C9D6DF", fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif" }}>
+        <div style={{ fontSize: 12, color: "#C9D6DF", fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif" }}>
           Ви не увійшли — вкажіть назву організації вручну, або спочатку зареєструйтесь.
         </div>
       )}
@@ -5360,12 +5397,12 @@ function AddListingForm({ onSubmit, user, lang }) {
           <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
             {form.photos.map((p, i) => (
               <div key={i} style={{ position: "relative" }}>
-                <img src={p} alt={`Прев'ю ${i + 1}`} style={{ width: 84, height: 84, objectFit: "cover", border: "1px solid #587890" }} />
+                <img src={p} alt={`Прев'ю ${i + 1}`} style={{ width: 84, height: 84, objectFit: "cover", border: "1px solid #4C8CB9" }} />
                 <button
                   type="button"
                   onClick={() => removePhoto(i)}
                   aria-label="Прибрати фото"
-                  style={{ position: "absolute", top: -6, right: -6, width: 20, height: 20, borderRadius: "50%", background: "#2B4254", border: "1px solid #587890", color: "#F4F4F1", fontSize: 12, cursor: "pointer" }}
+                  style={{ position: "absolute", top: -6, right: -6, width: 20, height: 20, borderRadius: "50%", background: "#184A74", border: "1px solid #4C8CB9", color: "#F4F4F1", fontSize: 12, cursor: "pointer" }}
                 >
                   ×
                 </button>
@@ -5487,16 +5524,16 @@ function RequestForm({ onSubmit, user, initial, t, lang }) {
     <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
       <DraftBanner draft={draft} />
       {initial && !initial.fromModel && (
-        <div style={{ fontSize: 12, color: "#FF6A1A", fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif" }}>
+        <div style={{ fontSize: 12, color: "#FF6A1A", fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif" }}>
           ✨ Заповнено помічником — перевірте і додайте контакт
         </div>
       )}
       {user ? (
-        <div style={{ fontSize: 12, color: "#6fae6f", fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif" }}>
+        <div style={{ fontSize: 12, color: "#6fae6f", fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif" }}>
           ✓ Заявка від: {user.name}{user.org ? ` · ${user.org}` : ""}
         </div>
       ) : (
-        <div style={{ fontSize: 12, color: "#C9D6DF", fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif" }}>
+        <div style={{ fontSize: 12, color: "#C9D6DF", fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif" }}>
           Ви не увійшли — контакт доведеться вказати вручну.
         </div>
       )}
@@ -5542,7 +5579,7 @@ function RequestForm({ onSubmit, user, initial, t, lang }) {
         </Field>
       </div>
       {dateError && <ErrorText>Кінець періоду не може бути раніше за початок</ErrorText>}
-      <label style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 13, color: "#C9D6DF", cursor: "pointer" }}>
+      <label style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 13, color: "#C9D6DF", cursor: "pointer" }}>
         <input type="checkbox" checked={!!form.withOperator} onChange={(e) => setForm((f) => ({ ...f, withOperator: e.target.checked }))} style={{ accentColor: "#FF6A1A", width: 18, height: 18 }} />
         Потрібна техніка з оператором
       </label>
@@ -5560,7 +5597,7 @@ function RequestForm({ onSubmit, user, initial, t, lang }) {
           </select>
         </Field>
       </div>
-      <label style={{ display: "flex", alignItems: "flex-start", gap: 8, fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 13, color: "#E3EBF0", cursor: "pointer" }}>
+      <label style={{ display: "flex", alignItems: "flex-start", gap: 8, fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 13, color: "#E3EBF0", cursor: "pointer" }}>
         <input type="checkbox" checked={!!form.isPublic} onChange={(e) => setForm((f) => ({ ...f, isPublic: e.target.checked }))} style={{ accentColor: "#FF6A1A", width: 18, height: 18, marginTop: 2 }} />
         <span>
           Вивісити заявку на «Дошці оголошень» — власники зможуть запропонувати свою техніку
@@ -5598,11 +5635,11 @@ function RequestForm({ onSubmit, user, initial, t, lang }) {
 function StepLabel({ n, of, text }) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4 }}>
-      <span style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 11, color: "#B8C8D3" }}>
+      <span style={{ fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 11, color: "#B8C8D3" }}>
         {String(n).padStart(2, "0")} / {String(of).padStart(2, "0")}
       </span>
-      <span style={{ flex: 1, height: 1, background: "#44627A" }} />
-      <span style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 11, color: "#C9D6DF" }}>
+      <span style={{ flex: 1, height: 1, background: "#3279AB" }} />
+      <span style={{ fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 11, color: "#C9D6DF" }}>
         {text}
       </span>
     </div>

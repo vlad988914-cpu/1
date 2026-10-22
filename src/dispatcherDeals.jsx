@@ -4,7 +4,7 @@ import { Label, RoleTag, primaryBtn, smallBtn, inputStyle, miniBtn } from "./ui.
 import { CountUp } from "./motion/index.jsx";
 import { fmtDate, fmtPeriod, fmtDateTime, todayLocal, unitLabel } from "./services/deals.js";
 
-const FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif";
+const FONT = "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif";
 const GREEN = "#6fae6f";
 const RED = "#c96b5a";
 const AMBER = "#FFB52E";
@@ -156,7 +156,7 @@ export function DealsSection({ req, listings, users = [], allBookings, onPropose
   const wantedListing = req.listingId ? listings.find((l) => l.id === req.listingId) : null;
 
   return (
-    <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px dashed #A9BBC7" }}>
+    <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px dashed #8FB6D3" }}>
       {/* Відгуки власників на заявку з дошки */}
       {!closed && !req.listingId && liveResponses(req).length > 0 && (
         <div style={{ marginBottom: 14 }}>
@@ -270,7 +270,7 @@ export function DealsSection({ req, listings, users = [], allBookings, onPropose
               const key = `p${l.id}`;
               const target = l.id === req.listingId;
               return (
-                <div key={l.id} style={{ border: `1px solid ${target ? "#FF6A1A" : "#4D6C84"}`, padding: "10px 12px", fontFamily: FONT, fontSize: 12.5, display: "flex", flexDirection: "column", gap: 6, opacity: blocked ? 0.85 : 1 }}>
+                <div key={l.id} style={{ border: `1px solid ${target ? "#FF6A1A" : "#3F7FAD"}`, padding: "10px 12px", fontFamily: FONT, fontSize: 12.5, display: "flex", flexDirection: "column", gap: 6, opacity: blocked ? 0.85 : 1 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
                     <span>
                       <b>{l.brand}</b> · {l.owner} · {l.region} · {l.price} ₴/{l.unit}
@@ -289,7 +289,7 @@ export function DealsSection({ req, listings, users = [], allBookings, onPropose
                       <button
                         disabled={blocked || !datesOk || busyKey === key}
                         onClick={() => run(key, () => onPropose(req.id, l.id, from, to))}
-                        style={{ ...smallBtn, borderColor: blocked || !datesOk ? "#587890" : "#FF6A1A", color: blocked || !datesOk ? "#B8C8D3" : "#FF6A1A", cursor: blocked || !datesOk ? "not-allowed" : "pointer" }}
+                        style={{ ...smallBtn, borderColor: blocked || !datesOk ? "#4C8CB9" : "#FF6A1A", color: blocked || !datesOk ? "#B8C8D3" : "#FF6A1A", cursor: blocked || !datesOk ? "not-allowed" : "pointer" }}
                       >
                         Запропонувати клієнту
                       </button>
@@ -297,7 +297,7 @@ export function DealsSection({ req, listings, users = [], allBookings, onPropose
                       <button
                         disabled={blocked || !datesOk || busyKey === key}
                         onClick={() => run(key, () => onManual(req.id, l.id, from, to))}
-                        style={{ ...smallBtn, borderColor: blocked || !datesOk ? "#587890" : GREEN, color: blocked || !datesOk ? "#B8C8D3" : GREEN, cursor: blocked || !datesOk ? "not-allowed" : "pointer" }}
+                        style={{ ...smallBtn, borderColor: blocked || !datesOk ? "#4C8CB9" : GREEN, color: blocked || !datesOk ? "#B8C8D3" : GREEN, cursor: blocked || !datesOk ? "not-allowed" : "pointer" }}
                       >
                         Підтвердити за телефоном
                       </button>
@@ -306,7 +306,7 @@ export function DealsSection({ req, listings, users = [], allBookings, onPropose
                       <button
                         disabled={busyKey === `m${l.id}`}
                         onClick={() => run(`m${l.id}`, () => onManual(req.id, l.id, from, to))}
-                        style={{ ...smallBtn, marginLeft: 8, borderColor: "#587890", color: "#C9D6DF", fontSize: 12 }}
+                        style={{ ...smallBtn, marginLeft: 8, borderColor: "#4C8CB9", color: "#C9D6DF", fontSize: 12 }}
                         title="Клієнт уже погодився по телефону — оформити оренду одразу"
                       >
                         Підтвердити за телефоном
@@ -356,7 +356,7 @@ export function EquipmentBoard({ listings, requests, allBookings, onConfirm, onD
       {rows.map(({ l, wanting, bookings }) => {
         const nowBooking = bookings.find((b) => b.date_from <= today && b.date_to >= today);
         return (
-          <div key={l.id} style={{ border: `1px solid ${wanting.length ? "#FF6A1A" : "#4D6C84"}`, padding: "12px 14px", display: "flex", flexDirection: "column", gap: 8, fontFamily: FONT, fontSize: 12.5 }}>
+          <div key={l.id} style={{ border: `1px solid ${wanting.length ? "#FF6A1A" : "#3F7FAD"}`, padding: "12px 14px", display: "flex", flexDirection: "column", gap: 8, fontFamily: FONT, fontSize: 12.5 }}>
             <div style={{ display: "flex", justifyContent: "space-between", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
               <span style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                 <RoleTag kind="lease" />
@@ -372,7 +372,7 @@ export function EquipmentBoard({ listings, requests, allBookings, onConfirm, onD
               </div>
             )}
             {wanting.length > 0 && (
-              <div style={{ display: "flex", flexDirection: "column", gap: 10, paddingTop: 8, borderTop: "1px dashed #587890" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 10, paddingTop: 8, borderTop: "1px dashed #4C8CB9" }}>
                 <Label>Хочуть цю техніку ({wanting.length})</Label>
                 {wanting.map((r) => (
                   <div key={r.id} style={{ paddingLeft: 10, borderLeft: "2px solid #FF6A1A" }}>
@@ -395,7 +395,7 @@ const DAY_MS = 86400000;
 
 function Stat({ label, value, accent, big }) {
   return (
-    <div style={{ border: `1px solid ${accent ? "#FF6A1A" : "#4D6C84"}`, padding: big ? "12px 18px" : "10px 14px", minWidth: big ? 170 : 120 }}>
+    <div style={{ border: `1px solid ${accent ? "#FF6A1A" : "#3F7FAD"}`, padding: big ? "12px 18px" : "10px 14px", minWidth: big ? 170 : 120 }}>
       <div style={{ fontFamily: FONT, fontSize: big ? 30 : 20, fontWeight: 700, color: accent ? "#FF6A1A" : "#F4F4F1", lineHeight: 1.1 }}>{typeof value === "number" ? <CountUp value={value} duration={700} /> : value}</div>
       <div style={{ fontFamily: FONT, fontSize: 11.5, color: "#C9D6DF", marginTop: 4 }}>{label}</div>
     </div>
@@ -476,12 +476,12 @@ export function UsersBoard({ users: allUsers, requests, bookings, listings, curr
         const mine = u.id === currentUserId;
         const canDelete = !isStaff(u) && !mine;
         return (
-          <div key={u.id} style={{ border: `1px solid ${isUnseen(u) ? "#FF6A1A" : "#4D6C84"}`, padding: "10px 14px", fontFamily: FONT, fontSize: 12.5, display: "flex", flexDirection: "column", gap: 4 }}>
+          <div key={u.id} style={{ border: `1px solid ${isUnseen(u) ? "#FF6A1A" : "#3F7FAD"}`, padding: "10px 14px", fontFamily: FONT, fontSize: 12.5, display: "flex", flexDirection: "column", gap: 4 }}>
             <div style={{ display: "flex", justifyContent: "space-between", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
               <span>
                 <b style={{ fontSize: 14 }}>{u.name}</b>
                 {u.org ? <span style={{ color: "#C9D6DF" }}> · {u.org}</span> : null}
-                {isNew(u) && <span style={{ marginLeft: 8, background: "#FF6A1A", color: "#2B4254", fontSize: 10.5, fontWeight: 700, padding: "2px 7px", letterSpacing: "0.04em" }}>НОВИЙ</span>}
+                {isNew(u) && <span style={{ marginLeft: 8, background: "#FF6A1A", color: "#184A74", fontSize: 10.5, fontWeight: 700, padding: "2px 7px", letterSpacing: "0.04em" }}>НОВИЙ</span>}
               </span>
               <span style={{ color: ROLE_COLOR[u.role], border: `1px solid ${ROLE_COLOR[u.role]}`, padding: "2px 8px", fontSize: 11.5 }}>{ROLE_LABEL[u.role] || u.role}</span>
             </div>
@@ -544,7 +544,7 @@ export function ResponsesBlock({ req, listings, users, allBookings, dateFrom, da
         const busyUntil = conflicts.length ? conflicts.map((c) => c.date_to).sort().slice(-1)[0] : null;
         const blocked = !datesOk || !!busyUntil || (l && !l.available);
         return (
-          <div key={r.id} style={{ borderLeft: `2px solid ${r.status === "chosen" ? GREEN : "#587890"}`, paddingLeft: 10, display: "flex", flexDirection: "column", gap: 4 }}>
+          <div key={r.id} style={{ borderLeft: `2px solid ${r.status === "chosen" ? GREEN : "#4C8CB9"}`, paddingLeft: 10, display: "flex", flexDirection: "column", gap: 4 }}>
             <div>
               <b style={{ fontSize: 14 }}>{l ? l.brand : `№${r.listing_id}`}</b> · {owner ? owner.org || owner.name : l ? l.owner : "власник"}
               {owner && owner.phone && owner.phone !== "—" ? <> · <a href={`tel:${String(owner.phone).replace(/[^\d+]/g, "")}`} style={{ color: "#F4F4F1" }}>{owner.phone}</a></> : null}
@@ -676,7 +676,7 @@ export function PairsBoard({ requests, listings, offers, bookings, users, onConf
         const st = PAIR_STATE[row.state];
         const l = row.listing;
         return (
-          <div key={row.key} style={{ border: `1px solid ${st.color === "#C9D6DF" ? "#4D6C84" : st.color}`, padding: "12px 14px", display: "flex", flexDirection: "column", gap: 10, fontFamily: FONT, fontSize: 12.5 }}>
+          <div key={row.key} style={{ border: `1px solid ${st.color === "#C9D6DF" ? "#3F7FAD" : st.color}`, padding: "12px 14px", display: "flex", flexDirection: "column", gap: 10, fontFamily: FONT, fontSize: 12.5 }}>
             <div style={{ display: "flex", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
               <span style={{ color: st.color, fontWeight: 600 }}>{st.text}</span>
               {row.req && <span style={{ color: "#B8C8D3" }}>заявка №{row.req.id}{row.req.createdAt ? ` · ${hoursAgo(row.req.createdAt)}` : ""}</span>}
