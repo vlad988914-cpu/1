@@ -56,7 +56,7 @@ function WantedCard({ item, index = 0, user, onRespond, onUnpublish, onSignIn })
         Автор: {item.req_author} · {ago(item.req_created_at)}
       </div>
 
-      <div style={{ marginTop: 4 }}>
+      <div style={{ marginTop: "auto", paddingTop: 4 }}>
         {item.req_mine ? (
           <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
             <span style={{ fontFamily: FONT, fontSize: 12, color: AMBER }}>Це ваша заявка</span>
