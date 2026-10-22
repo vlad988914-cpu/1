@@ -64,7 +64,7 @@
     transition: transform 0.32s cubic-bezier(.2,.7,.2,1) !important; will-change: transform; }
   .sticky-header.hdr-away { transform: translateY(-101%); }
   .sticky-header > div:first-child { flex: 0 0 auto; }
-  .sticky-header .brand-3d { width: 148px !important; margin: 0; }
+  .sticky-header .brand-3d { width: 148px !important; margin: -4px 0 -6px; }
   .sticky-header .hdr-tagline, .sticky-header .hdr-how { display: none !important; }
 
   .sticky-header > .forge-art { display: block; flex: 1 1 0; min-width: 120px; max-width: none; height: 58px; align-self: center; margin-block: 0; z-index: 0; }
@@ -105,3 +105,6 @@
 
 /* шапка чорна з помаранчевим відтінком: скляні кнопки в тон */
 .sticky-header .hdr-nav [style*="36, 58, 74"] { background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.02) 40%, rgba(255,106,26,.10) 100%), rgba(20,14,10,.72) !important; }
+
+/* плавний перехід від низу чорної шапки до блакитного фону: тінь-градієнт замість різкої лінії */
+.sticky-header.has-forge { border-bottom-color: rgba(255,122,48,.22) !important; box-shadow: 0 6px 18px -2px rgba(255,106,26,.22), 0 22px 46px -10px rgba(14,9,6,.7), 0 40px 70px -20px rgba(14,9,6,.35); }

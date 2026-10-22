@@ -2266,8 +2266,8 @@ export default function EquipmentMarketplace() {
           100% { transform: rotateX(360deg); }
         }
 
-        .brand-3d { display: block; position: relative; overflow: hidden; width: clamp(200px, 17vw, 300px); aspect-ratio: 1400 / 205; line-height: 0; align-self: center; margin: 0; }
-        .brand-3d img, .brand-3d video { position: absolute; left: 0; top: -2.86%; width: 100%; pointer-events: none; height: auto; display: block; user-select: none; filter: brightness(1.3) contrast(0.9) saturate(1.1); }
+        .brand-3d { display: inline-block; width: clamp(200px, 17vw, 300px); line-height: 0; align-self: center; margin: -6px 0 -10px; }
+        .brand-3d img, .brand-3d video { width: 100%; pointer-events: none; height: auto; display: block; user-select: none; }
         .logo-flip {
           position: relative;
           display: inline-grid;
@@ -2895,7 +2895,7 @@ export default function EquipmentMarketplace() {
         className={`sticky-header has-forge${scrolled ? " is-scrolled" : ""}`}
         style={{
           "--hp": scrolled ? "12px" : "20px",
-          borderBottom: "1px solid rgba(255,122,48,.38)",
+          borderBottom: "1px solid rgba(255,122,48,.45)",
           padding: scrolled ? "12px 24px" : "20px 24px",
           display: "flex",
           justifyContent: "space-between",
