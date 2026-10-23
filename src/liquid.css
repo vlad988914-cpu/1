@@ -188,3 +188,16 @@ h1,h2,h3{font-weight:800;letter-spacing:-.01em}
 .lp-av { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; font: 800 16px/1 'Manrope', sans-serif; color: #2A0E03; background: linear-gradient(180deg, #FFE8C4, #FFB46B); box-shadow: 0 0 0 2px rgba(255,200,140,.35); }
 .lp-body > div { position: relative; }
 .lp-bar { background: rgba(14,9,6,.82); border-bottom-color: rgba(255,170,90,.45); }
+
+/* ===== Багатший шрифт і колір (Unbounded для виразних елементів) ===== */
+[data-scene] h1, [data-scene] h2, .cat-name, .mo-stat b, .lp-key-i b, .lp-deal > div:first-child, .footer-mark { font-family: 'Unbounded', 'Manrope', sans-serif !important; letter-spacing: -.01em; }
+[data-scene] h2 { background: linear-gradient(100deg, #FFFFFF 0%, #FFE1B5 40%, #FFB81C 75%, #FF8A3A 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+.cat-card { transition: transform .35s cubic-bezier(.2,.8,.2,1), box-shadow .35s, border-color .35s; }
+.cat-card:hover { transform: translateY(-5px); border-color: rgba(255,184,28,.9); box-shadow: 0 24px 50px -22px rgba(255,120,30,.95), 0 0 0 1px rgba(255,184,28,.35); }
+.cat-card:nth-child(3n+2)::before { color: rgba(255,184,28,.22); }
+.cat-card:nth-child(3n)::before { color: rgba(255,90,70,.22); }
+.cat-card:nth-child(3n+2) { background-image: linear-gradient(150deg, rgba(255,184,28,.14), transparent 60%); }
+.cat-card:nth-child(3n) { background-image: linear-gradient(150deg, rgba(240,70,60,.14), transparent 60%); }
+.cat-card .go-btn, .cat-card button { transition: transform .25s, box-shadow .25s, background .25s; }
+.cat-card button:hover { transform: translateY(-2px); background: linear-gradient(135deg, #FFB81C, #FF7A1F) !important; color: #2A0E03 !important; box-shadow: 0 10px 24px -8px rgba(255,120,30,.9); }
+@media (prefers-reduced-motion: reduce) { .cat-card, .cat-card:hover { transition: none; transform: none; } }
