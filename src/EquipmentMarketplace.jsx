@@ -755,7 +755,7 @@ const CAT_COPY = {
   "Гідромолот": { uk: "Руйнування бетону, асфальту й твердих порід.", ru: "Разрушение бетона, асфальта и твёрдых пород.", en: "Breaking concrete, asphalt and hard rock." },
 };
 const CAT_UI = {
-  uk: { all: "Уся техніка", go: "Перейти в категорію", none: "Поки немає", n: (c) => (c === 1 ? "1 оголошення" : `${c} оголошень`), reset: "Показати всю техніку" },
+  uk: { all: "Уся техніка", go: "Перейти в категорію", none: "Поки немає", n: (c) => { const m10 = c % 10, m100 = c % 100; return `${c} ${m10 === 1 && m100 !== 11 ? "оголошення" : m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14) ? "оголошення" : "оголошень"}`; }, reset: "Показати всю техніку" },
   ru: { all: "Вся техника", go: "Перейти в категорию", none: "Пока нет", n: (c) => (c === 1 ? "1 объявление" : `${c} объявл.`), reset: "Показать всю технику" },
   en: { all: "All equipment", go: "Open category", none: "None yet", n: (c) => (c === 1 ? "1 listing" : `${c} listings`), reset: "Show all equipment" },
 };
@@ -2307,7 +2307,7 @@ export default function EquipmentMarketplace() {
     >
       <FontLink />
       <FlutedBackdrop />
-      <SweepBand />
+      {/* SweepBand убрана по просьбе */}
       <ScrollProgress />
       <SceneAura />
       <style>{`
