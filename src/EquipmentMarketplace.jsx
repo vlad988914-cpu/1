@@ -396,6 +396,20 @@ function FlutedBackdrop() {
   );
 }
 
+// ---- Рядок-пілюлі «Знайди → Забронюй → Будуй» (ідея з кейсу Zenixa: «We Create → Future») ----
+const PILLS = { uk: ["Знайди", "Забронюй", "Будуй"], ru: ["Найди", "Забронируй", "Строй"], en: ["Find", "Book", "Build"] };
+function PillBand({ lang }) {
+  const w = PILLS[lang] || PILLS.uk;
+  return (
+    <div className="pillband" data-scene>
+      <span className="pb pb-a">{w[0]}</span>
+      <span className="pb pb-b">{w[1]}</span>
+      <span className="pb pb-c" aria-hidden="true">→</span>
+      <span className="pb pb-d">{w[2]}</span>
+    </div>
+  );
+}
+
 // ---- Seed data ----
 const TYPES = [
   "Екскаватор",
@@ -2548,10 +2562,19 @@ export default function EquipmentMarketplace() {
         .section-divider .title {
           font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif;
           font-size: 11px;
-          letter-spacing: 0.04em;
-          color: #C9D6DF;
+          font-weight: 600;
+          letter-spacing: 0.06em;
+          color: #fff;
           flex-shrink: 0;
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          padding: 6px 14px 6px 11px;
+          border: 1px solid rgba(255,255,255,.3);
+          border-radius: 999px;
+          background: rgba(255,255,255,.07);
         }
+        .section-divider .title::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #FF6A1A; box-shadow: 0 0 8px rgba(255,106,26,.8); }
 
         }
 
@@ -3315,6 +3338,7 @@ export default function EquipmentMarketplace() {
             >
               <IconExcavator size={16} />
               {t("hero_cta_client")}
+              <span className="cta-arr" aria-hidden="true">→</span>
             </button>
           </div>
           <div className="mo-in ss-l ss-opt-p" style={{ "--i": 6, display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 8, marginBottom: 8 }}>
@@ -3382,6 +3406,8 @@ export default function EquipmentMarketplace() {
           {t("trust_line")}
         </span>
       </div>
+
+      <PillBand lang={lang} />
 
       {/* Catalog */}
       <div ref={appSectionRef} data-scene style={{ padding: "28px 24px 8px" }}>
@@ -3602,6 +3628,7 @@ export default function EquipmentMarketplace() {
             {t("footer_dispatcher")}
           </button>
         </div>
+        <div className="footer-mark" aria-hidden="true">ТЕХМАЙДАНЧИК</div>
       </footer>
 
       {modelId && findModel(modelId) && (
