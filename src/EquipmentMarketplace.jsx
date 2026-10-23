@@ -92,7 +92,7 @@ const TRANSLATIONS = {
     catalog_soon: "Каталог поповнюється. Залиште заявку — диспетчер підбере техніку під вашу роботу.",
     faq_label: "Часті запитання",
     faq_title: "Перш ніж почати",
-    footer_desc: "Біржа оренди будівельної техніки. Клієнти і власники технiки знаходять одне одного напряму.",
+    footer_desc: "Біржа оренди будівельної техніки. Клієнти і власники техніки знаходять одне одного напряму.",
     footer_contacts: "Контакти",
     footer_info: "Інформація",
     footer_terms: "Умови використання",
@@ -3705,8 +3705,15 @@ export default function EquipmentMarketplace() {
               <div style={{ fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif", fontSize: 22, fontWeight: 600 }}>
                 {detailListing.brand}
               </div>
-              <div style={{ fontSize: 13, color: "#FFE6D0", marginTop: 2 }}>{detailListing.region}</div>
+              <div className="lp-city"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 22s7-6.2 7-12a7 7 0 1 0-14 0c0 5.8 7 12 7 12z"/><circle cx="12" cy="10" r="2.6"/></svg>{detailListing.region}</div>
             </div>
+            {(() => { const keyS = Object.entries(detailListing.specs).filter(([k, v]) => v && v !== "—" && !k.startsWith("_")).slice(0, 4); return keyS.length > 0 && (
+              <div className="lp-key">
+                {keyS.map(([k, v]) => (
+                  <div key={k} className="lp-key-i"><b>{trVal(v, lang)}</b><span>{trLabel(k, lang)}</span></div>
+                ))}
+              </div>
+            ); })()}
 
             {EQUIPMENT_INFO[detailListing.type] && (
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -3725,18 +3732,20 @@ export default function EquipmentMarketplace() {
               </div>
             )}
 
+            {Object.entries(detailListing.specs).filter(([k, v]) => v && v !== "—" && !k.startsWith("_")).length > 4 && (
             <div style={{ borderTop: "1px solid #EFA06A", borderBottom: "1px solid #EFA06A", padding: "12px 0" }}>
               <Label>{lang === "ru" ? "Параметры" : lang === "en" ? "Parameters" : "Параметри"}</Label>
               <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 8 }}>
-                {[[lang === "ru" ? "Тип" : lang === "en" ? "Type" : "Тип", tType(detailListing.type, lang)], [lang === "ru" ? "Регион" : lang === "en" ? "Region" : "Регіон", detailListing.region], ...Object.entries(detailListing.specs).filter(([k, v]) => v && v !== "—" && !k.startsWith("_")).map(([k, v]) => [trLabel(k, lang), trVal(v, lang)])].map(([k, v]) => (
+                {[...Object.entries(detailListing.specs).filter(([k, v]) => v && v !== "—" && !k.startsWith("_")).slice(4).map(([k, v]) => [trLabel(k, lang), trVal(v, lang)])].map(([k, v]) => (
                   <div key={k} style={{ display: "flex", justifyContent: "space-between", gap: 12, fontSize: 13 }}>
                     <span style={{ color: "#FFE6D0" }}>{k}</span>
                     <span style={{ textAlign: "right" }}>{v}</span>
                   </div>
                 ))}
               </div>
-            </div>
+            </div>)}
 
+            <div className="lp-deal">
             <div
               style={{
                 fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif",
@@ -3751,9 +3760,7 @@ export default function EquipmentMarketplace() {
               {detailListing.price > 0 ? (<>{detailListing.price} ₴<span style={{ fontSize: 14, color: "#FFE6D0", WebkitTextFillColor: "#FFE6D0" }}>/{detailListing.unit}</span></>) : "Договірна"}
             </div>
 
-            <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13 }}>
-              {detailListing.owner}
-              {detailListing.photos && detailListing.photos.length > 0 && <span style={{ color: "#FFF0D2" }}>✓</span>}
+              <div className="lp-owner"><span className="lp-av">{String(detailListing.owner || "?").trim().charAt(0).toUpperCase()}</span><span><small>Власник</small>{detailListing.owner}{detailListing.photos && detailListing.photos.length > 0 && <span style={{ color: "#FFF0D2" }}> ✓</span>}</span></div>
             </div>
 
             {busyNowUntil(detailListing.id) && (
@@ -5405,7 +5412,12 @@ const mapListingRow = (r) => ({
   region: r.region,
   price: Number(r.price),
   unit: r.unit,
-  specs: r.specs || {},
+  specs: (() => { // jsonb втрачає порядок ключів — виводимо в логічному порядку
+    const o = r.specs || {}, order = ["Вантажопідйомність", "Довжина авто", "Довжина платформи", "Кран"], out = {};
+    order.forEach((k) => { if (k in o) out[k] = o[k]; });
+    Object.keys(o).forEach((k) => { if (!(k in out)) out[k] = o[k]; });
+    return out;
+  })(),
   owner: r.owner_name || "Власник",
   photos: r.photos || [],
   available: r.available,

@@ -852,7 +852,7 @@ export function AvailabilityCalendar({ ranges, months = 2, selectFrom, selectTo 
       <div style={{ display: "flex", gap: 18, flexWrap: "wrap" }}>
         {blocks.map((b) => (
           <div key={b.title} style={{ flex: "1 1 220px", minWidth: 210 }}>
-            <div style={{ fontFamily: FONT, fontSize: 13, fontWeight: 600, marginBottom: 6, textTransform: "capitalize" }}>{b.title}</div>
+            <div style={{ fontFamily: FONT, fontSize: 13, fontWeight: 600, marginBottom: 6 }}>{b.title ? b.title.charAt(0).toUpperCase() + b.title.slice(1) : ""}</div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 2, fontFamily: FONT, fontSize: 11.5, textAlign: "center" }}>
               {T.weekdays.map((w) => (
                 <div key={w} style={{ color: "#FFD3B0", padding: "2px 0" }}>{w}</div>
