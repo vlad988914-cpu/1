@@ -25,17 +25,17 @@ export function ListingReviews({ items, available, user, isOwnerOfListing, onSub
   return (
     <div>
       <Label>{T.rvTitle}{items.length ? ` · ${items.length}` : ""}</Label>
-      {!available && <div style={{ marginTop: 8, fontFamily: FONT, fontSize: 13, color: "#B8C8D3" }}>{T.rvSoon}</div>}
-      {available && items.length === 0 && <div style={{ marginTop: 8, fontFamily: FONT, fontSize: 13, color: "#C9D6DF" }}>{T.rvNone}</div>}
+      {!available && <div style={{ marginTop: 8, fontFamily: FONT, fontSize: 13, color: "#FFD3B0" }}>{T.rvSoon}</div>}
+      {available && items.length === 0 && <div style={{ marginTop: 8, fontFamily: FONT, fontSize: 13, color: "#FFE6D0" }}>{T.rvNone}</div>}
       {available && (
         <div style={{ marginTop: 6 }}>
           {items.map((r) => (
             <div key={r.user_id} className="rv-item">
               <div style={{ display: "flex", justifyContent: "space-between", gap: 8, fontFamily: FONT, fontSize: 13 }}>
                 <b>{r.author_name || T.client}</b>
-                <span style={{ color: "#B8C8D3" }}>{fmt(r.created_at, lang)}</span>
+                <span style={{ color: "#FFD3B0" }}>{fmt(r.created_at, lang)}</span>
               </div>
-              <p style={{ margin: "6px 0 0", fontFamily: FONT, fontSize: 14, lineHeight: 1.55, color: "#E3EBF0", whiteSpace: "pre-wrap" }}>{r.body}</p>
+              <p style={{ margin: "6px 0 0", fontFamily: FONT, fontSize: 14, lineHeight: 1.55, color: "#FFF1E3", whiteSpace: "pre-wrap" }}>{r.body}</p>
               {user && r.user_id === user.id && (
                 <button type="button" onClick={onDelete} style={{ ...smallBtn, marginTop: 8, minHeight: 36 }}>{T.rvDelete}</button>
               )}
@@ -46,7 +46,7 @@ export function ListingReviews({ items, available, user, isOwnerOfListing, onSub
       {available && !user && (
         <button type="button" onClick={onSignIn} style={{ ...smallBtn, marginTop: 10 }}>{T.rvSignIn}</button>
       )}
-      {available && user && isOwnerOfListing && <div style={{ marginTop: 10, fontFamily: FONT, fontSize: 12.5, color: "#B8C8D3" }}>{T.rvOwner}</div>}
+      {available && user && isOwnerOfListing && <div style={{ marginTop: 10, fontFamily: FONT, fontSize: 12.5, color: "#FFD3B0" }}>{T.rvOwner}</div>}
       {available && user && !isOwnerOfListing && !mine && (
         <form onSubmit={send} style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 8 }}>
           <Field label={T.rvYour}>

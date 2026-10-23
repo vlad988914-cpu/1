@@ -5,9 +5,9 @@ import { CountUp } from "./motion/index.jsx";
 import { fmtDate, fmtPeriod, fmtDateTime, todayLocal, unitLabel } from "./services/deals.js";
 
 const FONT = "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif";
-const GREEN = "#6fae6f";
-const RED = "#c96b5a";
-const AMBER = "#FFB52E";
+const GREEN = "#B9F6CA";
+const RED = "#FFD0C4";
+const AMBER = "#FFF0D2";
 
 const overlaps = (aFrom, aTo, bFrom, bTo) => aFrom <= bTo && bFrom <= aTo;
 
@@ -49,7 +49,7 @@ export function WantedActions({ req, listing, allBookings, onConfirm, onDecline,
         {req.withOperator ? " · з оператором" : ""}
         {busyUntil ? <span style={{ color: RED }}> · зайнята до {fmtDate(busyUntil)}</span> : datesOk ? <span style={{ color: GREEN }}> · дати вільні</span> : <span style={{ color: AMBER }}> · дати не вказано</span>}
       </div>
-      {req.comment && <div style={{ color: "#C9D6DF" }}>{req.comment}</div>}
+      {req.comment && <div style={{ color: "#FFE6D0" }}>{req.comment}</div>}
       {!declining ? (
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <button
@@ -69,7 +69,7 @@ export function WantedActions({ req, listing, allBookings, onConfirm, onDecline,
           <button disabled={busy} onClick={() => go(async () => { await onDecline(req.id, reason); setDeclining(false); setReason(""); })} style={miniBtn(RED)}>
             Відхилити
           </button>
-          <button onClick={() => setDeclining(false)} style={miniBtn("#C9D6DF")}>Назад</button>
+          <button onClick={() => setDeclining(false)} style={miniBtn("#FFE6D0")}>Назад</button>
         </div>
       )}
     </div>
@@ -80,13 +80,13 @@ const OFFER_LABEL = {
   proposed: { text: "очікує відповіді клієнта", color: AMBER },
   accepted: { text: "клієнт підтвердив", color: GREEN },
   declined: { text: "клієнт відхилив", color: RED },
-  expired: { text: "час вийшов", color: "#B8C8D3" },
-  withdrawn: { text: "знято", color: "#B8C8D3" },
+  expired: { text: "час вийшов", color: "#FFD3B0" },
+  withdrawn: { text: "знято", color: "#FFD3B0" },
 };
 const BOOKING_LABEL = {
   reserved: { text: "резерв — потрібне ваше підтвердження", color: AMBER },
   confirmed: { text: "оренду підтверджено", color: GREEN },
-  completed: { text: "завершена", color: "#B8C8D3" },
+  completed: { text: "завершена", color: "#FFD3B0" },
   cancelled: { text: "скасовано", color: RED },
 };
 
@@ -108,8 +108,8 @@ export function EventLog({ events }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
       {events.map((ev) => (
-        <div key={ev.id} style={{ fontSize: 11.5, fontFamily: FONT, color: "#C9D6DF", display: "flex", gap: 8 }}>
-          <span style={{ color: "#B8C8D3", whiteSpace: "nowrap" }}>{fmtDateTime(ev.created_at)}</span>
+        <div key={ev.id} style={{ fontSize: 11.5, fontFamily: FONT, color: "#FFE6D0", display: "flex", gap: 8 }}>
+          <span style={{ color: "#FFD3B0", whiteSpace: "nowrap" }}>{fmtDateTime(ev.created_at)}</span>
           <span>{eventText(ev)}</span>
         </div>
       ))}
@@ -156,7 +156,7 @@ export function DealsSection({ req, listings, users = [], allBookings, onPropose
   const wantedListing = req.listingId ? listings.find((l) => l.id === req.listingId) : null;
 
   return (
-    <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px dashed #8FB6D3" }}>
+    <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px dashed #FFDCC0" }}>
       {/* Відгуки власників на заявку з дошки */}
       {!closed && !req.listingId && liveResponses(req).length > 0 && (
         <div style={{ marginBottom: 14 }}>
@@ -166,19 +166,19 @@ export function DealsSection({ req, listings, users = [], allBookings, onPropose
 
       {/* Клієнт сам обрав техніку й дати: підтвердити одним кліком */}
       {!closed && req.listingId && (
-        <div style={{ border: "1px solid #FF6A1A", padding: "12px 14px", marginBottom: 14, display: "flex", flexDirection: "column", gap: 8 }}>
+        <div style={{ border: "1px solid #FFE3BD", padding: "12px 14px", marginBottom: 14, display: "flex", flexDirection: "column", gap: 8 }}>
           <Label>Клієнт обрав цю техніку</Label>
           <div style={{ fontFamily: FONT, fontSize: 15, fontWeight: 600 }}>
             {wantedListing ? wantedListing.brand : `Оголошення №${req.listingId}`}
-            {wantedListing && <span style={{ fontWeight: 400, fontSize: 12.5, color: "#C9D6DF" }}> · {wantedListing.owner} · {wantedListing.price} ₴/{wantedListing.unit}</span>}
+            {wantedListing && <span style={{ fontWeight: 400, fontSize: 12.5, color: "#FFE6D0" }}> · {wantedListing.owner} · {wantedListing.price} ₴/{wantedListing.unit}</span>}
           </div>
           {chosenResponse(req) && (
-            <div style={{ fontFamily: FONT, fontSize: 12.5, color: "#FF6A1A" }}>
+            <div style={{ fontFamily: FONT, fontSize: 12.5, color: "#FFE3BD" }}>
               Ціна за пропозицією власника: <b>{Number(chosenResponse(req).price).toLocaleString("uk-UA")} ₴ {unitLabel(chosenResponse(req).price_unit)}</b>
             </div>
           )}
           <WantedActions req={req} listing={wantedListing} allBookings={allBookings} onConfirm={(r) => onManual(r.id, r.listingId, r.dateFrom, r.dateTo)} onDecline={onDecline} />
-          <div style={{ fontFamily: FONT, fontSize: 11.5, color: "#B8C8D3" }}>
+          <div style={{ fontFamily: FONT, fontSize: 11.5, color: "#FFD3B0" }}>
             Після підтвердження клієнт і власник одразу бачать контакти одне одного. Або запропонуйте іншу техніку нижче.
           </div>
         </div>
@@ -221,7 +221,7 @@ export function DealsSection({ req, listings, users = [], allBookings, onPropose
                         <button disabled={busyKey === `c${b.id}`} onClick={() => run(`c${b.id}`, async () => { await onCancel(b.id, reason); setCancelFor(null); setReason(""); })} style={miniBtn(RED)}>
                           Скасувати бронь
                         </button>
-                        <button onClick={() => setCancelFor(null)} style={miniBtn("#C9D6DF")}>Назад</button>
+                        <button onClick={() => setCancelFor(null)} style={miniBtn("#FFE6D0")}>Назад</button>
                       </div>
                     ) : (
                       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -248,7 +248,7 @@ export function DealsSection({ req, listings, users = [], allBookings, onPropose
         <div>
           <Label>Підібрати техніку · {req.type}</Label>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginTop: 8, fontFamily: FONT, fontSize: 12 }}>
-            <span style={{ color: "#C9D6DF" }}>Період оренди:</span>
+            <span style={{ color: "#FFE6D0" }}>Період оренди:</span>
             <input type="date" aria-label="Початок оренди" value={from} onChange={(e) => setFrom(e.target.value)} style={{ ...inputStyle, padding: "6px 8px", fontSize: 12.5 }} />
             <span>—</span>
             <input type="date" aria-label="Кінець оренди" value={to} onChange={(e) => setTo(e.target.value)} style={{ ...inputStyle, padding: "6px 8px", fontSize: 12.5 }} />
@@ -258,11 +258,11 @@ export function DealsSection({ req, listings, users = [], allBookings, onPropose
               Клієнт без акаунта: онлайн-пропозиція неможлива. Домовтеся по телефону {req.contact} і натисніть «Підтвердити за телефоном».
             </div>
           )}
-          {!datesOk && <div style={{ fontFamily: FONT, fontSize: 12, color: "#C9D6DF", marginTop: 6 }}>Вкажіть період, щоб перевірити зайнятість і надіслати пропозицію.</div>}
+          {!datesOk && <div style={{ fontFamily: FONT, fontSize: 12, color: "#FFE6D0", marginTop: 6 }}>Вкажіть період, щоб перевірити зайнятість і надіслати пропозицію.</div>}
 
           <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 10 }}>
             {candidates.length === 0 && (
-              <div style={{ fontFamily: FONT, fontSize: 12.5, color: "#C9D6DF" }}>
+              <div style={{ fontFamily: FONT, fontSize: 12.5, color: "#FFE6D0" }}>
                 У каталозі немає техніки цього типу. Скористайтеся блоком «Запитати у власників» нижче.
               </div>
             )}
@@ -270,7 +270,7 @@ export function DealsSection({ req, listings, users = [], allBookings, onPropose
               const key = `p${l.id}`;
               const target = l.id === req.listingId;
               return (
-                <div key={l.id} style={{ border: `1px solid ${target ? "#FF6A1A" : "#3F7FAD"}`, padding: "10px 12px", fontFamily: FONT, fontSize: 12.5, display: "flex", flexDirection: "column", gap: 6, opacity: blocked ? 0.85 : 1 }}>
+                <div key={l.id} style={{ border: `1px solid ${target ? "#FFE3BD" : "#E99660"}`, padding: "10px 12px", fontFamily: FONT, fontSize: 12.5, display: "flex", flexDirection: "column", gap: 6, opacity: blocked ? 0.85 : 1 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
                     <span>
                       <b>{l.brand}</b> · {l.owner} · {l.region} · {l.price} ₴/{l.unit}
@@ -283,13 +283,13 @@ export function DealsSection({ req, listings, users = [], allBookings, onPropose
                       <span style={{ color: GREEN }}>вільна</span>
                     )}
                   </div>
-                  {target && <div style={{ color: "#FF6A1A", fontSize: 11.5 }}>Клієнт відгукнувся саме на це оголошення</div>}
+                  {target && <div style={{ color: "#FFE3BD", fontSize: 11.5 }}>Клієнт відгукнувся саме на це оголошення</div>}
                   <div>
                     {hasAccount ? (
                       <button
                         disabled={blocked || !datesOk || busyKey === key}
                         onClick={() => run(key, () => onPropose(req.id, l.id, from, to))}
-                        style={{ ...smallBtn, borderColor: blocked || !datesOk ? "#4C8CB9" : "#FF6A1A", color: blocked || !datesOk ? "#B8C8D3" : "#FF6A1A", cursor: blocked || !datesOk ? "not-allowed" : "pointer" }}
+                        style={{ ...smallBtn, borderColor: blocked || !datesOk ? "#F2AE7C" : "#FFE3BD", color: blocked || !datesOk ? "#FFD3B0" : "#FFE3BD", cursor: blocked || !datesOk ? "not-allowed" : "pointer" }}
                       >
                         Запропонувати клієнту
                       </button>
@@ -297,7 +297,7 @@ export function DealsSection({ req, listings, users = [], allBookings, onPropose
                       <button
                         disabled={blocked || !datesOk || busyKey === key}
                         onClick={() => run(key, () => onManual(req.id, l.id, from, to))}
-                        style={{ ...smallBtn, borderColor: blocked || !datesOk ? "#4C8CB9" : GREEN, color: blocked || !datesOk ? "#B8C8D3" : GREEN, cursor: blocked || !datesOk ? "not-allowed" : "pointer" }}
+                        style={{ ...smallBtn, borderColor: blocked || !datesOk ? "#F2AE7C" : GREEN, color: blocked || !datesOk ? "#FFD3B0" : GREEN, cursor: blocked || !datesOk ? "not-allowed" : "pointer" }}
                       >
                         Підтвердити за телефоном
                       </button>
@@ -306,7 +306,7 @@ export function DealsSection({ req, listings, users = [], allBookings, onPropose
                       <button
                         disabled={busyKey === `m${l.id}`}
                         onClick={() => run(`m${l.id}`, () => onManual(req.id, l.id, from, to))}
-                        style={{ ...smallBtn, marginLeft: 8, borderColor: "#4C8CB9", color: "#C9D6DF", fontSize: 12 }}
+                        style={{ ...smallBtn, marginLeft: 8, borderColor: "#F2AE7C", color: "#FFE6D0", fontSize: 12 }}
                         title="Клієнт уже погодився по телефону — оформити оренду одразу"
                       >
                         Підтвердити за телефоном
@@ -352,11 +352,11 @@ export function EquipmentBoard({ listings, requests, allBookings, onConfirm, onD
         <Stat label="На яку є запити" value={demandCount} accent={demandCount > 0} />
       </div>
       <input aria-label="Пошук техніки" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Пошук: марка, власник, тип, місто" style={{ ...inputStyle, maxWidth: 360 }} />
-      {rows.length === 0 && <div style={{ fontFamily: FONT, fontSize: 13, color: "#C9D6DF" }}>Техніки в каталозі поки немає.</div>}
+      {rows.length === 0 && <div style={{ fontFamily: FONT, fontSize: 13, color: "#FFE6D0" }}>Техніки в каталозі поки немає.</div>}
       {rows.map(({ l, wanting, bookings }) => {
         const nowBooking = bookings.find((b) => b.date_from <= today && b.date_to >= today);
         return (
-          <div key={l.id} style={{ border: `1px solid ${wanting.length ? "#FF6A1A" : "#3F7FAD"}`, padding: "12px 14px", display: "flex", flexDirection: "column", gap: 8, fontFamily: FONT, fontSize: 12.5 }}>
+          <div key={l.id} style={{ border: `1px solid ${wanting.length ? "#FFE3BD" : "#E99660"}`, padding: "12px 14px", display: "flex", flexDirection: "column", gap: 8, fontFamily: FONT, fontSize: 12.5 }}>
             <div style={{ display: "flex", justifyContent: "space-between", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
               <span style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                 <RoleTag kind="lease" />
@@ -367,15 +367,15 @@ export function EquipmentBoard({ listings, requests, allBookings, onConfirm, onD
               {!l.available ? <span style={{ color: RED }}>недоступна</span> : nowBooking ? <span style={{ color: RED }}>зайнята до {fmtDate(nowBooking.date_to)}</span> : <span style={{ color: GREEN }}>вільна</span>}
             </div>
             {bookings.length > 0 && (
-              <div style={{ color: "#C9D6DF" }}>
+              <div style={{ color: "#FFE6D0" }}>
                 Оренди: {bookings.map((b) => `${fmtDate(b.date_from).slice(0, 5)}–${fmtDate(b.date_to).slice(0, 5)}${b.status === "reserved" ? " (резерв)" : ""}`).join(" · ")}
               </div>
             )}
             {wanting.length > 0 && (
-              <div style={{ display: "flex", flexDirection: "column", gap: 10, paddingTop: 8, borderTop: "1px dashed #4C8CB9" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 10, paddingTop: 8, borderTop: "1px dashed #F2AE7C" }}>
                 <Label>Хочуть цю техніку ({wanting.length})</Label>
                 {wanting.map((r) => (
-                  <div key={r.id} style={{ paddingLeft: 10, borderLeft: "2px solid #FF6A1A" }}>
+                  <div key={r.id} style={{ paddingLeft: 10, borderLeft: "2px solid #FFE3BD" }}>
                     <WantedActions compact req={r} listing={l} allBookings={allBookings} onConfirm={(x) => onConfirm(x)} onDecline={onDecline} />
                   </div>
                 ))}
@@ -390,14 +390,14 @@ export function EquipmentBoard({ listings, requests, allBookings, onConfirm, onD
 
 // ---- Вкладка «Користувачі»: скільки всього, хто новий, видалення ----
 const ROLE_LABEL = { client: "Клієнт", owner: "Власник", dispatcher: "Диспетчер" };
-const ROLE_COLOR = { client: "#C9D6DF", owner: AMBER, dispatcher: GREEN };
+const ROLE_COLOR = { client: "#FFE6D0", owner: AMBER, dispatcher: GREEN };
 const DAY_MS = 86400000;
 
 function Stat({ label, value, accent, big }) {
   return (
-    <div style={{ border: `1px solid ${accent ? "#FF6A1A" : "#3F7FAD"}`, padding: big ? "12px 18px" : "10px 14px", minWidth: big ? 170 : 120 }}>
-      <div style={{ fontFamily: FONT, fontSize: big ? 30 : 20, fontWeight: 700, color: accent ? "#FF6A1A" : "#F4F4F1", lineHeight: 1.1 }}>{typeof value === "number" ? <CountUp value={value} duration={700} /> : value}</div>
-      <div style={{ fontFamily: FONT, fontSize: 11.5, color: "#C9D6DF", marginTop: 4 }}>{label}</div>
+    <div style={{ border: `1px solid ${accent ? "#FFE3BD" : "#E99660"}`, padding: big ? "12px 18px" : "10px 14px", minWidth: big ? 170 : 120 }}>
+      <div style={{ fontFamily: FONT, fontSize: big ? 30 : 20, fontWeight: 700, color: accent ? "#FFE3BD" : "#F4F4F1", lineHeight: 1.1 }}>{typeof value === "number" ? <CountUp value={value} duration={700} /> : value}</div>
+      <div style={{ fontFamily: FONT, fontSize: 11.5, color: "#FFE6D0", marginTop: 4 }}>{label}</div>
     </div>
   );
 }
@@ -461,14 +461,14 @@ export function UsersBoard({ users: allUsers, requests, bookings, listings, curr
 
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
         {filters.map(([k, label, count]) => (
-          <button key={k} onClick={() => setRole(k)} style={{ ...smallBtn, padding: "5px 12px", fontSize: 12, borderColor: role === k ? "#FF6A1A" : "rgba(255,255,255,0.18)", color: role === k ? "#FF6A1A" : "#ffffff" }}>
+          <button key={k} onClick={() => setRole(k)} style={{ ...smallBtn, padding: "5px 12px", fontSize: 12, borderColor: role === k ? "#FFE3BD" : "rgba(255,255,255,0.18)", color: role === k ? "#FFE3BD" : "#ffffff" }}>
             {label} ({count})
           </button>
         ))}
         <input aria-label="Пошук користувача" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Ім'я, телефон, email" style={{ ...inputStyle, padding: "7px 10px", fontSize: 12.5, minWidth: 200 }} />
       </div>
 
-      {shown.length === 0 && <div style={{ fontFamily: FONT, fontSize: 13, color: "#C9D6DF" }}>Нікого не знайдено.</div>}
+      {shown.length === 0 && <div style={{ fontFamily: FONT, fontSize: 13, color: "#FFE6D0" }}>Нікого не знайдено.</div>}
 
       {shown.map((u) => {
         const reqCount = requests.filter((r) => r.clientId === u.id).length;
@@ -476,19 +476,19 @@ export function UsersBoard({ users: allUsers, requests, bookings, listings, curr
         const mine = u.id === currentUserId;
         const canDelete = !isStaff(u) && !mine;
         return (
-          <div key={u.id} style={{ border: `1px solid ${isUnseen(u) ? "#FF6A1A" : "#3F7FAD"}`, padding: "10px 14px", fontFamily: FONT, fontSize: 12.5, display: "flex", flexDirection: "column", gap: 4 }}>
+          <div key={u.id} style={{ border: `1px solid ${isUnseen(u) ? "#FFE3BD" : "#E99660"}`, padding: "10px 14px", fontFamily: FONT, fontSize: 12.5, display: "flex", flexDirection: "column", gap: 4 }}>
             <div style={{ display: "flex", justifyContent: "space-between", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
               <span>
                 <b style={{ fontSize: 14 }}>{u.name}</b>
-                {u.org ? <span style={{ color: "#C9D6DF" }}> · {u.org}</span> : null}
-                {isNew(u) && <span style={{ marginLeft: 8, background: "#FF6A1A", color: "#184A74", fontSize: 10.5, fontWeight: 700, padding: "2px 7px", letterSpacing: "0.04em" }}>НОВИЙ</span>}
+                {u.org ? <span style={{ color: "#FFE6D0" }}> · {u.org}</span> : null}
+                {isNew(u) && <span style={{ marginLeft: 8, background: "#FFE3BD", color: "#3A1405", fontSize: 10.5, fontWeight: 700, padding: "2px 7px", letterSpacing: "0.04em" }}>НОВИЙ</span>}
               </span>
               <span style={{ color: ROLE_COLOR[u.role], border: `1px solid ${ROLE_COLOR[u.role]}`, padding: "2px 8px", fontSize: 11.5 }}>{ROLE_LABEL[u.role] || u.role}</span>
             </div>
-            <div style={{ color: "#C9D6DF" }}>
+            <div style={{ color: "#FFE6D0" }}>
               {u.phone && u.phone !== "—" ? <a href={`tel:${String(u.phone).replace(/[^\d+]/g, "")}`} style={{ color: "#F4F4F1" }}>{u.phone}</a> : "телефон не вказано"} · {u.email}
             </div>
-            <div style={{ color: "#B8C8D3" }}>
+            <div style={{ color: "#FFD3B0" }}>
               Зареєстровано {fmtDate(String(u.created_at).slice(0, 10))} · заявок: {reqCount} · активних оренд: {rentCount}
             </div>
             {!isStaff(u) && (
@@ -498,7 +498,7 @@ export function UsersBoard({ users: allUsers, requests, bookings, listings, curr
                     const to = u.role === "owner" ? "client" : "owner";
                     if (window.confirm(`Змінити роль «${u.name}» на «${ROLE_LABEL[to]}»?`)) onSetRole(u.id, to);
                   }}
-                  style={miniBtn("#C9D6DF")}
+                  style={miniBtn("#FFE6D0")}
                 >
                   {u.role === "owner" ? "Зробити клієнтом" : "Зробити власником"}
                 </button>
@@ -534,7 +534,7 @@ export function ResponsesBlock({ req, listings, users, allBookings, dateFrom, da
   const to = dateTo !== undefined ? dateTo : req.dateTo;
   const datesOk = !!(from && to && to >= from);
   return (
-    <div style={{ border: "1px solid #FFB52E", padding: "12px 14px", display: "flex", flexDirection: "column", gap: 10, fontFamily: FONT, fontSize: 12.5 }}>
+    <div style={{ border: "1px solid #FFF0D2", padding: "12px 14px", display: "flex", flexDirection: "column", gap: 10, fontFamily: FONT, fontSize: 12.5 }}>
       <Label>Відгуки власників ({rs.length})</Label>
       {!datesOk && <div style={{ color: AMBER }}>У заявці немає дат — вкажіть період у блоці «Підібрати техніку» (вкладка «Заявки»), щоб підтвердити.</div>}
       {rs.map((r) => {
@@ -544,14 +544,14 @@ export function ResponsesBlock({ req, listings, users, allBookings, dateFrom, da
         const busyUntil = conflicts.length ? conflicts.map((c) => c.date_to).sort().slice(-1)[0] : null;
         const blocked = !datesOk || !!busyUntil || (l && !l.available);
         return (
-          <div key={r.id} style={{ borderLeft: `2px solid ${r.status === "chosen" ? GREEN : "#4C8CB9"}`, paddingLeft: 10, display: "flex", flexDirection: "column", gap: 4 }}>
+          <div key={r.id} style={{ borderLeft: `2px solid ${r.status === "chosen" ? GREEN : "#F2AE7C"}`, paddingLeft: 10, display: "flex", flexDirection: "column", gap: 4 }}>
             <div>
               <b style={{ fontSize: 14 }}>{l ? l.brand : `№${r.listing_id}`}</b> · {owner ? owner.org || owner.name : l ? l.owner : "власник"}
               {owner && owner.phone && owner.phone !== "—" ? <> · <a href={`tel:${String(owner.phone).replace(/[^\d+]/g, "")}`} style={{ color: "#F4F4F1" }}>{owner.phone}</a></> : null}
             </div>
             <div>
-              <b style={{ color: "#FF6A1A" }}>{Number(r.price).toLocaleString("uk-UA")} ₴ {unitLabel(r.price_unit)}</b>
-              {r.note ? <span style={{ color: "#C9D6DF" }}> · «{r.note}»</span> : null}
+              <b style={{ color: "#FFE3BD" }}>{Number(r.price).toLocaleString("uk-UA")} ₴ {unitLabel(r.price_unit)}</b>
+              {r.note ? <span style={{ color: "#FFE6D0" }}> · «{r.note}»</span> : null}
               {busyUntil ? <span style={{ color: RED }}> · зайнята до {fmtDate(busyUntil)}</span> : null}
               {r.status === "chosen" ? <span style={{ color: GREEN }}> · клієнт обрав цю пропозицію</span> : null}
             </div>
@@ -582,9 +582,9 @@ export function ResponsesBlock({ req, listings, users, allBookings, dateFrom, da
 const PAIR_STATE = {
   wanted: { text: "Клієнт хоче цю техніку — потрібне ваше рішення", color: AMBER, rank: 0 },
   reserved: { text: "Клієнт підтвердив — підтвердіть оренду", color: AMBER, rank: 0 },
-  offered: { text: "Запропоновано клієнту, чекаємо відповіді", color: "#C9D6DF", rank: 1 },
+  offered: { text: "Запропоновано клієнту, чекаємо відповіді", color: "#FFE6D0", rank: 1 },
   responses: { text: "Є відгуки власників — оберіть і підтвердіть", color: AMBER, rank: 0 },
-  open: { text: "Техніку ще не обрано", color: "#C9D6DF", rank: 2 },
+  open: { text: "Техніку ще не обрано", color: "#FFE6D0", rank: 2 },
   confirmed: { text: "Оренду підтверджено", color: GREEN, rank: 3 },
   active: { text: "Оренда триває", color: GREEN, rank: 3 },
 };
@@ -596,7 +596,7 @@ const hoursAgo = (iso) => {
 };
 
 function PhoneLink({ value }) {
-  if (!value || value === "—") return <span style={{ color: "#B8C8D3" }}>телефон не вказано</span>;
+  if (!value || value === "—") return <span style={{ color: "#FFD3B0" }}>телефон не вказано</span>;
   return <a href={telHref(value)} style={{ color: "#F4F4F1" }}>{value}</a>;
 }
 
@@ -659,7 +659,7 @@ export function PairsBoard({ requests, listings, offers, bookings, users, onConf
           <button
             key={k}
             onClick={() => setFilter(k)}
-            style={{ ...smallBtn, padding: "6px 14px", fontSize: 12.5, borderColor: filter === k ? "#FF6A1A" : "rgba(255,255,255,0.18)", color: filter === k ? "#FF6A1A" : "#ffffff" }}
+            style={{ ...smallBtn, padding: "6px 14px", fontSize: 12.5, borderColor: filter === k ? "#FFE3BD" : "rgba(255,255,255,0.18)", color: filter === k ? "#FFE3BD" : "#ffffff" }}
           >
             {g.label} ({rows.filter(g.test).length})
           </button>
@@ -667,7 +667,7 @@ export function PairsBoard({ requests, listings, offers, bookings, users, onConf
       </div>
 
       {shown.length === 0 && (
-        <div style={{ fontFamily: FONT, fontSize: 13, color: "#C9D6DF" }}>
+        <div style={{ fontFamily: FONT, fontSize: 13, color: "#FFE6D0" }}>
           {rows.length === 0 ? "Поки ніхто нічого не хоче орендувати. Щойно клієнт забронює техніку, вона з'явиться тут." : "У цій групі нічого немає."}
         </div>
       )}
@@ -676,10 +676,10 @@ export function PairsBoard({ requests, listings, offers, bookings, users, onConf
         const st = PAIR_STATE[row.state];
         const l = row.listing;
         return (
-          <div key={row.key} style={{ border: `1px solid ${st.color === "#C9D6DF" ? "#3F7FAD" : st.color}`, padding: "12px 14px", display: "flex", flexDirection: "column", gap: 10, fontFamily: FONT, fontSize: 12.5 }}>
+          <div key={row.key} style={{ border: `1px solid ${st.color === "#FFE6D0" ? "#E99660" : st.color}`, padding: "12px 14px", display: "flex", flexDirection: "column", gap: 10, fontFamily: FONT, fontSize: 12.5 }}>
             <div style={{ display: "flex", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
               <span style={{ color: st.color, fontWeight: 600 }}>{st.text}</span>
-              {row.req && <span style={{ color: "#B8C8D3" }}>заявка №{row.req.id}{row.req.createdAt ? ` · ${hoursAgo(row.req.createdAt)}` : ""}</span>}
+              {row.req && <span style={{ color: "#FFD3B0" }}>заявка №{row.req.id}{row.req.createdAt ? ` · ${hoursAgo(row.req.createdAt)}` : ""}</span>}
             </div>
 
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))", gap: 14 }}>
@@ -693,14 +693,14 @@ export function PairsBoard({ requests, listings, offers, bookings, users, onConf
                 {l ? (
                   <>
                     <div style={{ fontSize: 15, fontWeight: 600, marginTop: 6 }}>
-                      {l.brand} <span style={{ fontWeight: 400, fontSize: 12.5, color: "#C9D6DF" }}>· {l.type} · {l.price} ₴/{l.unit}</span>
+                      {l.brand} <span style={{ fontWeight: 400, fontSize: 12.5, color: "#FFE6D0" }}>· {l.type} · {l.price} ₴/{l.unit}</span>
                     </div>
                     <div>
                       Власник: <b>{row.owner ? row.owner.name : "—"}</b> · <PhoneLink value={row.owner && row.owner.phone} />
                     </div>
                   </>
                 ) : (
-                  <div style={{ marginTop: 6, color: "#C9D6DF" }}>
+                  <div style={{ marginTop: 6, color: "#FFE6D0" }}>
                     {row.req ? `${row.req.type}, ${row.req.region}` : "—"}
                   </div>
                 )}
@@ -710,7 +710,7 @@ export function PairsBoard({ requests, listings, offers, bookings, users, onConf
             {row.state === "wanted" ? (
               <>
                 {chosenResponse(row.req) && (
-                  <div style={{ color: "#FF6A1A" }}>
+                  <div style={{ color: "#FFE3BD" }}>
                     Ціна за пропозицією власника: <b>{Number(chosenResponse(row.req).price).toLocaleString("uk-UA")} ₴ {unitLabel(chosenResponse(row.req).price_unit)}</b>
                   </div>
                 )}
@@ -722,7 +722,7 @@ export function PairsBoard({ requests, listings, offers, bookings, users, onConf
                   {fmtPeriod(row.from, row.to)}
                   {row.req && row.req.withOperator ? " · з оператором" : ""}
                 </div>
-                {row.req && row.req.comment && <div style={{ color: "#C9D6DF" }}>{row.req.comment}</div>}
+                {row.req && row.req.comment && <div style={{ color: "#FFE6D0" }}>{row.req.comment}</div>}
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                   {row.state === "reserved" && (
                     <button
@@ -741,13 +741,13 @@ export function PairsBoard({ requests, listings, offers, bookings, users, onConf
                     </button>
                   )}
                   {(row.state === "open" || row.state === "responses") && (
-                    <button onClick={onOpenRequests} style={miniBtn("#FF6A1A")}>Підібрати техніку →</button>
+                    <button onClick={onOpenRequests} style={miniBtn("#FFE3BD")}>Підібрати техніку →</button>
                   )}
                 </div>
                 {row.state === "responses" && (
                   <ResponsesBlock req={row.req} listings={listings} users={users} allBookings={bookings} onConfirm={(listingId, f, t) => onManual(row.req.id, listingId, f, t)} />
                 )}
-                {row.req && row.req.isPublic && row.state !== "responses" && <div style={{ color: "#B8C8D3" }}>Заявка вивішена на дошці запитів</div>}
+                {row.req && row.req.isPublic && row.state !== "responses" && <div style={{ color: "#FFD3B0" }}>Заявка вивішена на дошці запитів</div>}
               </div>
             )}
           </div>

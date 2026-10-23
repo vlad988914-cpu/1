@@ -5,9 +5,9 @@ import { Plate, Label, Field, ErrorText, RoleTag, primaryBtn, smallBtn, selectSt
 import { fmtDate, daysInclusive, rangesOverlap, todayLocal, unitLabel, BUDGET_UNITS } from "./services/deals.js";
 
 const FONT = "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif";
-const GREEN = "#6fae6f";
-const RED = "#c96b5a";
-const AMBER = "#FFB52E";
+const GREEN = "#B9F6CA";
+const RED = "#FFD0C4";
+const AMBER = "#FFF0D2";
 
 const ago = (iso) => {
   if (!iso) return "";
@@ -31,7 +31,7 @@ function WantedCard({ item, index = 0, user, onRespond, onUnpublish, onSignIn })
           <RoleTag kind="rent" />
           <Label>{item.req_type}</Label>
         </span>
-        <span style={{ fontFamily: FONT, fontSize: 11.5, color: item.req_responses > 0 ? GREEN : "#B8C8D3", border: `1px solid ${item.req_responses > 0 ? GREEN : "#3F7FAD"}`, padding: "2px 8px" }}>
+        <span style={{ fontFamily: FONT, fontSize: 11.5, color: item.req_responses > 0 ? GREEN : "#FFD3B0", border: `1px solid ${item.req_responses > 0 ? GREEN : "#E99660"}`, padding: "2px 8px" }}>
           {item.req_responses > 0 ? `Відгуків: ${item.req_responses}` : "Поки без відгуків"}
         </span>
       </div>
@@ -39,20 +39,20 @@ function WantedCard({ item, index = 0, user, onRespond, onUnpublish, onSignIn })
       <div style={{ fontFamily: FONT, fontSize: 13 }}>
         {item.req_date_from && item.req_date_to ? (
           <>
-            {fmtDate(item.req_date_from)} — {fmtDate(item.req_date_to)} <span style={{ color: "#C9D6DF" }}>({days} {days === 1 ? "день" : days < 5 ? "дні" : "днів"})</span>
+            {fmtDate(item.req_date_from)} — {fmtDate(item.req_date_to)} <span style={{ color: "#FFE6D0" }}>({days} {days === 1 ? "день" : days < 5 ? "дні" : "днів"})</span>
           </>
         ) : (
-          <span style={{ color: "#C9D6DF" }}>дати за домовленістю</span>
+          <span style={{ color: "#FFE6D0" }}>дати за домовленістю</span>
         )}
       </div>
-      <div style={{ fontFamily: FONT, fontSize: 16, fontWeight: 700, color: "#FF6A1A" }}>{priceText(item.req_budget, item.req_budget_unit)}</div>
-      {item.req_with_operator && <div style={{ fontFamily: FONT, fontSize: 12, color: "#C9D6DF" }}>З оператором</div>}
+      <div style={{ fontFamily: FONT, fontSize: 16, fontWeight: 700, color: "#FFE3BD" }}>{priceText(item.req_budget, item.req_budget_unit)}</div>
+      {item.req_with_operator && <div style={{ fontFamily: FONT, fontSize: 12, color: "#FFE6D0" }}>З оператором</div>}
       {item.req_comment && (
-        <div style={{ fontFamily: FONT, fontSize: 12.5, color: "#E3EBF0", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+        <div style={{ fontFamily: FONT, fontSize: 12.5, color: "#FFF1E3", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
           {item.req_comment}
         </div>
       )}
-      <div style={{ fontFamily: FONT, fontSize: 11.5, color: "#B8C8D3" }}>
+      <div style={{ fontFamily: FONT, fontSize: 11.5, color: "#FFD3B0" }}>
         Автор: {item.req_author} · {ago(item.req_created_at)}
       </div>
 
@@ -77,7 +77,7 @@ function WantedCard({ item, index = 0, user, onRespond, onUnpublish, onSignIn })
             </button>
           )
         ) : user.role === "dispatcher" ? null : (
-          <span style={{ fontFamily: FONT, fontSize: 11.5, color: "#B8C8D3" }}>Відгукуватись можуть власники техніки</span>
+          <span style={{ fontFamily: FONT, fontSize: 11.5, color: "#FFD3B0" }}>Відгукуватись можуть власники техніки</span>
         )}
       </div>
     </Plate>
@@ -104,7 +104,7 @@ export function WantedBoard({ items, user, onPublish, onRespond, onUnpublish, on
       <h2 style={{ fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif", fontSize: 24, textTransform: "none", margin: "0 0 6px" }}>
         {tx.title}
       </h2>
-      <p style={{ fontFamily: FONT, fontSize: 13.5, color: "#C9D6DF", margin: "0 0 14px", maxWidth: 680 }}>
+      <p style={{ fontFamily: FONT, fontSize: 13.5, color: "#FFE6D0", margin: "0 0 14px", maxWidth: 680 }}>
         {tx.intro}
       </p>
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginBottom: 14 }}>
@@ -120,11 +120,11 @@ export function WantedBoard({ items, user, onPublish, onRespond, onUnpublish, on
             ))}
           </select>
         )}
-        <span style={{ fontFamily: FONT, fontSize: 12.5, color: "#B8C8D3" }}>{items.length > 0 ? `${tx.now}: ${items.length}` : ""}</span>
+        <span style={{ fontFamily: FONT, fontSize: 12.5, color: "#FFD3B0" }}>{items.length > 0 ? `${tx.now}: ${items.length}` : ""}</span>
       </div>
 
       {loaded && list.length === 0 && (
-        <div style={{ fontFamily: FONT, fontSize: 13, color: "#C9D6DF" }}>
+        <div style={{ fontFamily: FONT, fontSize: 13, color: "#FFE6D0" }}>
           {tx.empty}
         </div>
       )}
@@ -197,10 +197,10 @@ export function RespondForm({ request, myListings, busyRanges, onSubmit, onAddLi
       }}
       style={{ display: "flex", flexDirection: "column", gap: 12 }}
     >
-      <div style={{ fontFamily: FONT, fontSize: 13, color: "#C9D6DF" }}>
+      <div style={{ fontFamily: FONT, fontSize: 13, color: "#FFE6D0" }}>
         {request.req_type} · {request.req_region} ·{" "}
         {request.req_date_from && request.req_date_to ? `${fmtDate(request.req_date_from)} — ${fmtDate(request.req_date_to)}` : "дати за домовленістю"} ·{" "}
-        <b style={{ color: "#FF6A1A" }}>{priceText(request.req_budget, request.req_budget_unit)}</b>
+        <b style={{ color: "#FFE3BD" }}>{priceText(request.req_budget, request.req_budget_unit)}</b>
       </div>
 
       <Field label="Яку техніку пропонуєте">
@@ -237,7 +237,7 @@ export function RespondForm({ request, myListings, busyRanges, onSubmit, onAddLi
       <button className="btn-premium-hover" type="submit" disabled={!canSend} style={{ ...primaryBtn, width: "100%", minHeight: 48, opacity: canSend ? 1 : 0.5, cursor: canSend ? "pointer" : "not-allowed" }}>
         {busy ? "Надсилаємо..." : "Надіслати пропозицію"}
       </button>
-      <div style={{ fontFamily: FONT, fontSize: 11.5, color: "#B8C8D3" }}>
+      <div style={{ fontFamily: FONT, fontSize: 11.5, color: "#FFD3B0" }}>
         Клієнт побачить вашу техніку, ціну й коментар (без вашого телефону). Якщо він обере вашу пропозицію, диспетчер підтвердить оренду — і тоді відкриються контакти.
       </div>
     </form>
@@ -248,8 +248,8 @@ export function RespondForm({ request, myListings, busyRanges, onSubmit, onAddLi
 const RESPONSE_STATE = {
   sent: { text: "Чекає вибору клієнта", color: AMBER },
   chosen: { text: "Клієнт обрав вашу техніку — диспетчер підтверджує", color: GREEN },
-  declined: { text: "Не обрано або заявку закрито", color: "#B8C8D3" },
-  withdrawn: { text: "Ви забрали відгук", color: "#B8C8D3" },
+  declined: { text: "Не обрано або заявку закрито", color: "#FFD3B0" },
+  withdrawn: { text: "Ви забрали відгук", color: "#FFD3B0" },
 };
 
 export function OwnerResponses({ items, onWithdraw, onRefresh }) {
@@ -260,7 +260,7 @@ export function OwnerResponses({ items, onWithdraw, onRefresh }) {
         Оновити
       </button>
       {items.length === 0 && (
-        <div style={{ fontFamily: FONT, fontSize: 13, color: "#C9D6DF" }}>
+        <div style={{ fontFamily: FONT, fontSize: 13, color: "#FFE6D0" }}>
           Ви ще не відгукувались на заявки. Загляньте в «Дошку запитів» на головній сторінці.
         </div>
       )}
@@ -279,12 +279,12 @@ export function OwnerResponses({ items, onWithdraw, onRefresh }) {
             <div style={{ fontFamily: FONT, fontSize: 14, fontWeight: 600 }}>
               {x.request.type} · {x.request.region}
             </div>
-            <div style={{ fontFamily: FONT, fontSize: 12.5, color: "#C9D6DF" }}>
+            <div style={{ fontFamily: FONT, fontSize: 12.5, color: "#FFE6D0" }}>
               {x.request.date_from && x.request.date_to ? `${fmtDate(x.request.date_from)} — ${fmtDate(x.request.date_to)}` : "дати за домовленістю"} · клієнт {x.request.author} · хоче {priceText(x.request.budget, x.request.budget_unit)}
             </div>
             <div style={{ fontFamily: FONT, fontSize: 13 }}>
               Ваша пропозиція: <b>{Number(x.price).toLocaleString("uk-UA")} ₴ {unitLabel(x.price_unit)}</b>
-              {x.note ? <span style={{ color: "#C9D6DF" }}> · «{x.note}»</span> : null}
+              {x.note ? <span style={{ color: "#FFE6D0" }}> · «{x.note}»</span> : null}
             </div>
             {x.status === "sent" && (
               <div>

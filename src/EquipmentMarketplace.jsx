@@ -337,7 +337,7 @@ function SweepBand() {
           const p0 = pts[i - 1];
           const f = (Math.abs(q.c) + Math.abs(p0.c)) / 2;
           const front = (q.c + p0.c) / 2 > 0;
-          const col = front ? mixHex([245, 176, 8], [255, 214, 60], f) : mixHex([220, 150, 6], [250, 188, 28], f);
+          const col = front ? mixHex([255, 226, 180], [255, 250, 232], f) : mixHex([250, 200, 140], [255, 232, 196], f);
           const fill = `rgb(${col[0]},${col[1]},${col[2]})`;
           quads.push({ fill, pts: `${(p0.x - p0.hw).toFixed(1)},${p0.y} ${(p0.x + p0.hw).toFixed(1)},${p0.y} ${(q.x + q.hw).toFixed(1)},${q.y} ${(q.x - q.hw).toFixed(1)},${q.y}` });
         }
@@ -377,8 +377,8 @@ function SweepBand() {
             <g opacity="0.28">{geo.quads.map((q, i) => <polygon key={i} points={q.pts} fill={q.fill} stroke={q.fill} strokeWidth="0.8" />)}</g>
             <path d={geo.eG} fill="none" stroke="#FFFFFF" strokeOpacity="0.5" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
             <path d={geo.eH} fill="none" stroke="#FFF6CF" strokeOpacity="0.22" strokeWidth="2" strokeLinejoin="round" />
-            <path d={geo.eL} fill="none" stroke="#FFE27A" strokeOpacity="0.95" strokeWidth="1.8" strokeLinejoin="round" />
-            <path d={geo.eR} fill="none" stroke="#FFD24A" strokeOpacity="0.85" strokeWidth="1.4" strokeLinejoin="round" />
+            <path d={geo.eL} fill="none" stroke="#FFF6E2" strokeOpacity="0.95" strokeWidth="1.8" strokeLinejoin="round" />
+            <path d={geo.eR} fill="none" stroke="#FFE2B0" strokeOpacity="0.85" strokeWidth="1.4" strokeLinejoin="round" />
           </g>
         </>
       )}
@@ -556,7 +556,7 @@ function FaqAccordion({ items }) {
         <div key={i} className="faq-item">
           <button className="faq-question" onClick={() => setOpenIndex(openIndex === i ? null : i)}>
             <span>{item.q}</span>
-            <span style={{ color: "#FF6A1A", fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", flexShrink: 0 }}>
+            <span style={{ color: "#FFE3BD", fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", flexShrink: 0 }}>
               {openIndex === i ? "−" : "+"}
             </span>
           </button>
@@ -865,7 +865,7 @@ function ModelPage({ model, listings, user, ratings, busyRanges, selectedId, onS
     <PageShell onClose={onClose} title={model.name} crumb={`${trGroup(g.name, lang)} · ${model.brand}`}>
       <div className="lp-hero" style={{ minHeight: 190 }}>
         <div style={{ textAlign: "center", padding: 18 }}>
-          <div style={{ color: "#FF6A1A", display: "flex", justifyContent: "center" }}><EquipmentIcon type={g.type} size={96} /></div>
+          <div style={{ color: "#FFE3BD", display: "flex", justifyContent: "center" }}><EquipmentIcon type={g.type} size={96} /></div>
         </div>
       </div>
       <div>
@@ -874,24 +874,24 @@ function ModelPage({ model, listings, user, ratings, busyRanges, selectedId, onS
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
           <RatingLine stat={stat} size={16} />
           {listings.some(isNewListing) && <span className="lp-badge-new">{T.isNew}</span>}
-          <span style={{ fontFamily: FONT, fontSize: 13, color: listings.length ? "#6fae6f" : "#C9D6DF" }}>
+          <span style={{ fontFamily: FONT, fontSize: 13, color: listings.length ? "#B9F6CA" : "#FFE6D0" }}>
             {listings.length ? T.listingsCount(listings.length) : T.noListings}
           </span>
         </div>
         <div className="mk" style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 12 }}>
-          {model.key.map((k) => <span key={k} style={{ fontFamily: FONT, fontSize: 13, padding: "4px 12px", border: "1px solid #4C8CB9", borderRadius: 980, color: "#FFB81C", background: "#184A74" }}>{trVal(k, lang)}</span>)}
+          {model.key.map((k) => <span key={k} style={{ fontFamily: FONT, fontSize: 13, padding: "4px 12px", border: "1px solid #F2AE7C", borderRadius: 980, color: "#FFF0D2", background: "#3A1405" }}>{trVal(k, lang)}</span>)}
         </div>
       </div>
 
       <section style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         <h2 style={h2}>{T.can}</h2>
-        {info && <p style={{ margin: 0, fontFamily: FONT, fontSize: 14.5, lineHeight: 1.6, color: "#E3EBF0" }}>{info.definition}</p>}
-        {info && <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>{info.uses.map((u) => <span key={u} style={{ fontFamily: FONT, fontSize: 13, padding: "5px 12px", border: "1px solid #4C8CB9", borderRadius: 980 }}>{u}</span>)}</div>}
+        {info && <p style={{ margin: 0, fontFamily: FONT, fontSize: 14.5, lineHeight: 1.6, color: "#FFF1E3" }}>{info.definition}</p>}
+        {info && <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>{info.uses.map((u) => <span key={u} style={{ fontFamily: FONT, fontSize: 13, padding: "5px 12px", border: "1px solid #F2AE7C", borderRadius: 980 }}>{u}</span>)}</div>}
         {tiles.length > 0 && (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 10, marginTop: 4 }}>
             {tiles.map(([k, v]) => (
-              <div key={k} style={{ border: "1px solid #3279AB", borderRadius: 14, padding: "12px 14px", background: "#133F63" }}>
-                <div style={{ fontFamily: FONT, fontSize: 12, color: "#C9D6DF" }}>{trLabel(k, lang)}</div>
+              <div key={k} style={{ border: "1px solid #EFA06A", borderRadius: 14, padding: "12px 14px", background: "#7A2807" }}>
+                <div style={{ fontFamily: FONT, fontSize: 12, color: "#FFE6D0" }}>{trLabel(k, lang)}</div>
                 <div style={{ fontFamily: FONT, fontSize: 17, fontWeight: 700, marginTop: 4 }}>{trVal(v.split(" (")[0], lang)}</div>
               </div>
             ))}
@@ -901,21 +901,21 @@ function ModelPage({ model, listings, user, ratings, busyRanges, selectedId, onS
 
       <section style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         <h2 style={h2}>{T.specs}</h2>
-        <div style={{ border: "1px solid #3279AB", borderRadius: 16, background: "#133F63", padding: "4px 16px" }}>
+        <div style={{ border: "1px solid #EFA06A", borderRadius: 16, background: "#7A2807", padding: "4px 16px" }}>
           {model.specs.map(([k, v], i) => (
-            <div key={k} style={{ display: "flex", justifyContent: "space-between", gap: 16, padding: "10px 0", borderTop: i ? "1px solid #3279AB" : "none", fontFamily: FONT, fontSize: 14.5 }}>
-              <span style={{ color: "#C9D6DF" }}>{trLabel(k, lang)}</span>
+            <div key={k} style={{ display: "flex", justifyContent: "space-between", gap: 16, padding: "10px 0", borderTop: i ? "1px solid #EFA06A" : "none", fontFamily: FONT, fontSize: 14.5 }}>
+              <span style={{ color: "#FFE6D0" }}>{trLabel(k, lang)}</span>
               <span style={{ textAlign: "right" }}>{trVal(v, lang)}</span>
             </div>
           ))}
         </div>
-        {model.note && <div style={{ fontFamily: FONT, fontSize: 12.5, color: "#C9D6DF" }}>{trNote(model.note, lang)}</div>}
+        {model.note && <div style={{ fontFamily: FONT, fontSize: 12.5, color: "#FFE6D0" }}>{trNote(model.note, lang)}</div>}
       </section>
 
       <section ref={bookRef} id="booking" style={{ display: "flex", flexDirection: "column", gap: 12, scrollMarginTop: 80 }}>
         <h2 style={h2}>{T.calBook}</h2>
         {!sel ? (
-          <div style={{ border: "1px solid #4C8CB9", borderRadius: 14, padding: 16, fontFamily: FONT, fontSize: 14, color: "#E3EBF0", lineHeight: 1.55 }}>
+          <div style={{ border: "1px solid #F2AE7C", borderRadius: 14, padding: 16, fontFamily: FONT, fontSize: 14, color: "#FFF1E3", lineHeight: 1.55 }}>
             {T.noSel}
           </div>
         ) : (
@@ -927,15 +927,15 @@ function ModelPage({ model, listings, user, ratings, busyRanges, selectedId, onS
                 ))}
               </div>
             )}
-            <div style={{ border: "1px solid #3279AB", borderRadius: 16, padding: 14, background: "#133F63", display: "flex", flexDirection: "column", gap: 10 }}>
+            <div style={{ border: "1px solid #EFA06A", borderRadius: 16, padding: 14, background: "#7A2807", display: "flex", flexDirection: "column", gap: 10 }}>
               <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap", fontFamily: FONT }}>
                 <div>
                   <div style={{ fontWeight: 700, fontSize: 16 }}>{sel.brand}</div>
-                  <div style={{ fontSize: 12.5, color: "#C9D6DF" }}>{sel.owner} · {sel.region}{sel.available ? "" : T.unavail}</div>
+                  <div style={{ fontSize: 12.5, color: "#FFE6D0" }}>{sel.owner} · {sel.region}{sel.available ? "" : T.unavail}</div>
                 </div>
-                <div style={{ fontWeight: 700, fontSize: 20, color: "#FFB81C" }}>{sel.price > 0 ? `${sel.price} ₴/${trUnit(sel.unit, lang)}` : T.negotiable}</div>
+                <div style={{ fontWeight: 700, fontSize: 20, color: "#FFF0D2" }}>{sel.price > 0 ? `${sel.price} ₴/${trUnit(sel.unit, lang)}` : T.negotiable}</div>
               </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", fontFamily: FONT, fontSize: 13, color: "#C9D6DF" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", fontFamily: FONT, fontSize: 13, color: "#FFE6D0" }}>
                 <RatingLine stat={ratings[sel.id]} />
                 {!isOwn && <><span>{T.yourRating}</span><Stars value={0} size={20} mine={(ratings[sel.id] && ratings[sel.id].mine) || 0} onPick={(n) => onRate(sel, n)} /></>}
               </div>
@@ -944,7 +944,7 @@ function ModelPage({ model, listings, user, ratings, busyRanges, selectedId, onS
             {!user ? (
               <button type="button" onClick={() => onSignIn(T.signInBookMsg)} style={{ ...primaryBtn, width: "100%", minHeight: 48 }}>{T.signInBook}</button>
             ) : isOwn || isDisp ? (
-              <div style={{ fontFamily: FONT, fontSize: 13, color: "#C9D6DF" }}>{isOwn ? T.ownTech : T.dispNote}</div>
+              <div style={{ fontFamily: FONT, fontSize: 13, color: "#FFE6D0" }}>{isOwn ? T.ownTech : T.dispNote}</div>
             ) : (
               <BookingForm key={sel.id} listing={sel} busyRanges={busyRanges} onSubmit={(d) => onBook(sel, d)} />
             )}
@@ -953,7 +953,7 @@ function ModelPage({ model, listings, user, ratings, busyRanges, selectedId, onS
       </section>
 
       {sel && (
-        <div style={{ paddingTop: 8, borderTop: "1px solid #3279AB" }}>
+        <div style={{ paddingTop: 8, borderTop: "1px solid #EFA06A" }}>
           <ListingReviews items={reviews.items} available={reviews.ok} user={user} isOwnerOfListing={isOwn} onSubmit={onReviewSubmit} onDelete={onReviewDelete} onSignIn={() => onSignIn(T.signInReviewMsg)} />
         </div>
       )}
@@ -1006,7 +1006,7 @@ function EquipmentIcon({ type, size = 24, style }) {
         alt={type}
         width={size}
         height={size}
-        style={{ objectFit: "cover", borderRadius: size > 32 ? 10 : 6, border: "2px solid #FF6A1A", ...style }}
+        style={{ objectFit: "cover", borderRadius: size > 32 ? 10 : 6, border: "2px solid #FFE3BD", ...style }}
       />
     );
   }
@@ -1081,8 +1081,8 @@ const carouselArrowStyle = (side) => ({
   width: 30,
   height: 30,
   borderRadius: "50%",
-  border: "1px solid #4C8CB9",
-  background: "#1F5683",
+  border: "1px solid #F2AE7C",
+  background: "#A53C0D",
   color: "#ffffff",
   fontSize: 16,
   cursor: "pointer",
@@ -1099,11 +1099,11 @@ function Stars({ value = 0, size = 14, onPick, mine = 0 }) {
   const shown = hover || mine || value;
   const star = (i) => {
     const fill = Math.max(0, Math.min(1, shown - (i - 1)));
-    const sty = { width: size, height: size, display: "inline-block", position: "relative", fontSize: size, lineHeight: 1, color: "#4C8CB9" };
+    const sty = { width: size, height: size, display: "inline-block", position: "relative", fontSize: size, lineHeight: 1, color: "#F2AE7C" };
     return (
       <span key={i} style={sty} aria-hidden="true">
         ★
-        <span style={{ position: "absolute", left: 0, top: 0, width: `${fill * 100}%`, overflow: "hidden", color: hover || mine ? "#FF6A1A" : "#FFB81C", whiteSpace: "nowrap" }}>★</span>
+        <span style={{ position: "absolute", left: 0, top: 0, width: `${fill * 100}%`, overflow: "hidden", color: hover || mine ? "#FFE3BD" : "#FFF0D2", whiteSpace: "nowrap" }}>★</span>
       </span>
     );
   };
@@ -1126,7 +1126,7 @@ function RatingLine({ stat, size = 13 }) {
     return <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11.5, color: "#7d8387", fontFamily: font }}><Stars value={0} size={size} />{T.noRatings}</span>;
   }
   const avg = stat.sum / stat.count;
-  return <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, color: "#D5D8DA", fontFamily: font }}><Stars value={avg} size={size} /><b style={{ fontWeight: 600 }}>{avg.toFixed(1)}</b><span style={{ color: "#C9D6DF" }}>({stat.count})</span></span>;
+  return <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, color: "#D5D8DA", fontFamily: font }}><Stars value={avg} size={size} /><b style={{ fontWeight: 600 }}>{avg.toFixed(1)}</b><span style={{ color: "#FFE6D0" }}>({stat.count})</span></span>;
 }
 
 // ---- Відео-превʼю техніки: при наведенні на фото зʼявляється вікно з відео ----
@@ -1167,9 +1167,9 @@ function VideoPeek({ video, children }) {
     <span ref={ref} onMouseEnter={show} onMouseLeave={hide} style={{ display: "inline-block", cursor: canHover ? "zoom-in" : undefined }}>
       {children}
       {pos && typeof document !== "undefined" && createPortal(
-        <div className="video-peek" style={{ position: "fixed", left: pos.x, top: pos.y, width: W, zIndex: 9999, pointerEvents: "none", background: "#133F63", border: "1px solid #4C8CB9", borderRadius: 14, overflow: "hidden", boxShadow: "0 18px 50px rgba(0,0,0,.6)" }}>
+        <div className="video-peek" style={{ position: "fixed", left: pos.x, top: pos.y, width: W, zIndex: 9999, pointerEvents: "none", background: "#7A2807", border: "1px solid #F2AE7C", borderRadius: 14, overflow: "hidden", boxShadow: "0 18px 50px rgba(0,0,0,.6)" }}>
           <video src={video.src} poster={video.poster} autoPlay muted loop playsInline preload="auto" style={{ display: "block", width: W, height: H, objectFit: "cover", background: "#000" }} />
-          <div style={{ padding: "6px 12px", fontSize: 11.5, color: "#C9D6DF", fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>Відео техніки</div>
+          <div style={{ padding: "6px 12px", fontSize: 11.5, color: "#FFE6D0", fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>Відео техніки</div>
         </div>, document.body)}
     </span>
   );
@@ -2317,7 +2317,7 @@ export default function EquipmentMarketplace() {
           100% { background-position: 0% 50%; }
         }
         .shimmer-logo {
-          background: linear-gradient(90deg, #FF6A1A, #ffb347, #FF6A1A, #e8437a, #FF6A1A);
+          background: linear-gradient(90deg, #FFE3BD, #FFE9C8, #FFE3BD, #e8437a, #FFE3BD);
           background-size: 300% 100%;
           -webkit-background-clip: text;
           background-clip: text;
@@ -2419,7 +2419,7 @@ export default function EquipmentMarketplace() {
         .road-fill {
           position: absolute;
           inset: 0;
-          background: linear-gradient(90deg, #B8C8D3, #C9D6DF);
+          background: linear-gradient(90deg, #FFD3B0, #FFE6D0);
           transform-origin: left center;
           transform: scaleX(0);
           animation: roadGrow 8s ease-in-out infinite;
@@ -2452,7 +2452,7 @@ export default function EquipmentMarketplace() {
           .auth-split-left { display: none !important; }
         }
         button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, [tabindex]:focus-visible {
-          outline: 2px solid #FFB52E;
+          outline: 2px solid #FFF0D2;
           outline-offset: 2px;
         }
 
@@ -2483,7 +2483,7 @@ export default function EquipmentMarketplace() {
           justify-content: center;
           gap: 6px;
           background: #ffffff;
-          color: #184A74;
+          color: #3A1405;
           border: 1px solid rgba(0,0,0,0.1);
           border-radius: 980px;
           font-size: 13px;
@@ -2494,7 +2494,7 @@ export default function EquipmentMarketplace() {
           font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif;
         }
         .hero-pill:hover {
-          background: #184A74;
+          background: #3A1405;
           color: #ffffff;
         }
         .hero-pill-outline {
@@ -2504,7 +2504,7 @@ export default function EquipmentMarketplace() {
         }
         .hero-pill-outline:hover {
           background: #ffffff;
-          color: #184A74;
+          color: #3A1405;
         }
 
         :root {
@@ -2551,13 +2551,13 @@ export default function EquipmentMarketplace() {
         .section-divider .num {
           font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif;
           font-size: 11px;
-          color: #B8C8D3;
+          color: #FFD3B0;
           flex-shrink: 0;
         }
         .section-divider .line {
           flex: 1;
           height: 1px;
-          background: #3279AB;
+          background: #EFA06A;
         }
         .section-divider .title {
           font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif;
@@ -2574,7 +2574,7 @@ export default function EquipmentMarketplace() {
           border-radius: 999px;
           background: rgba(255,255,255,.07);
         }
-        .section-divider .title::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #FF6A1A; box-shadow: 0 0 8px rgba(255,106,26,.8); }
+        .section-divider .title::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #FFE3BD; box-shadow: 0 0 8px rgba(255,214,160,.8); }
 
         }
 
@@ -2590,16 +2590,16 @@ export default function EquipmentMarketplace() {
         }
 
         @keyframes badgePulse {
-          0%, 100% { color: #FFB52E; border-color: #FFB52E; box-shadow: 0 0 20px rgba(255,176,32,0.25); }
-          33% { color: #FF6A1A; border-color: #FF6A1A; box-shadow: 0 0 20px rgba(255,106,26,0.3); }
-          66% { color: #FFE08A; border-color: #FFE08A; box-shadow: 0 0 20px rgba(255,224,138,0.3); }
+          0%, 100% { color: #FFF0D2; border-color: #FFF0D2; box-shadow: 0 0 20px rgba(255,225,170,0.25); }
+          33% { color: #FFE3BD; border-color: #FFE3BD; box-shadow: 0 0 20px rgba(255,214,160,0.3); }
+          66% { color: #FFF4DA; border-color: #FFF4DA; box-shadow: 0 0 20px rgba(255,246,228,0.3); }
         }
         .badge-pulse {
-          border: 1px solid #FFB52E;
+          border: 1px solid #FFF0D2;
           animation: badgePulse 3s ease-in-out infinite;
         }
         @media (prefers-reduced-motion: reduce) {
-          .badge-pulse { animation: none; color: #FFB52E; border-color: #FFB52E; }
+          .badge-pulse { animation: none; color: #FFF0D2; border-color: #FFF0D2; }
         }
 
         @keyframes statusBreathe {
@@ -2660,7 +2660,7 @@ export default function EquipmentMarketplace() {
           border-radius: 999px;
           border: none;
           cursor: pointer;
-          color: #184A74;
+          color: #3A1405;
           font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif;
           font-size: 13px;
           font-weight: 700;
@@ -2668,8 +2668,8 @@ export default function EquipmentMarketplace() {
           text-transform: uppercase;
           padding: 13px 24px;
           background:
-            linear-gradient(180deg, rgba(24,74,116,0) 45%, rgba(24,74,116,0.18) 100%),
-            linear-gradient(90deg, rgba(255,224,138,0.9) 0%, rgba(255,176,32,0.95) 45%, rgba(255,90,31,0.95) 100%);
+            linear-gradient(180deg, rgba(120,38,8,0) 45%, rgba(120,38,8,0.18) 100%),
+            linear-gradient(90deg, rgba(255,246,228,0.9) 0%, rgba(255,225,170,0.95) 45%, rgba(255,200,140,0.95) 100%);
           box-shadow: 0 6px 22px rgba(255,144,32,0.3), inset 0 1px 0 rgba(255,255,255,0.45);
         }
         .glass-cta::before {
@@ -2687,14 +2687,14 @@ export default function EquipmentMarketplace() {
         }
 
 
-        .sweep-wave { position: absolute; left: 0; top: 0; z-index: -1; pointer-events: none; overflow: visible; --sw: 26; filter: drop-shadow(0 0 14px rgba(255,205,60,.4)); }
+        .sweep-wave { position: absolute; left: 0; top: 0; z-index: -1; pointer-events: none; overflow: visible; --sw: 26; filter: drop-shadow(0 0 14px rgba(255,236,190,.45)); }
         @media (max-width: 700px) { .sweep-wave { --sw: 16; } }
-        .bg-base { position: fixed; inset: 0; z-index: -1; pointer-events: none; background: linear-gradient(165deg, #2C7FB3 0%, #1E5F8F 38%, #153F66 78%, #11334F 100%); animation: hueShift 480s ease-in-out infinite; will-change: filter; }
-        @keyframes hueShift { 0%, 25% { filter: hue-rotate(0deg); } 50%, 75% { filter: hue-rotate(-150deg) saturate(1.05); } 100% { filter: hue-rotate(0deg); } }
-        .bg-flutes { position: fixed; inset: 0; z-index: -1; pointer-events: none; background: repeating-linear-gradient(90deg, rgba(255,255,255,.045) 0, rgba(255,255,255,.015) 3px, rgba(0,0,0,0) 9px, rgba(0,0,0,.05) 20px, rgba(0,0,0,.08) 24px), radial-gradient(60% 50% at 88% 90%, rgba(255,236,200,.09), transparent 70%), radial-gradient(70% 45% at 8% 6%, rgba(255,110,60,.05), transparent 70%); -webkit-mask-image: linear-gradient(180deg, rgba(0,0,0,.6) 0%, #000 60%); mask-image: linear-gradient(180deg, rgba(0,0,0,.6) 0%, #000 60%); }
+        .bg-base { position: fixed; inset: 0; z-index: -1; pointer-events: none; background: radial-gradient(60% 50% at 82% 12%, rgba(255,190,90,.30), transparent 70%), radial-gradient(55% 45% at 6% 92%, rgba(120,20,0,.38), transparent 72%), linear-gradient(100deg, #B3330A 0%, #C8460C 34%, #D95F10 68%, #E58A22 100%); animation: hueShift 480s ease-in-out infinite; will-change: filter; }
+        @keyframes hueShift { 0%, 25% { filter: hue-rotate(0deg); } 50%, 75% { filter: hue-rotate(14deg) saturate(1.04); } 100% { filter: hue-rotate(0deg); } }
+        .bg-flutes { position: fixed; inset: 0; z-index: -1; pointer-events: none; background: repeating-linear-gradient(90deg, rgba(255,255,255,.03) 0, rgba(255,255,255,.01) 3px, rgba(0,0,0,0) 9px, rgba(0,0,0,.03) 20px, rgba(0,0,0,.05) 24px), radial-gradient(60% 50% at 88% 90%, rgba(255,236,200,.09), transparent 70%), radial-gradient(70% 45% at 8% 6%, rgba(255,110,60,.05), transparent 70%); -webkit-mask-image: linear-gradient(180deg, rgba(0,0,0,.6) 0%, #000 60%); mask-image: linear-gradient(180deg, rgba(0,0,0,.6) 0%, #000 60%); }
         @media (max-width: 700px) { .bg-flutes { background-size: auto; } }
         @media (prefers-reduced-motion: reduce) { .bg-base { animation: none; } }
-        [data-scene] :is(h1, h2, h3, p, li) { text-shadow: 0 0 3px rgba(10, 35, 60, .8), 0 1px 12px rgba(10, 35, 60, .55); }
+        [data-scene] :is(h1, h2, h3, p, li) { text-shadow: 0 0 3px rgba(60, 15, 0, .8), 0 1px 12px rgba(60, 15, 0, .55); }
         .sticky-header {
           position: sticky;
           top: 0;
@@ -2715,14 +2715,14 @@ export default function EquipmentMarketplace() {
             rgba(255,255,255,0.16) 0%,
             rgba(255,255,255,0.05) 30%,
             rgba(255,255,255,0) 55%,
-            rgba(255,90,31,0.06) 100%);
+            rgba(255,200,140,0.06) 100%);
         }
         .sticky-header::after {
           content: '';
           position: absolute;
           left: 0; right: 0; bottom: 0;
           height: 1px;
-          background: linear-gradient(90deg, rgba(255,90,31,0) 0%, rgba(255,176,32,0.55) 50%, rgba(255,90,31,0) 100%);
+          background: linear-gradient(90deg, rgba(255,200,140,0) 0%, rgba(255,225,170,0.55) 50%, rgba(255,200,140,0) 100%);
           pointer-events: none;
         }
         .sticky-header > * {
@@ -2730,7 +2730,7 @@ export default function EquipmentMarketplace() {
           z-index: 1;
         }
 
-        .faq-item { border-bottom: 1px solid #4C8CB9; }
+        .faq-item { border-bottom: 1px solid #F2AE7C; }
         .faq-question {
           width: 100%;
           text-align: left;
@@ -2756,7 +2756,7 @@ export default function EquipmentMarketplace() {
         .faq-answer p {
           margin: 0 4px 16px;
           font-size: 13px;
-          color: #C9D6DF;
+          color: #FFE6D0;
           line-height: 1.6;
         }
 
@@ -2765,8 +2765,8 @@ export default function EquipmentMarketplace() {
           position: fixed;
           left: 0; right: 0; bottom: 0;
           z-index: 45;
-          background: #1F5683;
-          border-top: 1px solid #4C8CB9;
+          background: #A53C0D;
+          border-top: 1px solid #F2AE7C;
           padding: 12px 16px;
           align-items: center;
           justify-content: space-between;
@@ -2780,7 +2780,7 @@ export default function EquipmentMarketplace() {
           body { padding-bottom: 0; }
         }
         .skeleton {
-          background: linear-gradient(90deg, #1F5683 25%, #1F5683 50%, #1F5683 75%);
+          background: linear-gradient(90deg, #A53C0D 25%, #A53C0D 50%, #A53C0D 75%);
           background-size: 200% 100%;
           border-radius: 16px;
           border: 1px solid rgba(255,255,255,0.06);
@@ -2794,7 +2794,7 @@ export default function EquipmentMarketplace() {
         .equipment-card:hover {
           transform: translateY(-5px);
           box-shadow: 0 14px 30px rgba(0,0,0,.45);
-          border-color: #FF6A1A;
+          border-color: #FFE3BD;
         }
         .role-pill {
           transition: color 0.2s ease, background 0.2s ease;
@@ -2813,8 +2813,8 @@ export default function EquipmentMarketplace() {
 
         .category-card {
           position: relative;
-          background: linear-gradient(180deg, #1F5683 0%, #1F5683 100%);
-          border: 1px solid #4C8CB9;
+          background: linear-gradient(180deg, #A53C0D 0%, #A53C0D 100%);
+          border: 1px solid #F2AE7C;
           border-radius: 16px;
           padding: 26px 16px;
           text-align: center;
@@ -2825,7 +2825,7 @@ export default function EquipmentMarketplace() {
           transition: border-color 0.25s ease, transform 0.25s ease;
         }
         .category-card:hover {
-          border-color: #FF6A1A;
+          border-color: #FFE3BD;
           transform: translateY(-4px);
         }
         .category-card-front {
@@ -2841,7 +2841,7 @@ export default function EquipmentMarketplace() {
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          background: radial-gradient(circle at 50% 0%, rgba(255,176,32,0.15), rgba(24,74,116,0.97) 60%);
+          background: radial-gradient(circle at 50% 0%, rgba(255,225,170,0.15), rgba(120,38,8,0.97) 60%);
           transform: translateY(100%);
           transition: transform 0.3s cubic-bezier(0.16,1,0.3,1);
           padding: 16px;
@@ -2857,8 +2857,8 @@ export default function EquipmentMarketplace() {
           width: 52px;
           height: 52px;
           border-radius: 50%;
-          background: #FF6A1A;
-          color: #184A74;
+          background: #FFE3BD;
+          color: #3A1405;
           border: none;
           font-size: 20px;
           cursor: pointer;
@@ -2873,28 +2873,28 @@ export default function EquipmentMarketplace() {
           max-width: calc(100vw - 40px);
           height: 600px;
           max-height: 78vh;
-          background: #1F5683;
-          border: 1px solid #4C8CB9;
+          background: #A53C0D;
+          border: 1px solid #F2AE7C;
           display: flex;
           flex-direction: column;
           box-shadow: 0 12px 40px rgba(0,0,0,.5);
         }
         .ai-panel-header {
           padding: 12px 14px;
-          border-bottom: 1px solid #4C8CB9;
+          border-bottom: 1px solid #F2AE7C;
           font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif;
           font-size: 12px;
           text-transform: uppercase;
           letter-spacing: 0.06em;
-          color: #C9D6DF;
+          color: #FFE6D0;
           display: flex;
           align-items: center;
           justify-content: space-between;
         }
         .ai-voice-toggle {
           background: none;
-          border: 1px solid #4C8CB9;
-          color: #C9D6DF;
+          border: 1px solid #F2AE7C;
+          color: #FFE6D0;
           font-size: 13px;
           width: 26px;
           height: 26px;
@@ -2905,19 +2905,19 @@ export default function EquipmentMarketplace() {
           justify-content: center;
         }
         .ai-voice-toggle.on {
-          border-color: #FF6A1A;
-          color: #FF6A1A;
+          border-color: #FFE3BD;
+          color: #FFE3BD;
         }
         .ai-mic-btn {
           background: none;
           border: none;
-          color: #C9D6DF;
+          color: #FFE6D0;
           width: 40px;
           font-size: 16px;
           cursor: pointer;
         }
         .ai-mic-btn.active {
-          color: #FF6A1A;
+          color: #FFE3BD;
           animation: micPulse 1.2s ease-in-out infinite;
         }
         @keyframes micPulse {
@@ -2940,15 +2940,15 @@ export default function EquipmentMarketplace() {
         }
         .ai-bubble.user {
           align-self: flex-end;
-          background: #FF6A1A;
-          color: #184A74;
+          background: #FFE3BD;
+          color: #3A1405;
         }
         .ai-bubble.assistant {
           max-width: 96%;
           align-self: flex-start;
-          background: #1F5683;
+          background: #A53C0D;
           color: #ffffff;
-          border: 1px solid #4C8CB9;
+          border: 1px solid #F2AE7C;
         }
         .ai-blocks {
           margin-top: 8px;
@@ -2957,14 +2957,14 @@ export default function EquipmentMarketplace() {
           gap: 2px;
         }
         .ai-block {
-          border-top: 1px solid #3F7FAD;
+          border-top: 1px solid #E99660;
           padding: 2px 0;
         }
         .ai-block summary {
           cursor: pointer;
           font-size: 12.5px;
           font-weight: 600;
-          color: #FFB52E;
+          color: #FFF0D2;
           padding: 6px 0;
           list-style: none;
           display: flex;
@@ -2972,7 +2972,7 @@ export default function EquipmentMarketplace() {
           align-items: center;
         }
         .ai-block summary::-webkit-details-marker { display: none; }
-        .ai-block summary::after { content: "+"; color: #B8C8D3; font-size: 15px; }
+        .ai-block summary::after { content: "+"; color: #FFD3B0; font-size: 15px; }
         .ai-block[open] summary::after { content: "–"; }
         .ai-block ul, .ai-block ol {
           margin: 2px 0 8px;
@@ -2981,14 +2981,14 @@ export default function EquipmentMarketplace() {
           flex-direction: column;
           gap: 6px;
         }
-        .ai-block li { font-size: 12.5px; line-height: 1.5; color: #E3EBF0; }
+        .ai-block li { font-size: 12.5px; line-height: 1.5; color: #FFF1E3; }
         .ai-block li b { color: #ffffff; font-weight: 600; }
         .ai-suggestion-btn {
           display: block;
           margin-top: 8px;
           background: none;
-          border: 1px solid #FF6A1A;
-          color: #FF6A1A;
+          border: 1px solid #FFE3BD;
+          color: #FFE3BD;
           font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif;
           font-size: 11px;
           padding: 6px 10px;
@@ -2997,7 +2997,7 @@ export default function EquipmentMarketplace() {
         }
         .ai-panel-input {
           display: flex;
-          border-top: 1px solid #4C8CB9;
+          border-top: 1px solid #F2AE7C;
         }
         .ai-panel-input input {
           flex: 1;
@@ -3010,8 +3010,8 @@ export default function EquipmentMarketplace() {
           outline: none;
         }
         .ai-panel-input button {
-          background: #FF6A1A;
-          color: #184A74;
+          background: #FFE3BD;
+          color: #3A1405;
           border: none;
           width: 44px;
           cursor: pointer;
@@ -3057,13 +3057,13 @@ export default function EquipmentMarketplace() {
             background: "none",
             border: "none",
             cursor: "pointer",
-            color: "#C9D6DF",
+            color: "#FFE6D0",
             fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
             fontSize: 13,
             transition: "color 0.2s ease",
           }}
           onMouseEnter={(e) => (e.currentTarget.style.color = "#F4F4F1")}
-          onMouseLeave={(e) => (e.currentTarget.style.color = "#C9D6DF")}
+          onMouseLeave={(e) => (e.currentTarget.style.color = "#FFE6D0")}
         >
           {t("how_it_works_title")}
         </button>
@@ -3090,11 +3090,11 @@ export default function EquipmentMarketplace() {
                 left: 6,
                 width: "calc(50% - 6px)",
                 borderRadius: 980,
-                background: "linear-gradient(180deg, #FFC862 0%, #FF6A1A 55%, #C9500E 100%)",
+                background: "linear-gradient(180deg, #FFEBC4 0%, #FFE3BD 55%, #C9500E 100%)",
                 transform: role === "owner" ? "translateX(calc(100% + 0px))" : "translateX(0%)",
                 transition: "transform 0.45s cubic-bezier(0.65, 0, 0.35, 1)",
                 boxShadow:
-                  "inset 0 1.5px 0 rgba(255,255,255,0.6), inset 0 -3px 4px rgba(0,0,0,0.35), 0 2px 8px rgba(255,90,31,0.5)",
+                  "inset 0 1.5px 0 rgba(255,255,255,0.6), inset 0 -3px 4px rgba(0,0,0,0.35), 0 2px 8px rgba(255,200,140,0.5)",
               }}
             />
             {[
@@ -3134,7 +3134,7 @@ export default function EquipmentMarketplace() {
                     width: 6,
                     height: 6,
                     borderRadius: "50%",
-                    background: role === r.key ? "radial-gradient(circle at 35% 30%, #FFE08A, #FF6A1A 75%)" : "radial-gradient(circle at 35% 30%, #8e8e93, transparent)",
+                    background: role === r.key ? "radial-gradient(circle at 35% 30%, #FFF4DA, #FFE3BD 75%)" : "radial-gradient(circle at 35% 30%, #8e8e93, transparent)",
                     boxShadow: role === r.key ? "0 0 5px 2px rgba(255,197,90,0.8)" : "-1px -1px 2px rgba(255,255,255,0.12), 0 1px 2px rgba(0,0,0,0.5)",
                     flexShrink: 0,
                   }}
@@ -3157,13 +3157,13 @@ export default function EquipmentMarketplace() {
                   fontSize: 10.5,
                   padding: "6px 9px",
                   borderRadius: 8,
-                  border: lang === l ? "1px solid rgba(255,106,26,.55)" : "1px solid rgba(255,255,255,.08)",
+                  border: lang === l ? "1px solid rgba(255,214,160,.55)" : "1px solid rgba(255,255,255,.08)",
                   background: "#1A130E",
                   boxShadow:
                     lang === l
                       ? "inset 3px 3px 6px rgba(0,0,0,0.55), inset -2px -2px 4px rgba(255,255,255,0.03)"
                       : "3px 3px 6px rgba(0,0,0,0.4), -2px -2px 5px rgba(255,255,255,0.025)",
-                  color: lang === l ? "#FFB27A" : "#C9C2BC",
+                  color: lang === l ? "#FFE4C6" : "#C9C2BC",
                   cursor: "pointer",
                 }}
               >
@@ -3175,9 +3175,9 @@ export default function EquipmentMarketplace() {
                     flexShrink: 0,
                     background:
                       lang === l
-                        ? "radial-gradient(circle at 35% 30%, #FFC862, #FF6A1A 70%)"
+                        ? "radial-gradient(circle at 35% 30%, #FFEBC4, #FFE3BD 70%)"
                         : "radial-gradient(circle at 35% 30%, #8e8e93, transparent)",
-                    boxShadow: lang === l ? "0 0 5px 1.5px rgba(255,106,26,0.65)" : "-1px -1px 2px rgba(255,255,255,0.15), 0 1px 2px rgba(0,0,0,0.5)",
+                    boxShadow: lang === l ? "0 0 5px 1.5px rgba(255,214,160,0.65)" : "-1px -1px 2px rgba(255,255,255,0.15), 0 1px 2px rgba(0,0,0,0.5)",
                   }}
                 />
                 {l.toUpperCase()}
@@ -3193,14 +3193,14 @@ export default function EquipmentMarketplace() {
               }}
               aria-label={`Сповіщення${unreadCount ? ` (${unreadCount})` : ""}`}
               className={bellRing ? "mo-ring" : undefined}
-              style={{ position: "relative", background: "#1F5683", border: "1px solid #4C8CB9", width: 38, height: 38, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#ffffff" }}
+              style={{ position: "relative", background: "#A53C0D", border: "1px solid #F2AE7C", width: 38, height: 38, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#ffffff" }}
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
                 <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
               </svg>
               {unreadCount > 0 && (
-                <span key={unreadCount} className="mo-badge-pop" style={{ position: "absolute", top: -7, right: -7, background: "#FF6A1A", color: "#184A74", borderRadius: 980, fontSize: 10.5, fontWeight: 700, minWidth: 18, height: 18, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 4px" }}>
+                <span key={unreadCount} className="mo-badge-pop" style={{ position: "absolute", top: -7, right: -7, background: "#FFE3BD", color: "#3A1405", borderRadius: 980, fontSize: 10.5, fontWeight: 700, minWidth: 18, height: 18, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 4px" }}>
                   {unreadCount > 99 ? "99+" : unreadCount}
                 </span>
               )}
@@ -3215,8 +3215,8 @@ export default function EquipmentMarketplace() {
                 display: "flex",
                 alignItems: "center",
                 gap: 8,
-                background: "#1F5683",
-                border: "1px solid #4C8CB9",
+                background: "#A53C0D",
+                border: "1px solid #F2AE7C",
                 padding: "8px 14px",
                 cursor: "pointer",
                 color: "#ffffff",
@@ -3224,16 +3224,16 @@ export default function EquipmentMarketplace() {
                 fontSize: 12,
               }}
             >
-              <span style={{ width: 20, height: 20, borderRadius: "50%", background: "#FF6A1A", color: "#184A74", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 11 }}>
+              <span style={{ width: 20, height: 20, borderRadius: "50%", background: "#FFE3BD", color: "#3A1405", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 11 }}>
                 {user.name.trim().charAt(0).toUpperCase()}
               </span>
               <span style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", lineHeight: 1.15 }}>
-                <span style={{ fontSize: 9.5, letterSpacing: "0.08em", textTransform: "uppercase", color: "#C9D6DF" }}>{t("profile_title")}</span>
+                <span style={{ fontSize: 9.5, letterSpacing: "0.08em", textTransform: "uppercase", color: "#FFE6D0" }}>{t("profile_title")}</span>
                 <span style={{ fontSize: 13 }}>{user.name.split(" ")[0]}</span>
               </span>
             </button>
           ) : (
-            <button ref={loginBtnRef} onClick={() => setShowAuthForm(true)} style={{ ...smallBtn, borderColor: "#FF6A1A", color: "#FF6A1A" }}>
+            <button ref={loginBtnRef} onClick={() => setShowAuthForm(true)} style={{ ...smallBtn, borderColor: "#FFE3BD", color: "#FFE3BD" }}>
               <ScrambleText text={t("nav_login")} hoverRef={loginBtnRef} />
             </button>
           )}
@@ -3273,7 +3273,7 @@ export default function EquipmentMarketplace() {
               "--i": 1,
               fontSize: "clamp(13px,3vw,16px)",
               lineHeight: 1.3,
-              color: "#C9D6DF",
+              color: "#FFE6D0",
               marginBottom: 10,
               cursor: "pointer",
               textDecoration: "underline",
@@ -3299,7 +3299,7 @@ export default function EquipmentMarketplace() {
             <br className="ss-br" />
             <SplitWords text={t("hero_title_2")} delay={0.32} offset={String(t("hero_title_1")).split(/\s+/).filter(Boolean).length} />
           </h1>
-          <p className="ss-l mo-in ss-opt-m" style={{ "--i": 3, color: "#C9D6DF", fontSize: 15.5, maxWidth: 480, margin: "0 auto 28px", minHeight: 44 }}>
+          <p className="ss-l mo-in ss-opt-m" style={{ "--i": 3, color: "#FFE6D0", fontSize: 15.5, maxWidth: 480, margin: "0 auto 28px", minHeight: 44 }}>
             {typedIntro}
             {!typedIntroDone && <span className="typewriter-cursor" />}
           </p>
@@ -3364,7 +3364,7 @@ export default function EquipmentMarketplace() {
       {/* 3D viewer temporarily removed — revisit later */}
 
       {/* How it works — the request workflow, as a technical process line */}
-      <section id="how-it-works" data-scene style={{ padding: "104px 24px 48px", marginTop: -56, borderBottom: "1px solid #3279AB" }}>
+      <section id="how-it-works" data-scene style={{ padding: "104px 24px 48px", marginTop: -56, borderBottom: "1px solid #EFA06A" }}>
         <div style={{ maxWidth: 900, margin: "0 auto" }}>
           <SectionDivider n={2} of={5} title={t("how_it_works_label")} />
           <h2 style={{ fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif", fontSize: 24, margin: "0 0 32px" }}>
@@ -3373,10 +3373,10 @@ export default function EquipmentMarketplace() {
           <div className="mo-steps mo-io" style={{ display: "flex", flexWrap: "wrap", gap: 24 }}>
             {[t("step_1"), t("step_2"), t("step_3"), t("step_4"), t("step_5")].map((step, i) => (
               <div key={i} className="mo-step" style={{ "--i": i, flex: "1 1 150px", minWidth: 140 }}>
-                <div style={{ fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 12, color: "#B8C8D3" }}>
+                <div style={{ fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 12, color: "#FFD3B0" }}>
                   {String(i + 1).padStart(2, "0")}
                 </div>
-                <div className="mo-dash" style={{ width: 20, height: 1.4, background: "#FF6A1A", margin: "8px 0 10px" }} />
+                <div className="mo-dash" style={{ width: 20, height: 1.4, background: "#FFE3BD", margin: "8px 0 10px" }} />
                 <div style={{ fontSize: 14, color: "#F4F4F1", lineHeight: 1.4 }}>{step}</div>
               </div>
             ))}
@@ -3385,7 +3385,7 @@ export default function EquipmentMarketplace() {
       </section>
 
       {/* Honest placeholder instead of mock trust signals */}
-      <div data-scene style={{ padding: "22px 24px 20px", borderBottom: "1px solid #3279AB", textAlign: "center" }}>
+      <div data-scene style={{ padding: "22px 24px 20px", borderBottom: "1px solid #EFA06A", textAlign: "center" }}>
         {listings.filter((l) => l.ownerId).length > 0 && (
           <div className="mo-stats">
             {[
@@ -3402,7 +3402,7 @@ export default function EquipmentMarketplace() {
             ); })}
           </div>
         )}
-        <span style={{ fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 12, color: "#C9D6DF", letterSpacing: "0.04em" }}>
+        <span style={{ fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 12, color: "#FFE6D0", letterSpacing: "0.04em" }}>
           {t("trust_line")}
         </span>
       </div>
@@ -3429,7 +3429,7 @@ export default function EquipmentMarketplace() {
             ? "Здавайте техніку простою — заявки клієнтів щодня"
             : "Диспетчерська: вручну обирайте, кому піде заявка"}
         </h2>
-        <p style={{ color: "#C9D6DF", marginTop: 10, maxWidth: 560, fontSize: 15 }}>
+        <p style={{ color: "#FFE6D0", marginTop: 10, maxWidth: 560, fontSize: 15 }}>
           {role === "client"
             ? "Оберіть дати — покажемо, яка техніка вільна. Натисніть на картку: побачите, для чого вона, де використовується, параметри й календар зайнятості."
             : role === "owner"
@@ -3463,7 +3463,7 @@ export default function EquipmentMarketplace() {
                     loadClientData();
                     setShowMyRequests(true);
                   }}
-                  style={clientPending > 0 ? { ...smallBtn, borderColor: "#FF6A1A", color: "#FF6A1A" } : smallBtn}
+                  style={clientPending > 0 ? { ...smallBtn, borderColor: "#FFE3BD", color: "#FFE3BD" } : smallBtn}
                 >
                   Мій кабінет{clientPending > 0 ? ` (${clientPending})` : ""}
                 </button>
@@ -3489,7 +3489,7 @@ export default function EquipmentMarketplace() {
                     loadOwnerBookings();
                     loadOwnerResponses();
                   }}
-                  style={ownerAttention > 0 ? { ...smallBtn, borderColor: "#FF6A1A", color: "#FF6A1A" } : smallBtn}
+                  style={ownerAttention > 0 ? { ...smallBtn, borderColor: "#FFE3BD", color: "#FFE3BD" } : smallBtn}
                 >
                   Кабінет власника
                   {ownerAttention > 0 ? ` (${ownerAttention})` : ""}
@@ -3551,7 +3551,7 @@ export default function EquipmentMarketplace() {
       </div>
 
       {/* Footer */}
-      <footer className="site-footer" style={{ borderTop: "1px solid #3279AB", padding: "32px 24px", marginTop: 8 }}>
+      <footer className="site-footer" style={{ borderTop: "1px solid #EFA06A", padding: "32px 24px", marginTop: 8 }}>
         <div
           style={{
             maxWidth: 1000,
@@ -3564,9 +3564,9 @@ export default function EquipmentMarketplace() {
         >
           <div>
             <div style={{ fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif", fontWeight: 700, fontSize: 16, textTransform: "none" }}>
-              ТЕХ<span style={{ color: "#FF6A1A" }}>МАЙДАНЧИК</span>
+              ТЕХ<span style={{ color: "#FFE3BD" }}>МАЙДАНЧИК</span>
             </div>
-            <p style={{ color: "#C9D6DF", fontSize: 12, marginTop: 8, maxWidth: 260, lineHeight: 1.6 }}>
+            <p style={{ color: "#FFE6D0", fontSize: 12, marginTop: 8, maxWidth: 260, lineHeight: 1.6 }}>
               {t("footer_desc")}
             </p>
           </div>
@@ -3574,7 +3574,7 @@ export default function EquipmentMarketplace() {
           <div style={{ display: "flex", gap: 40, flexWrap: "wrap" }}>
             <div>
               <Label>{t("footer_contacts")}</Label>
-              <div style={{ marginTop: 8, fontSize: 12.5, color: "#C9D6DF", lineHeight: 2 }}>
+              <div style={{ marginTop: 8, fontSize: 12.5, color: "#FFE6D0", lineHeight: 2 }}>
                 <div>demolis@ukr.net</div>
                 <div>+380 98 131 97 25</div>
                 <div>Миколаїв, Україна</div>
@@ -3582,7 +3582,7 @@ export default function EquipmentMarketplace() {
             </div>
             <div>
               <Label>{t("footer_info")}</Label>
-              <div style={{ marginTop: 8, fontSize: 12.5, color: "#C9D6DF", lineHeight: 2 }}>
+              <div style={{ marginTop: 8, fontSize: 12.5, color: "#FFE6D0", lineHeight: 2 }}>
                 <div>{t("footer_terms")}</div>
                 <div>{t("footer_privacy")}</div>
                 <div>{t("footer_for_owners")}</div>
@@ -3596,7 +3596,7 @@ export default function EquipmentMarketplace() {
             maxWidth: 1000,
             margin: "24px auto 0",
             paddingTop: 16,
-            borderTop: "1px solid #3279AB",
+            borderTop: "1px solid #EFA06A",
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
@@ -3604,7 +3604,7 @@ export default function EquipmentMarketplace() {
             gap: 10,
           }}
         >
-          <span style={{ fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 11, color: "#B8C8D3" }}>
+          <span style={{ fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 11, color: "#FFD3B0" }}>
             © {new Date().getFullYear()} ТехМайданчик
           </span>
           <button
@@ -3618,7 +3618,7 @@ export default function EquipmentMarketplace() {
             style={{
               background: "none",
               border: "none",
-              color: "#B8C8D3",
+              color: "#FFD3B0",
               fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
               fontSize: 11,
               cursor: "pointer",
@@ -3657,7 +3657,7 @@ export default function EquipmentMarketplace() {
               <RoleTag kind="lease" />
               <RatingLine stat={ratings[detailListing.id]} size={16} />
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", fontSize: 13, color: "#C9D6DF", fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", fontSize: 13, color: "#FFE6D0", fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
               <span>{user && user.id && detailListing.ownerId === user.id ? "Це ваша техніка" : "Ваша оцінка:"}</span>
               {!(user && user.id && detailListing.ownerId === user.id) && (
                 <Stars value={0} size={20} mine={(ratings[detailListing.id] && ratings[detailListing.id].mine) || 0} onPick={(n) => handleRate(detailListing, n)} />
@@ -3671,7 +3671,7 @@ export default function EquipmentMarketplace() {
               {detailListing.photos && detailListing.photos.length > 0 ? (
                 <img className="lp-photo" src={detailListing.photos[detailPhotoIndex] || detailListing.photos[0]} alt={detailListing.brand} />
               ) : (
-                <div style={{ color: "#FF6A1A" }}><EquipmentIcon type={detailListing.type} size={110} /></div>
+                <div style={{ color: "#FFE3BD" }}><EquipmentIcon type={detailListing.type} size={110} /></div>
               )}
             </div>
             {detailListing.photos && detailListing.photos.length > 1 && (
@@ -3688,7 +3688,7 @@ export default function EquipmentMarketplace() {
                       objectFit: "cover",
                       cursor: "pointer",
                       borderRadius: 6,
-                      border: i === detailPhotoIndex ? "2px solid #FF6A1A" : "1px solid #4C8CB9",
+                      border: i === detailPhotoIndex ? "2px solid #FFE3BD" : "1px solid #F2AE7C",
                     }}
                   />
                 ))}
@@ -3696,8 +3696,8 @@ export default function EquipmentMarketplace() {
             )}
 
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <span className={detailListing.available ? "status-dot-available" : ""} style={{ width: 6, height: 6, borderRadius: "50%", background: detailListing.available ? "#5FA876" : "#B8C8D3" }} />
-              <span style={{ fontSize: 11, color: "#B8C8D3" }}>{detailListing.available ? t("status_available") : t("status_busy")}</span>
+              <span className={detailListing.available ? "status-dot-available" : ""} style={{ width: 6, height: 6, borderRadius: "50%", background: detailListing.available ? "#B9F6CA" : "#FFD3B0" }} />
+              <span style={{ fontSize: 11, color: "#FFD3B0" }}>{detailListing.available ? t("status_available") : t("status_busy")}</span>
             </div>
 
             <div>
@@ -3705,32 +3705,32 @@ export default function EquipmentMarketplace() {
               <div style={{ fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif", fontSize: 22, fontWeight: 600 }}>
                 {detailListing.brand}
               </div>
-              <div style={{ fontSize: 13, color: "#C9D6DF", marginTop: 2 }}>{detailListing.region}</div>
+              <div style={{ fontSize: 13, color: "#FFE6D0", marginTop: 2 }}>{detailListing.region}</div>
             </div>
 
             {EQUIPMENT_INFO[detailListing.type] && (
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 <div>
                   <Label>Для чого служить</Label>
-                  <p style={{ margin: "8px 0 0", fontSize: 13.5, lineHeight: 1.55, color: "#E3EBF0" }}>{trInfo(detailListing.type, EQUIPMENT_INFO[detailListing.type], lang).definition}</p>
+                  <p style={{ margin: "8px 0 0", fontSize: 13.5, lineHeight: 1.55, color: "#FFF1E3" }}>{trInfo(detailListing.type, EQUIPMENT_INFO[detailListing.type], lang).definition}</p>
                 </div>
                 <div>
                   <Label>{t("guide_uses_label")}</Label>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
                     {trInfo(detailListing.type, EQUIPMENT_INFO[detailListing.type], lang).uses.map((u) => (
-                      <span key={u} style={{ fontSize: 12, padding: "4px 10px", borderRadius: 980, border: "1px solid #4C8CB9", color: "#FFB52E" }}>{u}</span>
+                      <span key={u} style={{ fontSize: 12, padding: "4px 10px", borderRadius: 980, border: "1px solid #F2AE7C", color: "#FFF0D2" }}>{u}</span>
                     ))}
                   </div>
                 </div>
               </div>
             )}
 
-            <div style={{ borderTop: "1px solid #3279AB", borderBottom: "1px solid #3279AB", padding: "12px 0" }}>
+            <div style={{ borderTop: "1px solid #EFA06A", borderBottom: "1px solid #EFA06A", padding: "12px 0" }}>
               <Label>{lang === "ru" ? "Параметры" : lang === "en" ? "Parameters" : "Параметри"}</Label>
               <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 8 }}>
                 {[[lang === "ru" ? "Тип" : lang === "en" ? "Type" : "Тип", tType(detailListing.type, lang)], [lang === "ru" ? "Регион" : lang === "en" ? "Region" : "Регіон", detailListing.region], ...Object.entries(detailListing.specs).filter(([k, v]) => v && v !== "—" && !k.startsWith("_")).map(([k, v]) => [trLabel(k, lang), trVal(v, lang)])].map(([k, v]) => (
                   <div key={k} style={{ display: "flex", justifyContent: "space-between", gap: 12, fontSize: 13 }}>
-                    <span style={{ color: "#C9D6DF" }}>{k}</span>
+                    <span style={{ color: "#FFE6D0" }}>{k}</span>
                     <span style={{ textAlign: "right" }}>{v}</span>
                   </div>
                 ))}
@@ -3742,27 +3742,27 @@ export default function EquipmentMarketplace() {
                 fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif",
                 fontSize: 26,
                 fontWeight: 600,
-                background: "linear-gradient(90deg, #FF6A1A, #FFB52E)",
+                background: "linear-gradient(90deg, #FFE3BD, #FFF0D2)",
                 WebkitBackgroundClip: "text",
                 backgroundClip: "text",
                 color: "transparent",
               }}
             >
-              {detailListing.price > 0 ? (<>{detailListing.price} ₴<span style={{ fontSize: 14, color: "#C9D6DF", WebkitTextFillColor: "#C9D6DF" }}>/{detailListing.unit}</span></>) : "Договірна"}
+              {detailListing.price > 0 ? (<>{detailListing.price} ₴<span style={{ fontSize: 14, color: "#FFE6D0", WebkitTextFillColor: "#FFE6D0" }}>/{detailListing.unit}</span></>) : "Договірна"}
             </div>
 
             <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13 }}>
               {detailListing.owner}
-              {detailListing.photos && detailListing.photos.length > 0 && <span style={{ color: "#FFB52E" }}>✓</span>}
+              {detailListing.photos && detailListing.photos.length > 0 && <span style={{ color: "#FFF0D2" }}>✓</span>}
             </div>
 
             {busyNowUntil(detailListing.id) && (
-              <div style={{ padding: "12px 14px", border: "1px solid #c96b5a", background: "rgba(201,107,90,0.1)", color: "#e0a89c", fontSize: 14, fontWeight: 700, letterSpacing: "0.02em" }}>
+              <div style={{ padding: "12px 14px", border: "1px solid #FFD0C4", background: "rgba(255,208,196,0.1)", color: "#FFD8CC", fontSize: 14, fontWeight: 700, letterSpacing: "0.02em" }}>
                 ● ЗАЙНЯТА до {deals.fmtDate(busyNowUntil(detailListing.id))}
               </div>
             )}
             {!busyNowUntil(detailListing.id) && busyNextRange(detailListing.id) && (
-              <div style={{ padding: "10px 14px", border: "1px solid #FFB52E", background: "rgba(255,181,46,0.08)", color: "#FFB52E", fontSize: 13 }}>
+              <div style={{ padding: "10px 14px", border: "1px solid #FFF0D2", background: "rgba(255,226,170,0.08)", color: "#FFF0D2", fontSize: 13 }}>
                 Найближча оренда: {deals.fmtDate(busyNextRange(detailListing.id).date_from)} — {deals.fmtDate(busyNextRange(detailListing.id).date_to)}. Обирайте вільні дати.
               </div>
             )}
@@ -3785,17 +3785,17 @@ export default function EquipmentMarketplace() {
             </button>
 
             {detailListing.ownerId && user && (user.id === detailListing.ownerId || user.role === "dispatcher") && (
-              <div style={{ display: "flex", gap: 8, paddingTop: 4, borderTop: "1px dashed #8FB6D3" }}>
+              <div style={{ display: "flex", gap: 8, paddingTop: 4, borderTop: "1px dashed #FFDCC0" }}>
                 <button type="button" onClick={() => toggleAvailability(detailListing)} style={{ ...smallBtn, flex: 1 }}>
                   {detailListing.available ? "Позначити зайнятою" : "Позначити вільною"}
                 </button>
-                <button type="button" onClick={() => deleteListing(detailListing)} style={{ ...smallBtn, borderColor: "#c96b5a", color: "#c96b5a" }}>
+                <button type="button" onClick={() => deleteListing(detailListing)} style={{ ...smallBtn, borderColor: "#FFD0C4", color: "#FFD0C4" }}>
                   Видалити
                 </button>
               </div>
             )}
 
-            <div style={{ paddingTop: 8, borderTop: "1px solid #3279AB" }}>
+            <div style={{ paddingTop: 8, borderTop: "1px solid #EFA06A" }}>
               <ListingReviews
                 items={listingReviews.items}
                 available={listingReviews.ok}
@@ -3954,7 +3954,7 @@ export default function EquipmentMarketplace() {
       />
 
       <div className="sticky-cta">
-        <span style={{ fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 12.5, color: "#C9D6DF" }}>
+        <span style={{ fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 12.5, color: "#FFE6D0" }}>
           {role === "owner" ? "Готові здати техніку?" : "Потрібна техніка зараз?"}
         </span>
         <button
@@ -3975,8 +3975,8 @@ export default function EquipmentMarketplace() {
             bottom: 20,
             left: "50%",
             transform: "translateX(-50%)",
-            background: "#FF6A1A",
-            color: "#184A74",
+            background: "#FFE3BD",
+            color: "#3A1405",
             padding: "10px 18px",
             fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
             fontSize: 12.5,
@@ -4030,7 +4030,7 @@ function DispatcherPanel(props) {
   const groups = [
     {
       title: "Візьму в оренду",
-      color: "#6fae6f",
+      color: "#B9F6CA",
       tabs: [
         ["pairs", "Хто в кого", decide],
         ["requests", "Заявки", attention],
@@ -4039,7 +4039,7 @@ function DispatcherPanel(props) {
     },
     {
       title: "Здам в оренду",
-      color: "#FF6A1A",
+      color: "#FFE3BD",
       tabs: [
         ["equipment", "Техніка", wanted],
         ["owners", "Власники", ownersCount],
@@ -4047,7 +4047,7 @@ function DispatcherPanel(props) {
     },
     {
       title: "Облік",
-      color: "#C9D6DF",
+      color: "#FFE6D0",
       tabs: [["users", "Користувачі", unseenUsers > 0 ? unseenUsers : users.length]],
     },
   ];
@@ -4055,7 +4055,7 @@ function DispatcherPanel(props) {
   const quiet = (key) => (key === "users" && unseenUsers === 0) || key === "clients" || key === "owners";
   return (
     <div>
-      <div role="tablist" aria-label="Розділи диспетчерської" style={{ display: "flex", flexWrap: "wrap", gap: "10px 30px", padding: "0 24px", borderBottom: "1px solid #3279AB", margin: "0 0 14px" }}>
+      <div role="tablist" aria-label="Розділи диспетчерської" style={{ display: "flex", flexWrap: "wrap", gap: "10px 30px", padding: "0 24px", borderBottom: "1px solid #EFA06A", margin: "0 0 14px" }}>
         {groups.map((g) => (
           <div key={g.title} role="presentation" style={{ display: "flex", flexDirection: "column" }}>
             <div style={{ fontFamily: sansFont, fontSize: 12.5, fontWeight: 700, letterSpacing: "0.09em", textTransform: "uppercase", color: g.color, padding: "4px 14px 0", borderTop: `2px solid ${g.color}` }}>
@@ -4065,12 +4065,12 @@ function DispatcherPanel(props) {
               tabs={g.tabs.map(([key, label, count]) => ({ key, label, count }))}
               value={view}
               onChange={setView}
-              buttonStyle={(active) => ({ background: "none", border: "none", color: active ? "#F4F4F1" : "#C9D6DF", fontFamily: sansFont, fontSize: 14, padding: "8px 14px", cursor: "pointer", whiteSpace: "nowrap", minHeight: 44 })}
+              buttonStyle={(active) => ({ background: "none", border: "none", color: active ? "#F4F4F1" : "#FFE6D0", fontFamily: sansFont, fontSize: 14, padding: "8px 14px", cursor: "pointer", whiteSpace: "nowrap", minHeight: 44 })}
               renderLabel={(tab) => (
                 <>
                   {tab.label}
                   {tab.count > 0 && (
-                    <span style={{ marginLeft: 6, background: quiet(tab.key) ? "#3F7FAD" : "#FF6A1A", color: quiet(tab.key) ? "#F4F4F1" : "#184A74", borderRadius: 980, padding: "1px 7px", fontSize: 11, fontWeight: 600 }}>
+                    <span style={{ marginLeft: 6, background: quiet(tab.key) ? "#E99660" : "#FFE3BD", color: quiet(tab.key) ? "#F4F4F1" : "#3A1405", borderRadius: 980, padding: "1px 7px", fontSize: 11, fontWeight: 600 }}>
                       {tab.key === "users" && unseenUsers > 0 ? "+" : ""}
                       {tab.count}
                     </span>
@@ -4134,7 +4134,7 @@ function DispatcherRequests({ requests, owners, users, listings, allBookings, on
     return (
       <div style={{ padding: "8px 24px 48px" }}>
         <Plate style={{ padding: "24px", maxWidth: 480 }}>
-          <div style={{ fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 13, color: "#C9D6DF" }}>
+          <div style={{ fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 13, color: "#FFE6D0" }}>
             Заявок поки немає. Щойно клієнт залишить заявку через форму — вона з'явиться тут для диспетчеризації.
           </div>
           <button onClick={onRefresh} style={{ ...smallBtn, marginTop: 12 }}>Оновити</button>
@@ -4147,7 +4147,7 @@ function DispatcherRequests({ requests, owners, users, listings, allBookings, on
     <div className="dispatcher-layout" style={{ padding: "8px 24px 48px", display: "flex", gap: 20 }}>
       <div className="dispatcher-sidebar" style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 160, flexShrink: 0 }}>
         <button onClick={onRefresh} style={{ ...smallBtn, marginBottom: 8 }}>Оновити</button>
-        <div style={{ fontSize: 11, color: "#B8C8D3", padding: "0 12px 8px", fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif" }}>
+        <div style={{ fontSize: 11, color: "#FFD3B0", padding: "0 12px 8px", fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif" }}>
           Власників у базі: {owners.length}
         </div>
         {categories.map((c) => {
@@ -4161,9 +4161,9 @@ function DispatcherRequests({ requests, owners, users, listings, allBookings, on
                 display: "flex",
                 alignItems: "center",
                 gap: 8,
-                background: active ? "#1F5683" : "transparent",
+                background: active ? "#A53C0D" : "transparent",
                 border: "none",
-                color: active ? "#F4F4F1" : "#C9D6DF",
+                color: active ? "#F4F4F1" : "#FFE6D0",
                 fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
                 fontSize: 13,
                 padding: "9px 12px",
@@ -4178,20 +4178,20 @@ function DispatcherRequests({ requests, owners, users, listings, allBookings, on
                   borderRadius: "50%",
                   flexShrink: 0,
                   background: active
-                    ? "radial-gradient(circle at 35% 30%, #FFC862, #FF6A1A 70%)"
+                    ? "radial-gradient(circle at 35% 30%, #FFEBC4, #FFE3BD 70%)"
                     : "radial-gradient(circle at 35% 30%, #8e8e93, transparent)",
-                  boxShadow: active ? "0 0 5px 1.5px rgba(255,106,26,0.65)" : "-1px -1px 2px rgba(255,255,255,0.12), 0 1px 2px rgba(0,0,0,0.5)",
+                  boxShadow: active ? "0 0 5px 1.5px rgba(255,214,160,0.65)" : "-1px -1px 2px rgba(255,255,255,0.12), 0 1px 2px rgba(0,0,0,0.5)",
                 }}
               />
               <span style={{ flex: 1 }}>{c.label}</span>
-              <span style={{ fontSize: 11, color: "#B8C8D3" }}>{count}</span>
+              <span style={{ fontSize: 11, color: "#FFD3B0" }}>{count}</span>
             </button>
           );
         })}
       </div>
       <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 16, minWidth: 0 }}>
         {filtered.length === 0 ? (
-          <div style={{ fontSize: 13, color: "#B8C8D3" }}>Немає заявок у цій категорії.</div>
+          <div style={{ fontSize: 13, color: "#FFD3B0" }}>Немає заявок у цій категорії.</div>
         ) : (
           filtered.map((req) => (
             <RequestDispatchCard key={req.id} req={req} owners={owners} users={users} listings={listings} allBookings={allBookings} onDispatch={onDispatch} onOwnerAction={onOwnerAction} onPropose={onPropose} onManual={onManual} onConfirm={onConfirm} onCancel={onCancel} onDecline={onDecline} user={user} />
@@ -4210,16 +4210,16 @@ const STATUS_LABEL = {
 };
 const STATUS_COLOR = {
   sent: "#c9a83f",
-  accepted: "#6fae6f",
-  rejected: "#c96b5a",
-  expired: "#B8C8D3",
+  accepted: "#B9F6CA",
+  rejected: "#FFD0C4",
+  expired: "#FFD3B0",
 };
 
 // ---- Client-facing request status panel ----
 function clientStatusInfo(req) {
   if (req.status === "taken") {
     const acceptedEntry = req.log.find((l) => l.action === "accepted");
-    return { label: acceptedEntry ? `Виконує: ${acceptedEntry.ownerName}` : "Заявку виконано", color: "#6fae6f" };
+    return { label: acceptedEntry ? `Виконує: ${acceptedEntry.ownerName}` : "Заявку виконано", color: "#B9F6CA" };
   }
   if (req.status === "dispatched") {
     return { label: "Надіслано власникам, очікуємо відповіді", color: "#c9a83f" };
@@ -4227,7 +4227,7 @@ function clientStatusInfo(req) {
   if (req.log.length > 0) {
     return { label: "Шукаємо виконавця далі", color: "#c9a83f" };
   }
-  return { label: "Заявку прийнято, очікує диспетчеризації", color: "#C9D6DF" };
+  return { label: "Заявку прийнято, очікує диспетчеризації", color: "#FFE6D0" };
 }
 
 function useTypewriter(text, speed = 38, startDelay = 500) {
@@ -4273,7 +4273,7 @@ function StarRating({ value, onChange, readOnly }) {
           onClick={() => !readOnly && onChange?.(n)}
           style={{
             cursor: readOnly ? "default" : "pointer",
-            color: n <= value ? "#FF6A1A" : "#8FB6D3",
+            color: n <= value ? "#FFE3BD" : "#FFDCC0",
             fontSize: 16,
           }}
         >
@@ -4291,7 +4291,7 @@ function ReviewBox({ req, onSubmit }) {
   const ownerName = acceptedEntry?.ownerName || "виконавець";
 
   return (
-    <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px dashed #8FB6D3" }}>
+    <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px dashed #FFDCC0" }}>
       <Label>Оцініть роботу «{ownerName}»</Label>
       <div style={{ marginTop: 6 }}>
         <StarRating value={rating} onChange={setRating} />
@@ -4370,7 +4370,7 @@ function RequestDispatchCard({ req, owners, users, listings, allBookings, onDisp
           <div style={{ fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif", fontSize: 18, fontWeight: 600, marginTop: 2 }}>
             {req.type} — {req.region}
           </div>
-          <div style={{ fontSize: 12.5, color: "#C9D6DF", marginTop: 4, fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif" }}>
+          <div style={{ fontSize: 12.5, color: "#FFE6D0", marginTop: 4, fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif" }}>
             Бюджет: {req.budget || "—"} ₴ · Період: {req.dateFrom ? (req.dateTo ? `${deals.fmtDate(req.dateFrom)} — ${deals.fmtDate(req.dateTo)}` : deals.fmtDate(req.dateFrom)) : "не вказано"}{req.withOperator ? " · з оператором" : ""} · Контакт: {req.contact}{req.hasAccount ? "" : " (без акаунта)"}
           </div>
           {req.comment && (
@@ -4378,42 +4378,42 @@ function RequestDispatchCard({ req, owners, users, listings, allBookings, onDisp
           )}
         </div>
         {req.status === "taken" && (
-          <span style={{ ...badgeStyle, background: "rgba(111,174,111,0.15)", color: "#6fae6f", border: "1px solid #6fae6f" }}>
+          <span style={{ ...badgeStyle, background: "rgba(185,246,202,0.15)", color: "#B9F6CA", border: "1px solid #B9F6CA" }}>
             ✓ Взято
           </span>
         )}
       </div>
 
       {req.status === "booked" && (
-        <div style={{ marginTop: 12, padding: "8px 12px", background: "rgba(255,181,46,0.1)", border: "1px solid #FFB52E", fontSize: 12, color: "#FFB52E", fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif" }}>
+        <div style={{ marginTop: 12, padding: "8px 12px", background: "rgba(255,226,170,0.1)", border: "1px solid #FFF0D2", fontSize: 12, color: "#FFF0D2", fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif" }}>
           Клієнт підтвердив техніку. Підтвердьте оренду в блоці «Угода» нижче — після цього клієнт і власник отримають контакти.
         </div>
       )}
 
       {needsAttention && (
-        <div style={{ marginTop: 12, padding: "8px 12px", background: "rgba(201,107,90,0.1)", border: "1px solid #c96b5a", fontSize: 12, color: "#e0a89c", fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif" }}>
+        <div style={{ marginTop: 12, padding: "8px 12px", background: "rgba(255,208,196,0.1)", border: "1px solid #FFD0C4", fontSize: 12, color: "#FFD8CC", fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif" }}>
           Усі, кому надсилали, відмовились. Оберіть інших власників нижче.
         </div>
       )}
 
       {/* Contacted owners with live status + action buttons for pending ones */}
       {contactedOwners.length > 0 && (
-        <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px dashed #8FB6D3" }}>
+        <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px dashed #FFDCC0" }}>
           <Label>Кому надіслано</Label>
           <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 8 }}>
             {contactedOwners.map((o) => {
               const st = req.ownerStatuses[String(o.id)];
               return (
                 <div key={o.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 12.5, fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif" }}>
-                  <span>{o.name} <span style={{ color: "#B8C8D3" }}>· {o.phone}</span></span>
+                  <span>{o.name} <span style={{ color: "#FFD3B0" }}>· {o.phone}</span></span>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     <span style={{ color: STATUS_COLOR[st] }}>{STATUS_LABEL[st]}</span>
                     {st === "sent" && (
                       <>
-                        <button onClick={() => onOwnerAction(req.id, o.id, o.name, "accepted")} style={miniBtn("#6fae6f")}>
+                        <button onClick={() => onOwnerAction(req.id, o.id, o.name, "accepted")} style={miniBtn("#B9F6CA")}>
                           Взяв (за телефоном)
                         </button>
-                        <button onClick={() => onOwnerAction(req.id, o.id, o.name, "rejected")} style={miniBtn("#c96b5a")}>
+                        <button onClick={() => onOwnerAction(req.id, o.id, o.name, "rejected")} style={miniBtn("#FFD0C4")}>
                           Відмова (за телефоном)
                         </button>
                       </>
@@ -4430,11 +4430,11 @@ function RequestDispatchCard({ req, owners, users, listings, allBookings, onDisp
 
       {/* Запит власникам: запасний шлях, коли в каталозі немає підходящої техніки */}
       {!["taken", "booked"].includes(req.status) && (
-        <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px dashed #8FB6D3" }}>
+        <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px dashed #FFDCC0" }}>
           <Label>{contactedOwners.length === 0 ? "Запитати у власників (якщо немає підходящої техніки)" : "Запитати у власників ще"}</Label>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 8 }}>
             {suggestedUncontacted.length === 0 && otherUncontacted.length === 0 && (
-              <span style={{ fontSize: 12.5, color: "#C9D6DF" }}>Усіх власників уже задіяно.</span>
+              <span style={{ fontSize: 12.5, color: "#FFE6D0" }}>Усіх власників уже задіяно.</span>
             )}
             {suggestedUncontacted.map((o) => (
               <OwnerChip key={o.id} owner={o} checked={selected.has(String(o.id))} onToggle={() => toggle(String(o.id))} highlighted />
@@ -4458,10 +4458,10 @@ function RequestDispatchCard({ req, owners, users, listings, allBookings, onDisp
 
       {/* History log */}
       {(req.log.length > 0 || (req.events || []).length > 0) && (
-        <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px dashed #8FB6D3" }}>
+        <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px dashed #FFDCC0" }}>
           <button
             onClick={() => setShowHistory((s) => !s)}
-            style={{ background: "none", border: "none", color: "#C9D6DF", cursor: "pointer", fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 11, letterSpacing: "0.08em", textTransform: "none", padding: 0 }}
+            style={{ background: "none", border: "none", color: "#FFE6D0", cursor: "pointer", fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 11, letterSpacing: "0.08em", textTransform: "none", padding: 0 }}
           >
             {showHistory ? "▲ Сховати історію" : `▼ Історія (${req.log.length + (req.events || []).length})`}
           </button>
@@ -4473,8 +4473,8 @@ function RequestDispatchCard({ req, owners, users, listings, allBookings, onDisp
           {showHistory && (
             <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 4 }}>
               {req.log.map((l, i) => (
-                <div key={i} style={{ fontSize: 11.5, fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", color: "#C9D6DF", display: "flex", gap: 8 }}>
-                  <span style={{ color: "#B8C8D3" }}>{l.time}</span>
+                <div key={i} style={{ fontSize: 11.5, fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", color: "#FFE6D0", display: "flex", gap: 8 }}>
+                  <span style={{ color: "#FFD3B0" }}>{l.time}</span>
                   <span>
                     {l.ownerName} —{" "}
                     <span style={{ color: STATUS_COLOR[l.action === "sent" ? "sent" : l.action === "auto-expired" ? "expired" : l.action] }}>
@@ -4507,17 +4507,17 @@ function OwnerChip({ owner, checked, onToggle, highlighted }) {
         alignItems: "center",
         gap: 7,
         padding: "7px 12px",
-        border: `1px solid ${checked ? "#FF6A1A" : "#8FB6D3"}`,
-        background: checked ? "rgba(255,90,31,0.1)" : "transparent",
+        border: `1px solid ${checked ? "#FFE3BD" : "#FFDCC0"}`,
+        background: checked ? "rgba(255,200,140,0.1)" : "transparent",
         cursor: "pointer",
         fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
         fontSize: 12,
       }}
     >
-      <input type="checkbox" checked={checked} onChange={onToggle} style={{ accentColor: "#FF6A1A" }} />
+      <input type="checkbox" checked={checked} onChange={onToggle} style={{ accentColor: "#FFE3BD" }} />
       <span>{owner.name}</span>
-      {owner.verified && <span style={{ color: "#6fae6f", fontSize: 10, textShadow: "0 0 6px rgba(111,174,111,0.6)" }}>✓</span>}
-      {highlighted && <span style={{ color: "#C9D6DF", fontSize: 10 }}>({(owner.regions || []).join(", ")})</span>}
+      {owner.verified && <span style={{ color: "#B9F6CA", fontSize: 10, textShadow: "0 0 6px rgba(185,246,202,0.6)" }}>✓</span>}
+      {highlighted && <span style={{ color: "#FFE6D0", fontSize: 10 }}>({(owner.regions || []).join(", ")})</span>}
     </label>
   );
 }
@@ -4582,11 +4582,11 @@ function TelegramLogin({ role, onDone }) {
         <div style={{ border: "1px solid #229ED9", borderRadius: 14, padding: 12, fontFamily: font, fontSize: 13, lineHeight: 1.5 }}>
           Відкрийте бота, натисніть «Старт» і «Поділитися номером». Вхід виконається автоматично.
           <a href={link} target="_blank" rel="noopener noreferrer" style={{ display: "block", marginTop: 8, textAlign: "center", padding: "12px 10px", borderRadius: 980, background: "#229ED9", color: "#fff", textDecoration: "none", fontWeight: 600 }}>Відкрити Telegram</a>
-          <div style={{ marginTop: 8, color: "#C9D6DF", fontSize: 12 }}>Чекаємо підтвердження…</div>
+          <div style={{ marginTop: 8, color: "#FFE6D0", fontSize: 12 }}>Чекаємо підтвердження…</div>
         </div>
       )}
       {msg && <ErrorText>{msg}</ErrorText>}
-      <div style={{ fontFamily: font, fontSize: 11.5, color: "#B8C8D3", textAlign: "center" }}>Без пароля й листів: підтвердіть номер у Telegram за 10 секунд</div>
+      <div style={{ fontFamily: font, fontSize: 11.5, color: "#FFD3B0", textAlign: "center" }}>Без пароля й листів: підтвердіть номер у Telegram за 10 секунд</div>
     </div>
   );
 }
@@ -4650,7 +4650,7 @@ function AuthForm({ onSubmit, onTelegramDone }) {
           Вхід
         </button>
       </div>
-      <div style={{ fontFamily: font, fontSize: 12, color: "#C9D6DF" }}>Орендувати й здавати техніку можуть лише зареєстровані користувачі.</div>
+      <div style={{ fontFamily: font, fontSize: 12, color: "#FFE6D0" }}>Орендувати й здавати техніку можуть лише зареєстровані користувачі.</div>
 
       {mode === "signup" && (
         <Field label="Я реєструюсь як">
@@ -4662,8 +4662,8 @@ function AuthForm({ onSubmit, onTelegramDone }) {
         </Field>
       )}
       <TelegramLogin role={mode === "signup" ? form.role : "client"} onDone={onTelegramDone} />
-      <div style={{ display: "flex", alignItems: "center", gap: 10, fontFamily: font, fontSize: 12, color: "#B8C8D3" }}>
-        <span style={{ flex: 1, height: 1, background: "#4C8CB9" }} />або за email<span style={{ flex: 1, height: 1, background: "#4C8CB9" }} />
+      <div style={{ display: "flex", alignItems: "center", gap: 10, fontFamily: font, fontSize: 12, color: "#FFD3B0" }}>
+        <span style={{ flex: 1, height: 1, background: "#F2AE7C" }} />або за email<span style={{ flex: 1, height: 1, background: "#F2AE7C" }} />
       </div>
 
       {mode === "signup" && (
@@ -4705,7 +4705,7 @@ function AuthForm({ onSubmit, onTelegramDone }) {
             aria-label={showPw ? "Сховати пароль" : "Показати пароль"}
             aria-pressed={showPw}
             title={showPw ? "Сховати пароль" : "Показати пароль"}
-            style={{ position: "absolute", right: 2, top: "50%", transform: "translateY(-50%)", width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center", background: "none", border: "none", color: showPw ? "#FF6A1A" : "#C9D6DF", cursor: "pointer" }}
+            style={{ position: "absolute", right: 2, top: "50%", transform: "translateY(-50%)", width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center", background: "none", border: "none", color: showPw ? "#FFE3BD" : "#FFE6D0", cursor: "pointer" }}
           >
             {showPw ? (
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -4725,7 +4725,7 @@ function AuthForm({ onSubmit, onTelegramDone }) {
       </Field>
 
       {serverError && <ErrorText>{serverError}</ErrorText>}
-      {info && <span style={{ color: "#5FA876", fontSize: 12, fontFamily: font }}>{info}</span>}
+      {info && <span style={{ color: "#B9F6CA", fontSize: 12, fontFamily: font }}>{info}</span>}
 
       <button
         className="btn-premium-hover"
@@ -4751,8 +4751,8 @@ function ProfileForm({ user, onSave, onLogout }) {
 
   return (
     <div>
-      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18, paddingBottom: 16, borderBottom: "1px dashed #8FB6D3" }}>
-        <span style={{ width: 44, height: 44, borderRadius: "50%", background: "#FF6A1A", color: "#184A74", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 18, fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18, paddingBottom: 16, borderBottom: "1px dashed #FFDCC0" }}>
+        <span style={{ width: 44, height: 44, borderRadius: "50%", background: "#FFE3BD", color: "#3A1405", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 18, fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif" }}>
           {form.name.trim().charAt(0).toUpperCase()}
         </span>
         <div>
@@ -4779,7 +4779,7 @@ function ProfileForm({ user, onSave, onLogout }) {
           <button className="btn-premium-hover" type="submit" style={{ ...primaryBtn, flex: 1 }}>
             Зберегти
           </button>
-          <button type="button" onClick={onLogout} style={{ ...smallBtn, borderColor: "#c96b5a", color: "#c96b5a" }}>
+          <button type="button" onClick={onLogout} style={{ ...smallBtn, borderColor: "#FFD0C4", color: "#FFD0C4" }}>
             Вийти
           </button>
         </div>
@@ -5138,17 +5138,17 @@ function AiAssistant({ user, onPrefillRequest, onViewListing, listings, t, open,
                       gap: 10,
                       marginTop: 8,
                       padding: 10,
-                      background: "#1F5683",
+                      background: "#A53C0D",
                       borderRadius: 12,
                       cursor: "pointer",
                     }}
                   >
-                    <div style={{ color: "#FF6A1A", flexShrink: 0 }}>
+                    <div style={{ color: "#FFE3BD", flexShrink: 0 }}>
                       <EquipmentIcon type={m.matchedListing.type} size={30} />
                     </div>
                     <div style={{ minWidth: 0 }}>
                       <div style={{ fontSize: 13, fontWeight: 600, color: "#F4F4F1" }}>{m.matchedListing.brand}</div>
-                      <div style={{ fontSize: 11, color: "#C9D6DF" }}>
+                      <div style={{ fontSize: 11, color: "#FFE6D0" }}>
                         {m.matchedListing.region} · {m.matchedListing.price > 0 ? `${m.matchedListing.price} ₴/${m.matchedListing.unit}` : "договірна"}
                       </div>
                     </div>
@@ -5165,17 +5165,17 @@ function AiAssistant({ user, onPrefillRequest, onViewListing, listings, t, open,
                           alignItems: "center",
                           gap: 10,
                           padding: 8,
-                          background: "#1F5683",
+                          background: "#A53C0D",
                           borderRadius: 10,
                           cursor: "pointer",
                         }}
                       >
-                        <div style={{ color: "#FF6A1A", flexShrink: 0 }}>
+                        <div style={{ color: "#FFE3BD", flexShrink: 0 }}>
                           <EquipmentIcon type={l.type} size={24} />
                         </div>
                         <div style={{ minWidth: 0 }}>
                           <div style={{ fontSize: 12, fontWeight: 600, color: "#F4F4F1" }}>{l.type} · {l.brand}</div>
-                          <div style={{ fontSize: 10.5, color: "#C9D6DF" }}>
+                          <div style={{ fontSize: 10.5, color: "#FFE6D0" }}>
                             {l.region} · {l.price > 0 ? `${l.price} ₴/${l.unit}` : "договірна"}
                           </div>
                         </div>
@@ -5226,7 +5226,7 @@ function AiAssistant({ user, onPrefillRequest, onViewListing, listings, t, open,
               return (
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 6 }}>
                   {pills.map((p) => (
-                    <button key={p} onClick={() => send(p)} style={p === "Створити заявку" ? { ...chip, borderColor: "#FF6A1A", color: "#FF6A1A" } : chip}>
+                    <button key={p} onClick={() => send(p)} style={p === "Створити заявку" ? { ...chip, borderColor: "#FFE3BD", color: "#FFE3BD" } : chip}>
                       {p}
                     </button>
                   ))}
@@ -5380,7 +5380,7 @@ function DraftBanner({ draft }) {
         justifyContent: "space-between",
         gap: 8,
         fontSize: 12,
-        color: "#FFB52E",
+        color: "#FFF0D2",
         fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
       }}
     >
@@ -5388,7 +5388,7 @@ function DraftBanner({ draft }) {
       <button
         type="button"
         onClick={draft.reset}
-        style={{ background: "none", border: "none", color: "#C9D6DF", textDecoration: "underline", cursor: "pointer", fontSize: 12, padding: 0 }}
+        style={{ background: "none", border: "none", color: "#FFE6D0", textDecoration: "underline", cursor: "pointer", fontSize: 12, padding: 0 }}
       >
         Почати заново
       </button>
@@ -5479,11 +5479,11 @@ function AddListingForm({ onSubmit, user, lang }) {
     <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
       <DraftBanner draft={draft} />
       {user ? (
-        <div style={{ fontSize: 12, color: "#6fae6f", fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif" }}>
+        <div style={{ fontSize: 12, color: "#B9F6CA", fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif" }}>
           ✓ Дані підтягнуто з кабінету — {user.org || user.name}
         </div>
       ) : (
-        <div style={{ fontSize: 12, color: "#C9D6DF", fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif" }}>
+        <div style={{ fontSize: 12, color: "#FFE6D0", fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif" }}>
           Ви не увійшли — вкажіть назву організації вручну, або спочатку зареєструйтесь.
         </div>
       )}
@@ -5493,12 +5493,12 @@ function AddListingForm({ onSubmit, user, lang }) {
           <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
             {form.photos.map((p, i) => (
               <div key={i} style={{ position: "relative" }}>
-                <img src={p} alt={`Прев'ю ${i + 1}`} style={{ width: 84, height: 84, objectFit: "cover", border: "1px solid #4C8CB9" }} />
+                <img src={p} alt={`Прев'ю ${i + 1}`} style={{ width: 84, height: 84, objectFit: "cover", border: "1px solid #F2AE7C" }} />
                 <button
                   type="button"
                   onClick={() => removePhoto(i)}
                   aria-label="Прибрати фото"
-                  style={{ position: "absolute", top: -6, right: -6, width: 20, height: 20, borderRadius: "50%", background: "#184A74", border: "1px solid #4C8CB9", color: "#F4F4F1", fontSize: 12, cursor: "pointer" }}
+                  style={{ position: "absolute", top: -6, right: -6, width: 20, height: 20, borderRadius: "50%", background: "#3A1405", border: "1px solid #F2AE7C", color: "#F4F4F1", fontSize: 12, cursor: "pointer" }}
                 >
                   ×
                 </button>
@@ -5506,7 +5506,7 @@ function AddListingForm({ onSubmit, user, lang }) {
             ))}
           </div>
         )}
-        <span style={{ fontSize: 11, color: "#C9D6DF", marginTop: 4, display: "block" }}>
+        <span style={{ fontSize: 11, color: "#FFE6D0", marginTop: 4, display: "block" }}>
           Без фото буде показана іконка типу техніки
         </span>
       </Field>
@@ -5548,7 +5548,7 @@ function AddListingForm({ onSubmit, user, lang }) {
       </div>
       <Field label="Зайнято до (необов'язково)">
         <input type="date" value={form.busyUntil} onChange={set("busyUntil")} style={inputStyle} />
-        <span style={{ fontSize: 11, color: "#C9D6DF", marginTop: 4, display: "block" }}>
+        <span style={{ fontSize: 11, color: "#FFE6D0", marginTop: 4, display: "block" }}>
           Залиште порожнім, якщо техніка вільна прямо зараз
         </span>
       </Field>
@@ -5620,16 +5620,16 @@ function RequestForm({ onSubmit, user, initial, t, lang }) {
     <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
       <DraftBanner draft={draft} />
       {initial && !initial.fromModel && (
-        <div style={{ fontSize: 12, color: "#FF6A1A", fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif" }}>
+        <div style={{ fontSize: 12, color: "#FFE3BD", fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif" }}>
           ✨ Заповнено помічником — перевірте і додайте контакт
         </div>
       )}
       {user ? (
-        <div style={{ fontSize: 12, color: "#6fae6f", fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif" }}>
+        <div style={{ fontSize: 12, color: "#B9F6CA", fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif" }}>
           ✓ Заявка від: {user.name}{user.org ? ` · ${user.org}` : ""}
         </div>
       ) : (
-        <div style={{ fontSize: 12, color: "#C9D6DF", fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif" }}>
+        <div style={{ fontSize: 12, color: "#FFE6D0", fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif" }}>
           Ви не увійшли — контакт доведеться вказати вручну.
         </div>
       )}
@@ -5675,8 +5675,8 @@ function RequestForm({ onSubmit, user, initial, t, lang }) {
         </Field>
       </div>
       {dateError && <ErrorText>Кінець періоду не може бути раніше за початок</ErrorText>}
-      <label style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 13, color: "#C9D6DF", cursor: "pointer" }}>
-        <input type="checkbox" checked={!!form.withOperator} onChange={(e) => setForm((f) => ({ ...f, withOperator: e.target.checked }))} style={{ accentColor: "#FF6A1A", width: 18, height: 18 }} />
+      <label style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 13, color: "#FFE6D0", cursor: "pointer" }}>
+        <input type="checkbox" checked={!!form.withOperator} onChange={(e) => setForm((f) => ({ ...f, withOperator: e.target.checked }))} style={{ accentColor: "#FFE3BD", width: 18, height: 18 }} />
         Потрібна техніка з оператором
       </label>
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
@@ -5693,11 +5693,11 @@ function RequestForm({ onSubmit, user, initial, t, lang }) {
           </select>
         </Field>
       </div>
-      <label style={{ display: "flex", alignItems: "flex-start", gap: 8, fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 13, color: "#E3EBF0", cursor: "pointer" }}>
-        <input type="checkbox" checked={!!form.isPublic} onChange={(e) => setForm((f) => ({ ...f, isPublic: e.target.checked }))} style={{ accentColor: "#FF6A1A", width: 18, height: 18, marginTop: 2 }} />
+      <label style={{ display: "flex", alignItems: "flex-start", gap: 8, fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 13, color: "#FFF1E3", cursor: "pointer" }}>
+        <input type="checkbox" checked={!!form.isPublic} onChange={(e) => setForm((f) => ({ ...f, isPublic: e.target.checked }))} style={{ accentColor: "#FFE3BD", width: 18, height: 18, marginTop: 2 }} />
         <span>
           Вивісити заявку на «Дошці оголошень» — власники зможуть запропонувати свою техніку
-          <span style={{ display: "block", fontSize: 11.5, color: "#B8C8D3", marginTop: 2 }}>
+          <span style={{ display: "block", fontSize: 11.5, color: "#FFD3B0", marginTop: 2 }}>
             Усі побачать: тип техніки, регіон, дати, ціну, коментар і ваше ім'я (без прізвища). Телефон не показується — не пишіть його в коментарі.
           </span>
         </span>
@@ -5731,11 +5731,11 @@ function RequestForm({ onSubmit, user, initial, t, lang }) {
 function StepLabel({ n, of, text }) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4 }}>
-      <span style={{ fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 11, color: "#B8C8D3" }}>
+      <span style={{ fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 11, color: "#FFD3B0" }}>
         {String(n).padStart(2, "0")} / {String(of).padStart(2, "0")}
       </span>
-      <span style={{ flex: 1, height: 1, background: "#3279AB" }} />
-      <span style={{ fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 11, color: "#C9D6DF" }}>
+      <span style={{ flex: 1, height: 1, background: "#EFA06A" }} />
+      <span style={{ fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 11, color: "#FFE6D0" }}>
         {text}
       </span>
     </div>

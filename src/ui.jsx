@@ -11,7 +11,7 @@ export const Plate = ({ children, style, className, onClick }) => (
       position: "relative",
       border: "1px solid rgba(255,255,255,0.08)",
       borderRadius: 16,
-      background: "#1F5683",
+      background: "#A53C0D",
       boxShadow: "0 1px 2px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.25)",
       ...style,
     }}
@@ -21,8 +21,8 @@ export const Plate = ({ children, style, className, onClick }) => (
 );
 
 export const Label = ({ children }) => (
-  <div style={{ display: "flex", alignItems: "center", gap: 7, fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 11, letterSpacing: "0.01em", color: "#C9D6DF" }}>
-    <span style={{ width: 11, height: 1.4, background: "#FF6A1A", flexShrink: 0 }} />
+  <div style={{ display: "flex", alignItems: "center", gap: 7, fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 11, letterSpacing: "0.01em", color: "#FFE6D0" }}>
+    <span style={{ width: 11, height: 1.4, background: "#FFE3BD", flexShrink: 0 }} />
     {children}
   </div>
 );
@@ -35,7 +35,7 @@ export const badgeStyle = {
 };
 
 export const miniBtn = (color) => ({
-  background: "linear-gradient(180deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.02) 45%, rgba(255,255,255,0.05) 100%), rgba(19,63,99,0.58)",
+  background: "linear-gradient(180deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.02) 45%, rgba(255,255,255,0.05) 100%), rgba(74,18,3,0.58)",
   border: `1px solid ${color}`,
   color,
   borderRadius: 980,
@@ -50,14 +50,14 @@ export const miniBtn = (color) => ({
 
 export function ErrorText({ children }) {
   return (
-    <span style={{ color: "#c96b5a", fontSize: 11, fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif" }}>{children}</span>
+    <span style={{ color: "#FFD0C4", fontSize: 11, fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif" }}>{children}</span>
   );
 }
 
 export function Field({ label, children, style }) {
   return (
     <label style={{ display: "flex", flexDirection: "column", gap: 6, ...style }}>
-      <span style={{ fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 10.5, letterSpacing: "0.08em", textTransform: "none", color: "#C9D6DF" }}>
+      <span style={{ fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 10.5, letterSpacing: "0.08em", textTransform: "none", color: "#FFE6D0" }}>
         {label}
       </span>
       {children}
@@ -70,7 +70,7 @@ import "./liquid.css";
 // Liquid glass: темне скло, кольорова кромка, блик зверху, кольорове світіння знизу
 const LG_FONT = "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif";
 export const lgGlass = (rgb, fill = 0.16) => ({
-  background: `linear-gradient(180deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.03) 40%, rgba(${rgb},${fill}) 100%), rgba(19,63,99,0.58)`,
+  background: `linear-gradient(180deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.03) 40%, rgba(${rgb},${fill}) 100%), rgba(74,18,3,0.58)`,
   border: `1px solid rgba(${rgb},0.6)`,
   boxShadow: `inset 0 1.5px 0 rgba(255,255,255,0.38), inset 0 -9px 14px -7px rgba(${rgb},0.55), inset 0 0 0 1px rgba(255,255,255,0.05), 0 10px 20px -9px rgba(${rgb},0.65), 0 2px 5px rgba(0,0,0,0.45)`,
   backdropFilter: "blur(10px) saturate(1.5)",
@@ -78,11 +78,11 @@ export const lgGlass = (rgb, fill = 0.16) => ({
 });
 
 export const primaryBtn = {
-  ...lgGlass("255,106,26", 0.5),
-  background: "linear-gradient(180deg, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0.04) 42%, rgba(255,181,46,0.0) 100%), linear-gradient(90deg, rgba(255,106,26,0.62), rgba(255,181,46,0.46)), rgba(19,63,99,0.6)",
-  border: "1px solid rgba(255,196,130,0.7)",
-  color: "#ffffff",
-  textShadow: "0 1px 2px rgba(0,0,0,0.55)",
+  background: "linear-gradient(180deg, #FFF3DC 0%, #FFD9A0 100%)",
+  border: "1px solid rgba(255,240,215,0.9)",
+  boxShadow: "inset 0 1px 0 rgba(255,255,255,0.8), 0 10px 22px -10px rgba(60,15,0,0.65), 0 2px 5px rgba(0,0,0,0.25)",
+  color: "#3A1405",
+  textShadow: "none",
   borderRadius: 980,
   padding: "12px 22px",
   fontFamily: LG_FONT,
@@ -109,9 +109,9 @@ export const smallBtn = {
 };
 
 export const selectStyle = {
-  background: "#1F5683",
+  background: "#A53C0D",
   color: "#ffffff",
-  border: "1px solid #8FB6D3",
+  border: "1px solid #FFDCC0",
   borderRadius: 8,
   padding: "9px 12px",
   fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
@@ -119,9 +119,9 @@ export const selectStyle = {
 };
 
 export const inputStyle = {
-  background: "#1F5683",
+  background: "#A53C0D",
   color: "#ffffff",
-  border: "1px solid #8FB6D3",
+  border: "1px solid #FFDCC0",
   borderRadius: 8,
   padding: "10px 12px",
   fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
@@ -175,7 +175,7 @@ export function Modal({ children, onClose, title, splitLeft, wide }) {
       style={{
         position: "fixed",
         inset: 0,
-        background: "rgba(19,63,99,.7)",
+        background: "rgba(74,18,3,.7)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -191,7 +191,7 @@ export function Modal({ children, onClose, title, splitLeft, wide }) {
         aria-modal="true"
         aria-labelledby={titleId}
         style={{
-          background: "#1F5683",
+          background: "#A53C0D",
           border: "1px solid #48484a",
           width: "100%",
           maxWidth: splitLeft ? 760 : wide ? 640 : 460,
@@ -204,8 +204,8 @@ export function Modal({ children, onClose, title, splitLeft, wide }) {
           <div
             style={{
               flex: "0 0 280px",
-              background: "linear-gradient(180deg, #1F5683, #184A74)",
-              borderRight: "1px solid #3279AB",
+              background: "linear-gradient(180deg, #A53C0D, #3A1405)",
+              borderRight: "1px solid #EFA06A",
               padding: 28,
               display: "flex",
               flexDirection: "column",
@@ -214,7 +214,7 @@ export function Modal({ children, onClose, title, splitLeft, wide }) {
             className="auth-split-left"
           >
             <div style={{ fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif", fontSize: 26, fontWeight: 600, lineHeight: 1.15 }}>
-              ТЕХНІКА<br />ПОЧИНАЄТЬСЯ<br />З ПРАВИЛЬНОГО<br /><span style={{ color: "#FF6A1A" }}>ЗАПИТУ.</span>
+              ТЕХНІКА<br />ПОЧИНАЄТЬСЯ<br />З ПРАВИЛЬНОГО<br /><span style={{ color: "#FFE3BD" }}>ЗАПИТУ.</span>
             </div>
           </div>
         )}
@@ -227,7 +227,7 @@ export function Modal({ children, onClose, title, splitLeft, wide }) {
             ref={closeBtnRef}
             onClick={requestClose}
             aria-label="Закрити"
-            style={{ background: "none", border: "none", color: "#C9D6DF", fontSize: 20, cursor: "pointer", padding: 10, margin: -10 }}
+            style={{ background: "none", border: "none", color: "#FFE6D0", fontSize: 20, cursor: "pointer", padding: 10, margin: -10 }}
           >
             ×
           </button>
@@ -243,7 +243,7 @@ export function Modal({ children, onClose, title, splitLeft, wide }) {
 // Пометка на карточках: хто це — той, хто орендує, чи той, хто здає техніку
 export function RoleTag({ kind, style }) {
   const rent = kind === "rent";
-  const color = rent ? "#6fae6f" : "#FF6A1A";
+  const color = rent ? "#B9F6CA" : "#FFE3BD";
   return (
     <span
       style={{
