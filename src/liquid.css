@@ -163,3 +163,7 @@ h1,h2,h3{font-weight:800;letter-spacing:-.01em}
 .cat-card { counter-increment: cc; }
 .cat-card::before { content: counter(cc, decimal-leading-zero); position: absolute; right: 14px; bottom: 8px; font-weight: 800; font-size: 56px; line-height: 1; letter-spacing: -.05em; color: rgba(255,255,255,.1); pointer-events: none; z-index: 0; }
 .footer-mark { margin: 30px auto 0; text-align: center; font-weight: 800; font-size: clamp(30px, 9.6vw, 176px); line-height: .86; letter-spacing: -.045em; white-space: nowrap; overflow: hidden; background: linear-gradient(180deg, rgba(255,255,255,.3), rgba(255,255,255,0) 88%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; user-select: none; pointer-events: none; }
+
+/* читабельність підписів на світлішому фоні */
+.ss-caps { text-shadow: 0 1px 2px rgba(70,20,0,.65), 0 0 10px rgba(70,20,0,.35); }
+.ss-kicker { color: #FFFFFF !important; opacity: .92; }
