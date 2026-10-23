@@ -14,7 +14,7 @@ const AMBER = "#FFF0D2";
 
 const confirmBtn = {
   ...primaryBtn,
-  background: "linear-gradient(180deg, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0.04) 42%, rgba(255,255,255,0) 100%), linear-gradient(90deg, rgba(62,154,92,0.62), rgba(185,246,202,0.46)), rgba(74,18,3,0.6)",
+  background: "linear-gradient(180deg, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0.04) 42%, rgba(255,255,255,0) 100%), linear-gradient(90deg, rgba(62,154,92,0.62), rgba(185,246,202,0.46)), rgba(22,14,9,0.6)",
   border: "1px solid rgba(150,215,160,0.7)",
   boxShadow: "inset 0 1.5px 0 rgba(255,255,255,0.4), inset 0 -9px 14px -7px rgba(185,246,202,0.6), 0 10px 20px -9px rgba(185,246,202,0.7), 0 2px 5px rgba(0,0,0,0.45)",
   minHeight: 48,

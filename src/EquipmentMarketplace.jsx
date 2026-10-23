@@ -2689,12 +2689,12 @@ export default function EquipmentMarketplace() {
 
         .sweep-wave { position: absolute; left: 0; top: 0; z-index: -1; pointer-events: none; overflow: visible; --sw: 26; filter: drop-shadow(0 0 14px rgba(255,236,190,.45)); }
         @media (max-width: 700px) { .sweep-wave { --sw: 16; } }
-        .bg-base { position: fixed; inset: 0; z-index: -1; pointer-events: none; background: radial-gradient(60% 50% at 82% 12%, rgba(255,205,120,.34), transparent 70%), radial-gradient(55% 45% at 6% 92%, rgba(150,35,0,.22), transparent 72%), linear-gradient(100deg, #D2430F 0%, #E25A1A 34%, #EE7622 68%, #F79C36 100%); animation: hueShift 480s ease-in-out infinite; will-change: filter; }
-        @keyframes hueShift { 0%, 25% { filter: hue-rotate(0deg); } 50%, 75% { filter: hue-rotate(14deg) saturate(1.04); } 100% { filter: hue-rotate(0deg); } }
-        .bg-flutes { position: fixed; inset: 0; z-index: -1; pointer-events: none; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1  0 0 0 0 .85  0 0 0 0 .7  0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E"), repeating-linear-gradient(90deg, rgba(255,255,255,.03) 0, rgba(255,255,255,.01) 3px, rgba(0,0,0,0) 9px, rgba(0,0,0,.03) 20px, rgba(0,0,0,.05) 24px), radial-gradient(60% 50% at 88% 90%, rgba(255,236,200,.09), transparent 70%), radial-gradient(70% 45% at 8% 6%, rgba(255,110,60,.05), transparent 70%); -webkit-mask-image: linear-gradient(180deg, rgba(0,0,0,.6) 0%, #000 60%); mask-image: linear-gradient(180deg, rgba(0,0,0,.6) 0%, #000 60%); }
+        .bg-base { position: fixed; inset: 0; z-index: -1; pointer-events: none; background: radial-gradient(60% 50% at 85% 6%, rgba(255,106,26,.20), transparent 70%), radial-gradient(55% 45% at 4% 96%, rgba(255,150,40,.09), transparent 72%), linear-gradient(180deg, #0C0A09 0%, #08090A 100%); animation: hueShift 480s ease-in-out infinite; will-change: filter; }
+        @keyframes hueShift { 0%, 25% { filter: hue-rotate(0deg); } 50%, 75% { filter: hue-rotate(14deg) saturate(1.1); } 100% { filter: hue-rotate(0deg); } }
+        .bg-flutes { position: fixed; inset: 0; z-index: -1; pointer-events: none; background: repeating-linear-gradient(90deg, rgba(255,255,255,.045) 0, rgba(255,255,255,.015) 3px, rgba(0,0,0,0) 9px, rgba(0,0,0,.05) 20px, rgba(0,0,0,.08) 24px), radial-gradient(60% 50% at 88% 90%, rgba(255,236,200,.09), transparent 70%), radial-gradient(70% 45% at 8% 6%, rgba(255,110,60,.05), transparent 70%); -webkit-mask-image: linear-gradient(180deg, rgba(0,0,0,.6) 0%, #000 60%); mask-image: linear-gradient(180deg, rgba(0,0,0,.6) 0%, #000 60%); }
         @media (max-width: 700px) { .bg-flutes { background-size: auto; } }
         @media (prefers-reduced-motion: reduce) { .bg-base { animation: none; } }
-        [data-scene] :is(h1, h2, h3, p, li) { text-shadow: 0 0 3px rgba(60, 15, 0, .8), 0 1px 12px rgba(60, 15, 0, .55); }
+        [data-scene] :is(h1, h2, h3, p, li) { text-shadow: 0 0 3px rgba(0, 0, 0, .8), 0 1px 12px rgba(0, 0, 0, .55); }
         .sticky-header {
           position: sticky;
           top: 0;

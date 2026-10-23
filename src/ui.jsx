@@ -35,7 +35,7 @@ export const badgeStyle = {
 };
 
 export const miniBtn = (color) => ({
-  background: "linear-gradient(180deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.02) 45%, rgba(255,255,255,0.05) 100%), rgba(74,18,3,0.58)",
+  background: "linear-gradient(180deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.02) 45%, rgba(255,255,255,0.05) 100%), rgba(22,14,9,0.58)",
   border: `1px solid ${color}`,
   color,
   borderRadius: 980,
@@ -70,7 +70,7 @@ import "./liquid.css";
 // Liquid glass: темне скло, кольорова кромка, блик зверху, кольорове світіння знизу
 const LG_FONT = "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif";
 export const lgGlass = (rgb, fill = 0.16) => ({
-  background: `linear-gradient(180deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.03) 40%, rgba(${rgb},${fill}) 100%), rgba(74,18,3,0.58)`,
+  background: `linear-gradient(180deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.03) 40%, rgba(${rgb},${fill}) 100%), rgba(22,14,9,0.58)`,
   border: `1px solid rgba(${rgb},0.6)`,
   boxShadow: `inset 0 1.5px 0 rgba(255,255,255,0.38), inset 0 -9px 14px -7px rgba(${rgb},0.55), inset 0 0 0 1px rgba(255,255,255,0.05), 0 10px 20px -9px rgba(${rgb},0.65), 0 2px 5px rgba(0,0,0,0.45)`,
   backdropFilter: "blur(10px) saturate(1.5)",
@@ -175,7 +175,7 @@ export function Modal({ children, onClose, title, splitLeft, wide }) {
       style={{
         position: "fixed",
         inset: 0,
-        background: "rgba(74,18,3,.7)",
+        background: "rgba(22,14,9,.7)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",

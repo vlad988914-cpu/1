@@ -62,7 +62,7 @@ const CITIES = [
 ];
 
 const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-const css = `*{box-sizing:border-box}body{margin:0;background:#C2410C linear-gradient(100deg,#B8360A,#CC4A0C 38%,#DB6612 72%,#E88E26) fixed;color:#F4F4F1;font:16px/1.65 Manrope,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}a{color:#FFF0D2}
+const css = `*{box-sizing:border-box}body{margin:0;background:#08090A;color:#F4F4F1;font:16px/1.65 Manrope,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}a{color:#FFF0D2}
 .w{max-width:860px;margin:0 auto;padding:0 20px}header{border-bottom:1px solid #EFA06A}header .w{display:flex;justify-content:space-between;align-items:center;padding:14px 20px;gap:12px;flex-wrap:wrap}
 .logo{font-weight:800;letter-spacing:.04em;color:#F4F4F1;text-decoration:none}.logo b{color:#FFE3BD}
 .btn{display:inline-block;background:#FFE3BD;color:#3A1405;font-weight:700;text-decoration:none;border-radius:980px;padding:12px 24px;min-height:44px}

@@ -65,7 +65,7 @@
 .ss-chip {
   position: absolute; left: 14px; bottom: 14px; padding: 7px 12px; border-radius: 980px;
   font: 600 11.5px/1 'Manrope', -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif; letter-spacing: 0.14em; text-transform: uppercase; color: #fff;
-  background: rgba(74,18,3, 0.55); border: 1px solid rgba(255, 255, 255, 0.1); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+  background: rgba(22,14,9, 0.55); border: 1px solid rgba(255, 255, 255, 0.1); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
 }
 .ss-loading { position: absolute; inset: 0; background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, 0.05) 50%, transparent 70%); background-size: 200% 100%; animation: ss-shimmer 1.4s linear infinite; pointer-events: none; }
 @keyframes ss-shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
@@ -85,7 +85,7 @@
   .ss-caps-col { position: absolute; z-index: 3; left: 12px; right: 12px; bottom: 150px; display: block; } /* выше нижней плашки заявки и кнопки помощника */
   .ss-rail { display: none; }
   .ss-caps { min-height: 190px; }
-  .ss-cap { top: auto; bottom: 0; transform: translate3d(0, 24px, 0); padding: 18px 20px 20px; border-radius: 16px; background: rgba(74,18,3, 0.58); border: 1px solid rgba(255, 255, 255, 0.1); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); }
+  .ss-cap { top: auto; bottom: 0; transform: translate3d(0, 24px, 0); padding: 18px 20px 20px; border-radius: 16px; background: rgba(22,14,9, 0.58); border: 1px solid rgba(255, 255, 255, 0.1); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); }
   .ss-cap[data-on] { transform: translate3d(0, 0, 0); }
   .ss-title { font-size: clamp(28px, 8vw, 40px); }
   .ss-kicker { margin-bottom: 10px; }
@@ -157,7 +157,7 @@
 .ss-simple { background: transparent; margin-top: 0; }
 .sm-hero { position: relative; min-height: min(calc(100svh - 150px), 560px); display: flex; align-items: flex-end; padding: 0 12px 84px; background-size: cover; background-position: 50% 28%; background-repeat: no-repeat; }
 .sm-hero::before { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(60,14,2,.25) 0%, transparent 30%, rgba(60,14,2,.78) 100%); }
-.sm-hero-in { position: relative; z-index: 1; width: 100%; box-sizing: border-box; padding: 16px 18px 18px; border-radius: 16px; background: rgba(74,18,3,.62); border: 1px solid rgba(255,255,255,.1); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); }
+.sm-hero-in { position: relative; z-index: 1; width: 100%; box-sizing: border-box; padding: 16px 18px 18px; border-radius: 16px; background: rgba(22,14,9,.62); border: 1px solid rgba(255,255,255,.1); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); }
 .sm-card { margin: 12px 12px 0; border-radius: 18px; overflow: hidden; background: #7A2807; border: 1px solid rgba(255,255,255,.08); }
 .sm-card .sm-body { padding-top: 20px; }
 .sm-body { padding: 16px 18px 20px; }
@@ -178,12 +178,12 @@
 .oc-media { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
 .oc-svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
 .oc-part line { stroke: rgba(255,255,255,.4); stroke-width: .7; stroke-linecap: round; stroke-dasharray: 1.6 1.4; transition: stroke .25s ease, stroke-width .25s ease; }
-.oc-part circle { fill: rgba(255,255,255,.55); stroke: rgba(74,18,3,.7); stroke-width: .6; transition: fill .25s ease; }
+.oc-part circle { fill: rgba(255,255,255,.55); stroke: rgba(22,14,9,.7); stroke-width: .6; transition: fill .25s ease; }
 .oc-part[data-on="1"] line { stroke: #FFF0D2; stroke-width: 1.1; stroke-dasharray: none; filter: drop-shadow(0 0 1.5px rgba(255,214,160,.9)); }
 .oc-part[data-on="1"] circle { fill: #FFE3BD; stroke: #fff; stroke-width: .9; }
 .oc-chip { position: absolute; padding: 5px 9px; border-radius: 980px; font: 600 10.5px/1 'Manrope', -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif; color: #d5d8db; cursor: pointer;
-  background: linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,.03) 45%), rgba(74,18,3,.7); border: 1px solid rgba(255,255,255,.26);
+  background: linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,.03) 45%), rgba(22,14,9,.7); border: 1px solid rgba(255,255,255,.26);
   -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); box-shadow: inset 0 1px 0 rgba(255,255,255,.3), 0 4px 8px -4px rgba(0,0,0,.6); }
-.oc-chip[data-on="1"] { color: #fff; border-color: rgba(255,226,190,.8); background: linear-gradient(180deg, rgba(255,255,255,.22), rgba(255,255,255,.04) 45%), linear-gradient(90deg, rgba(255,214,160,.6), rgba(255,226,170,.45)), rgba(74,18,3,.7); box-shadow: inset 0 1px 0 rgba(255,255,255,.4), 0 5px 12px -4px rgba(255,214,160,.7); }
+.oc-chip[data-on="1"] { color: #fff; border-color: rgba(255,226,190,.8); background: linear-gradient(180deg, rgba(255,255,255,.22), rgba(255,255,255,.04) 45%), linear-gradient(90deg, rgba(255,214,160,.6), rgba(255,226,170,.45)), rgba(22,14,9,.7); box-shadow: inset 0 1px 0 rgba(255,255,255,.4), 0 5px 12px -4px rgba(255,214,160,.7); }
 @media (max-width: 360px) { .oc { width: 168px; } }
 @media (prefers-reduced-motion: reduce) { .oc { transition: none; } }
