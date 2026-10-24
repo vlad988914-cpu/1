@@ -224,3 +224,9 @@ input:not([type="checkbox"]):not([type="radio"]):focus, select:focus, textarea:f
 .mo-aura span:nth-child(3) { right: -30vmax; top: 30vh; background: radial-gradient(circle, rgba(255, 181, 46, 0.15), rgba(255, 181, 46, 0) 62%); }
 [data-scene] { border-color: transparent !important; position: relative; }
 @media (prefers-reduced-motion: reduce) { .mo-aura span { opacity: 0.35 !important; transform: none !important; } }
+
+/* лінії розділу сходяться до центру в такт прокрутці (--dp задає SectionDivider) */
+.section-divider.mo-io .line.line-l, .section-divider.mo-io.is-visible .line.line-l { transform: scaleX(var(--dp, 0)); transform-origin: left center; transition: none; }
+.section-divider.mo-io .line.line-r, .section-divider.mo-io.is-visible .line.line-r { transform: scaleX(var(--dp, 0)); transform-origin: right center; transition: none; }
+.section-divider.mo-io .title { box-shadow: 0 0 calc(var(--dp, 0) * 18px) rgba(255,170,60,calc(var(--dp, 0) * .45)); border-color: rgba(255,200,130,calc(.3 + var(--dp, 0) * .4)); }
+@media (prefers-reduced-motion: reduce) { .section-divider.mo-io .line.line-l, .section-divider.mo-io .line.line-r { transform: none !important; } }

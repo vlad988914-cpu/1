@@ -212,3 +212,8 @@ h1,h2,h3{font-weight:800;letter-spacing:-.01em}
   .sticky-header .hdr-nav button { min-height: 40px; }
   footer button { min-height: 40px; padding: 10px 6px; display: inline-flex; align-items: center; }
 }
+
+/* картки категорій: «Перейти в категорію» і лічильник завжди на одному рівні */
+.cat-card .cat-count { margin-top: auto; padding-top: 8px; }
+.cat-card .cat-count + .cat-go { margin-top: 10px; }
+.cat-card .cat-go { align-self: flex-start; }

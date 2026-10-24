@@ -968,12 +968,33 @@ function ModelPage({ model, listings, user, ratings, busyRanges, selectedId, onS
 }
 
 function SectionDivider({ n, of, title }) {
+  const ref = useRef(null);
+  // Лінії «сходяться» до центру разом із прокруткою: зліва направо і справа наліво; назад — розходяться
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return undefined;
+    const reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduce) { el.style.setProperty("--dp", "1"); return undefined; }
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      const r = el.getBoundingClientRect();
+      const vh = window.innerHeight || 800;
+      const p = Math.max(0, Math.min(1, (vh * 0.92 - r.top) / (vh * 0.5)));
+      el.style.setProperty("--dp", p.toFixed(3));
+    };
+    const on = () => { if (!raf) raf = requestAnimationFrame(update); };
+    update();
+    window.addEventListener("scroll", on, { passive: true });
+    window.addEventListener("resize", on);
+    return () => { window.removeEventListener("scroll", on); window.removeEventListener("resize", on); if (raf) cancelAnimationFrame(raf); };
+  }, []);
   return (
-    <div className="section-divider mo-io">
+    <div className="section-divider mo-io" ref={ref}>
       <span className="num">{String(n).padStart(2, "0")}</span>
-      <span className="line" />
+      <span className="line line-l" />
       <span className="title">{title}</span>
-      <span className="line" />
+      <span className="line line-r" />
     </div>
   );
 }
@@ -2554,11 +2575,16 @@ export default function EquipmentMarketplace() {
           color: #FFD3B0;
           flex-shrink: 0;
         }
+        .section-divider { --dp: 0; }
         .section-divider .line {
           flex: 1;
-          height: 1px;
-          background: #EFA06A;
+          height: 2px;
+          border-radius: 2px;
+          will-change: transform;
         }
+        .section-divider .line-l { transform-origin: left center; transform: scaleX(var(--dp)); background: linear-gradient(90deg, rgba(255,184,28,0) 0%, #EFA06A 45%, #FFD08A 100%); box-shadow: 0 0 10px rgba(255,170,60,calc(var(--dp) * .55)); }
+        .section-divider .line-r { transform-origin: right center; transform: scaleX(var(--dp)); background: linear-gradient(270deg, rgba(255,184,28,0) 0%, #EFA06A 45%, #FFD08A 100%); box-shadow: 0 0 10px rgba(255,170,60,calc(var(--dp) * .55)); }
+        .section-divider .title { transition: box-shadow .4s, border-color .4s; box-shadow: 0 0 calc(var(--dp) * 18px) rgba(255,170,60,calc(var(--dp) * .45)); border-color: rgba(255,200,130,calc(.3 + var(--dp) * .4)); }
         .section-divider .title {
           font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif;
           font-size: 11px;
