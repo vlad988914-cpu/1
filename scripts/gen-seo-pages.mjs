@@ -61,6 +61,7 @@ const CITIES = [
   { slug: "kyiv", name: "Київ", loc: "у Києві", obl: "Київ і область" },
 ];
 
+const cut160 = (t) => { t = String(t); if (t.length <= 160) return t; const c = t.slice(0, 157); return c.slice(0, c.lastIndexOf(" ")).replace(/[,;:\s—-]+$/, "") + "…"; };
 const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const css = `*{box-sizing:border-box}html{scroll-behavior:smooth}
 body{margin:0;min-height:100vh;background:repeating-linear-gradient(90deg,rgba(255,214,150,0) 0,rgba(255,214,150,.16) 1px,rgba(255,184,28,.07) 2.5px,rgba(255,150,50,.03) 6px,rgba(255,255,255,.012) 10px,rgba(0,0,0,.16) 19px,rgba(0,0,0,.26) 24px) fixed,linear-gradient(180deg,#1B0B0A,#0B0506) fixed;color:#F7F1EA;font:16px/1.65 Manrope,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;position:relative;overflow-x:hidden}
@@ -110,8 +111,8 @@ footer{border-top:1px solid rgba(255,160,90,.3);margin-top:60px;padding:28px 0 4
 function page({ path, title, desc, h1, body, crumbs, ld, back }) {
   const url = `${SITE}${path}`;
   const bc = { "@type": "BreadcrumbList", itemListElement: crumbs.map((c, i) => ({ "@type": "ListItem", position: i + 1, name: c[0], item: `${SITE}${c[1]}` })) };
-  return `<!doctype html><html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Unbounded:wght@600;700;800&display=swap">
-<title>${esc(title)}</title><meta name="description" content="${esc(desc)}"><link rel="canonical" href="${url}"><meta name="robots" content="index, follow, max-image-preview:large">
+  return `<!doctype html><html lang="uk" translate="no"><head><meta name="google" content="notranslate"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Unbounded:wght@600;700;800&display=swap">
+<title>${esc(title)}</title><meta name="description" content="${esc(cut160(desc))}"><link rel="canonical" href="${url}"><meta name="robots" content="index, follow, max-image-preview:large">
 <meta name="theme-color" content="#3A1405"><meta property="og:type" content="website"><meta property="og:locale" content="uk_UA"><meta property="og:site_name" content="ТехМайданчик"><meta property="og:title" content="${esc(title)}"><meta property="og:description" content="${esc(desc)}"><meta property="og:url" content="${url}"><meta property="og:image" content="${SITE}/story/poster.jpg">
 <meta name="twitter:card" content="summary_large_image"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="manifest" href="/manifest.webmanifest">
 <script type="application/ld+json">${JSON.stringify({ "@context": "https://schema.org", "@graph": [bc, ...ld] })}</script><style>${css}</style></head>

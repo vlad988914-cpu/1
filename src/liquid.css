@@ -162,7 +162,7 @@ h1,h2,h3{font-weight:800;letter-spacing:-.01em}
 .cat-grid { counter-reset: cc; }
 .cat-card { counter-increment: cc; }
 .cat-card::before { content: counter(cc, decimal-leading-zero); position: absolute; right: 14px; bottom: 8px; font-weight: 800; font-size: 56px; line-height: 1; letter-spacing: -.05em; color: rgba(255,255,255,.1); pointer-events: none; z-index: 0; }
-.footer-mark { margin: 30px auto 0; text-align: center; font-weight: 800; font-size: clamp(30px, 9.6vw, 176px); line-height: .86; letter-spacing: -.045em; white-space: nowrap; overflow: hidden; background: linear-gradient(180deg, rgba(255,255,255,.3), rgba(255,255,255,0) 88%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; user-select: none; pointer-events: none; }
+.footer-mark { margin: 30px auto 0; text-align: center; font-weight: 800; font-size: clamp(20px, 7.2vw, 120px); line-height: 1; padding: 0 2vw; letter-spacing: -.03em; white-space: nowrap; overflow: hidden; background: linear-gradient(180deg, rgba(255,214,150,.55), rgba(255,150,50,.18) 55%, rgba(255,150,50,0) 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; user-select: none; pointer-events: none; }
 
 /* читабельність підписів на світлішому фоні */
 .ss-caps { text-shadow: 0 1px 2px rgba(70,20,0,.65), 0 0 10px rgba(70,20,0,.35); }
@@ -201,3 +201,14 @@ h1,h2,h3{font-weight:800;letter-spacing:-.01em}
 .cat-card .go-btn, .cat-card button { transition: transform .25s, box-shadow .25s, background .25s; }
 .cat-card button:hover { transform: translateY(-2px); background: linear-gradient(135deg, #FFB81C, #FF7A1F) !important; color: #2A0E03 !important; box-shadow: 0 10px 24px -8px rgba(255,120,30,.9); }
 @media (prefers-reduced-motion: reduce) { .cat-card, .cat-card:hover { transition: none; transform: none; } }
+
+/* вузькі екрани (320–360 px): пігулки без обрізання тексту */
+@media (max-width: 380px) { .pillband { padding-left: 12px; padding-right: 12px; gap: 6px; } .pb { font-size: 13px; letter-spacing: -.02em; } }
+
+/* сенсорні екрани: зони дотику не менше ~40 px */
+@media (pointer: coarse) {
+  .oc-chip { min-height: 40px; padding-left: 14px; padding-right: 14px; display: inline-flex; align-items: center; }
+  .cat-all { min-height: 40px; }
+  .sticky-header .hdr-nav button { min-height: 40px; }
+  footer button { min-height: 40px; padding: 10px 6px; display: inline-flex; align-items: center; }
+}
