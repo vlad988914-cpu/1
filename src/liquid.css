@@ -217,3 +217,14 @@ h1,h2,h3{font-weight:800;letter-spacing:-.01em}
 .cat-card .cat-count { margin-top: auto; padding-top: 8px; }
 .cat-card .cat-count + .cat-go { margin-top: 10px; }
 .cat-card .cat-go { align-self: flex-start; }
+
+/* поле пошуку: біле, темний текст, підсвітка при наведенні та фокусі */
+input.hero-search { background: #FFFFFF !important; color: #2A1206 !important; border: 1.5px solid rgba(255,255,255,.9) !important; box-shadow: 0 8px 22px -10px rgba(0,0,0,.5), inset 0 1px 0 #fff !important; transition: box-shadow .3s, border-color .3s, transform .3s !important; }
+input.hero-search::placeholder { color: #8A6A55 !important; opacity: 1; }
+input.hero-search:hover { border-color: #FFC24A !important; box-shadow: 0 0 0 3px rgba(255,184,28,.35), 0 0 26px 2px rgba(255,184,28,.55), 0 8px 22px -10px rgba(0,0,0,.5) !important; }
+input.hero-search:focus { outline: none; border-color: #FFB81C !important; box-shadow: 0 0 0 4px rgba(255,184,28,.5), 0 0 34px 4px rgba(255,184,28,.65) !important; }
+
+/* «Перша біржа будтехніки»: жовте віконце, білий текст, підсвітка при наведенні */
+.badge-pulse { animation: none !important; color: #FFFFFF !important; font-weight: 800 !important; text-shadow: 0 1px 2px rgba(90,45,0,.55); background: linear-gradient(135deg, #FFC21F 0%, #F59E0B 55%, #E8860C 100%) !important; border: 1px solid rgba(255,236,170,.9) !important; box-shadow: 0 6px 18px -8px rgba(255,170,30,.8), inset 0 1px 0 rgba(255,255,255,.55); cursor: default; transition: box-shadow .3s, transform .3s, filter .3s; }
+.badge-pulse:hover { transform: translateY(-2px); filter: brightness(1.08); box-shadow: 0 0 0 3px rgba(255,200,60,.4), 0 0 28px 4px rgba(255,190,40,.85), inset 0 1px 0 rgba(255,255,255,.65); }
+@media (prefers-reduced-motion: reduce) { .badge-pulse, .badge-pulse:hover { transform: none; } }

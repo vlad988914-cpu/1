@@ -3348,7 +3348,7 @@ export default function EquipmentMarketplace() {
               onChange={(e) => setHeroSearch(e.target.value)}
               aria-label={t("hero_search_placeholder")}
               placeholder={t("hero_search_placeholder")}
-              style={{ ...inputStyle, flex: 1, minWidth: 0 }}
+              className="hero-search" style={{ ...inputStyle, flex: 1, minWidth: 0 }}
             />
             <button type="submit" className="glass-cta" style={{ flexShrink: 0 }}>
               {t("hero_search_btn")}
