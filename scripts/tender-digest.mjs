@@ -47,13 +47,19 @@ async function search(body, tries = 3) {
   }
 }
 
-// Чи приймає пошук фільтр за областю (формат невідомий, пробуємо кілька і логуємо результат).
+// Фільтр області на сервері: формат невідомий, "48" (код Миколаївської області) сервер приймає.
 let regionValue = null;
-for (const cand of ["Миколаївська область", "Миколаївська", "UA-48", "48", "Миколаївська обл."]) {
+for (const cand of ["48", "Миколаївська область", "UA-48"]) {
   try {
-    const r = await search({ text: "демонтаж", status: ["active.tendering"], region: cand }, 1);
-    console.log("DIAG region", JSON.stringify(cand), "->", r.status, r.json?.total ?? JSON.stringify(r.json?.errors || {}));
-    if (r.status === 200 && r.json?.total) { regionValue = cand; break; }
+    const r = await search({ text: "ремонт", status: ["active.tendering"], region: cand }, 1);
+    console.log("DIAG region", JSON.stringify(cand), "->", r.status, "total", r.json?.total ?? JSON.stringify(r.json?.errors || {}));
+    if (r.status === 200) {
+      regionValue = cand;
+      for (const x of (r.json?.data || []).slice(0, 5)) {
+        console.log("DIAG зразок:", JSON.stringify({ t: x.title, c: x.procuringEntity?.name, a: x.procuringEntity?.address }).slice(0, 300));
+      }
+      break;
+    }
   } catch (e) {
     console.log("DIAG region помилка", cand, e.message);
   }
@@ -68,7 +74,7 @@ for (const cat of CATEGORIES) {
     for (let page = 0; page < MAXP; page++) {
       let res;
       try {
-        res = await search({ text: q, status: ["active.tendering"], page, ...(regionValue ? { region: regionValue } : {}) });
+        res = await search({ text: q, status: ["active.tendering"], ...(page ? { page } : {}), ...(regionValue ? { region: regionValue } : {}) });
       } catch (e) {
         console.log("пропуск", q, page, e.message);
         break;
@@ -93,7 +99,7 @@ const isMyk = (t) => {
   const blob = [t.title, pe.name, pe.identifier?.legalName, pe.address?.locality, pe.address?.region].join(" ");
   return MYK.test(blob);
 };
-const mine = [...all.values()].filter(isMyk);
+const mine = regionValue ? [...all.values()] : [...all.values()].filter(isMyk);
 console.log(`Усього знайдено: ${all.size}, по Миколаївщині: ${mine.length}`);
 
 const fmt = (n) => (n ? Math.round(n).toLocaleString("uk-UA").replace(/\s/g, " ") : "0");
@@ -138,7 +144,57 @@ if (top.length) {
   lines.push(`\n🏢 <b>Найбільші замовники</b>`);
   for (const [n, c] of top) lines.push(`• ${esc(cut(n, 70))}: ${c.n} шт., ${fmt(c.sum)} грн`);
 }
-lines.push(`\nДжерело: Prozorro (відкриті дані). Область визначено за адресою та назвою замовника, тож перевіряйте тендер на сторінці. Ціни за годину роботи техніки в такому списку не видно, лише загальні суми.`);
+// ===== Уся Україна: де зараз найбільше відкритих тендерів за напрямами =====
+const REGIONS = { "05": "Вінницька", "07": "Волинська", "12": "Дніпропетровська", "14": "Донецька", "18": "Житомирська", "21": "Закарпатська", "23": "Запорізька", "26": "Івано-Франківська", "32": "Київська", "35": "Кіровоградська", "44": "Луганська", "46": "Львівська", "48": "Миколаївська", "51": "Одеська", "53": "Полтавська", "56": "Рівненська", "59": "Сумська", "61": "Тернопільська", "63": "Харківська", "65": "Херсонська", "68": "Хмельницька", "71": "Черкаська", "73": "Чернівецька", "74": "Чернігівська", "80": "м. Київ" };
+const MAIN = { "Дороги": "ремонт доріг", "Земляні роботи, котловани": "земляні роботи", "Демонтаж": "демонтаж", "Бетон, фундаменти": "бетонні роботи", "Покрівлі, дахи": "ремонт покрівлі", "Послуги техніки": "послуги спецтехніки" };
+lines.push(`\n🇺🇦 <b>Уся Україна: відкриті тендери за напрямами</b>`);
+for (const cat of CATEGORIES) {
+  const q = MAIN[cat.name];
+  try {
+    const nat = await search({ text: q, status: ["active.tendering"] });
+    const natTotal = nat.json?.total ?? 0;
+    const per = [];
+    for (const [code, name] of Object.entries(REGIONS)) {
+      try {
+        const r = await search({ text: q, status: ["active.tendering"], region: code }, 2);
+        if (r.status === 200 && r.json?.total) per.push([name, r.json.total]);
+      } catch {}
+      await sleep(100);
+    }
+    per.sort((a, b) => b[1] - a[1]);
+    console.log(`DIAG Україна "${q}": ${natTotal}; по областях: ${per.length}`);
+    const topR = per.slice(0, 5).map(([n, c]) => `${n} ${c}`).join(", ");
+    lines.push(`${cat.icon} ${cat.name} («${q}»): ${natTotal >= 10000 ? "10 000+" : natTotal}${topR ? `. Більше всього: ${topR}` : ""}`);
+  } catch (e) {
+    console.log("Україна: пропуск", q, e.message);
+  }
+}
+
+// Найбільші відкриті тендери на послуги техніки по Україні
+try {
+  const rent = new Map();
+  for (const q of ["послуги екскаватора", "оренда екскаватора", "послуги спецтехніки", "оренда автокрана", "послуги самоскида"]) {
+    for (let page = 0; page < 3; page++) {
+      const r = await search({ text: q, status: ["active.tendering"], ...(page ? { page } : {}) });
+      const d = r.json?.data || [];
+      for (const t of d) if (t.tenderID) rent.set(t.tenderID, t);
+      if (d.length < 20) break;
+      await sleep(150);
+    }
+  }
+  const top = [...rent.values()].sort((a, b) => (b.value?.amount || 0) - (a.value?.amount || 0)).slice(0, 5);
+  if (top.length) {
+    lines.push(`\n🚜 <b>Найбільші відкриті тендери на послуги техніки (Україна)</b>`);
+    for (const t of top) {
+      const loc = t.procuringEntity?.address?.locality || t.procuringEntity?.name || "";
+      lines.push(`• ${esc(cut(t.title, 80))}\n  ${fmt(t.value?.amount)} грн · ${esc(cut(loc, 50))}\n  https://prozorro.gov.ua/tender/${t.tenderID}`);
+    }
+  }
+} catch (e) {
+  console.log("Україна: техніка помилка", e.message);
+}
+
+lines.push(`\nДжерело: Prozorro (відкриті дані). Область визначено фільтром Prozorro (код 48), перевіряйте тендер на сторінці. Ціни за годину роботи техніки в такому списку не видно, лише загальні суми.`);
 
 const text = lines.join("\n");
 if (DRY || !TOKEN || !CHAT) {
