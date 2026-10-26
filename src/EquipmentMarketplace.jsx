@@ -3606,6 +3606,7 @@ export default function EquipmentMarketplace() {
                 <div>demolis@ukr.net</div>
                 <div>+380 98 131 97 25</div>
                 <div>Миколаїв, Україна</div>
+                <div><a href="https://share.google/pR0mdWI94lEWL1dFs" target="_blank" rel="noopener" style={{ color: "#FFD9A8", textDecoration: "underline" }}>Ми на Google Картах</a></div>
               </div>
             </div>
             <div>

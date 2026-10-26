@@ -1,4 +1,17 @@
 {
+  "redirects": [
+    {
+      "source": "/:path(.*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "1-eosin-chi-26.vercel.app"
+        }
+      ],
+      "destination": "https://www.tehmaydan.com/:path",
+      "permanent": true
+    }
+  ],
   "headers": [
     {
       "source": "/story/(.*)",
