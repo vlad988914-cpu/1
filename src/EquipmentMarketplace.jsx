@@ -3607,6 +3607,8 @@ export default function EquipmentMarketplace() {
                 <div>+380 98 131 97 25</div>
                 <div>Миколаїв, Україна</div>
                 <div><a href="https://share.google/pR0mdWI94lEWL1dFs" target="_blank" rel="noopener" style={{ color: "#FFD9A8", textDecoration: "underline" }}>Ми на Google Картах</a></div>
+                <div><a href="/api/tg-subscribe?role=clients" target="_blank" rel="noopener" style={{ color: "#FFD9A8", textDecoration: "underline" }}>Новини в Telegram (клієнтам)</a></div>
+                <div><a href="/api/tg-subscribe?role=owners" target="_blank" rel="noopener" style={{ color: "#FFD9A8", textDecoration: "underline" }}>Новини в Telegram (власникам техніки)</a></div>
               </div>
             </div>
             <div>

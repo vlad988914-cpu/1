@@ -5,6 +5,8 @@ import { configured, sbRest, tg, safeEq, fresh, WEBHOOK_SECRET } from "./_tg.js"
 const ADMIN_ID = String(process.env.TELEGRAM_CHAT_ID || "").trim();
 const ROLE_NAME = { owners: "власників техніки", clients: "клієнтів" };
 const subKeyboard = { inline_keyboard: [[{ text: "🚜 Я власник техніки", callback_data: "sub:owners" }], [{ text: "🏗 Я шукаю техніку (клієнт)", callback_data: "sub:clients" }]] };
+const saveSub = (u, role) => sbRest("tg_subs?on_conflict=tg_id", { method: "POST", headers: { Prefer: "resolution=merge-duplicates" },
+  body: JSON.stringify({ tg_id: u.id, role, name: [u.first_name, u.last_name].filter(Boolean).join(" ") || null, active: true }) });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 export default async function handler(req, res) {
@@ -32,6 +34,14 @@ export default async function handler(req, res) {
     const m = (req.body || {}).message;
     if (!m || !m.from || m.chat.type !== "private") return res.status(200).json({ ok: true });
     const say = (text, extra = {}) => tg("sendMessage", { chat_id: m.chat.id, text, ...extra });
+
+    // Кнопка «Підписатися» з сайту: /start sub_owners | sub_clients — підписка одним натисканням
+    const sb = /^\/start\s+sub_(owners|clients)$/.exec(m.text || "");
+    if (sb) {
+      await saveSub(m.from, sb[1]);
+      await say(`Готово ✅ Ви підписані на новини ТехМайданчика для ${ROLE_NAME[sb[1]]}. Відписатися можна командою /stop.`);
+      return res.status(200).json({ ok: true });
+    }
 
     // Клієнт натиснув «Старт» з сайту: /start <code>
     const st = /^\/start\s+([a-f0-9]{24})$/.exec(m.text || "");
