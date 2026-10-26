@@ -9,6 +9,15 @@ const DAYS = Number(process.env.DAYS || 7);
 const MAXP = Number(process.env.MAXP || 8); // сторінок по 20 на запит
 const SEARCH = "https://prozorro.gov.ua/api/search/tenders";
 
+// Запуск за розкладом: працюємо лише о 9-й за Києвом (другий cron-запуск просто виходить).
+if (process.env.GITHUB_EVENT_NAME === "schedule") {
+  const h = Number(new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Kyiv", hour: "2-digit", hour12: false }).format(new Date()));
+  if (h !== 9) {
+    console.log(`Київ ${h}:xx, не 9-та година, пропускаю`);
+    process.exit(0);
+  }
+}
+
 // Місцевість Миколаївської області (адреса замовника в пошуку без області, тому фільтруємо за текстом).
 const MYK = /миколаї|вознесенськ|первомайськ|південноукраїнськ|южноукраїнськ|очаків|баштанк|снігурівк|нова одеса|новий буг|казанк|доманівк|братськ|веселинів|вітовськ|арбузинк|врадіївськ|кривоозер|березнегуват|жовтнев|корабельн|інгульськ|коблев|парутин|рибаківськ/i;
 
@@ -164,7 +173,12 @@ for (const cat of CATEGORIES) {
     per.sort((a, b) => b[1] - a[1]);
     console.log(`DIAG Україна "${q}": ${natTotal}; по областях: ${per.length}`);
     const topR = per.slice(0, 5).map(([n, c]) => `${n} ${c}`).join(", ");
-    lines.push(`${cat.icon} ${cat.name} («${q}»): ${natTotal >= 10000 ? "10 000+" : natTotal}${topR ? `. Більше всього: ${topR}` : ""}`);
+    lines.push(`\n${cat.icon} <b>${cat.name}</b> («${q}»): ${natTotal >= 10000 ? "10 000+" : natTotal}${topR ? `. Більше всього: ${topR}` : ""}`);
+    const big = (nat.json?.data || []).filter((t) => t.tenderID).sort((a, b) => (b.value?.amount || 0) - (a.value?.amount || 0)).slice(0, 3);
+    for (const t of big) {
+      const loc = t.procuringEntity?.address?.locality || "";
+      lines.push(`• ${esc(cut(t.title, 80))}\n  ${fmt(t.value?.amount)} грн · ${esc(cut(t.procuringEntity?.name || "", 50))}${loc ? " · " + esc(loc) : ""}\n  https://prozorro.gov.ua/tender/${t.tenderID}`);
+    }
   } catch (e) {
     console.log("Україна: пропуск", q, e.message);
   }
@@ -194,7 +208,7 @@ try {
   console.log("Україна: техніка помилка", e.message);
 }
 
-lines.push(`\nДжерело: Prozorro (відкриті дані). Область визначено фільтром Prozorro (код 48), перевіряйте тендер на сторінці. Ціни за годину роботи техніки в такому списку не видно, лише загальні суми.`);
+lines.push(`\nДжерело: Prozorro (відкриті дані). Область визначено фільтром Prozorro (код 48), перевіряйте тендер на сторінці. Ціни за годину роботи техніки в такому списку не видно, лише загальні суми. Контакти замовника (контактна особа, телефон, email для закупівлі) є на сторінці кожного тендеру.`);
 
 const text = lines.join("\n");
 if (DRY || !TOKEN || !CHAT) {

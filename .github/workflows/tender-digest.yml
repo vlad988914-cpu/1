@@ -1,7 +1,9 @@
 name: Tender digest
 on:
   schedule:
-    - cron: "0 6 * * 1" # понеділок 06:00 UTC = 08:00/09:00 Київ
+    # Пн і Пт. GitHub рахує час в UTC: 06:00 і 07:00 UTC, скрипт сам лишає той запуск,
+    # коли в Києві 9-та година (взимку 07:00 UTC, влітку 06:00 UTC).
+    - cron: "0 6,7 * * 1,5"
   workflow_dispatch:
 jobs:
   digest:
