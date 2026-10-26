@@ -1,32 +1,45 @@
 // Тижневий дайджест тендерів Prozorro (Миколаївська область) → Telegram.
 // Запускається в GitHub Actions. Токен і chat id беруться тільки зі змінних середовища.
-// Дані: відкритий API Prozorro (без ключа). Лише публічні тендери замовників, жодних приватних осіб.
+// Дані: пошук сайту prozorro.gov.ua (відкриті тендери замовників; приватних осіб тут немає).
 
 const TOKEN = process.env.TG_REPORT_TOKEN;
 const CHAT = process.env.TG_REPORT_CHAT;
 const DRY = process.env.DRY_RUN === "1";
 const DAYS = Number(process.env.DAYS || 7);
-const REGION = /миколаїв/i;
-const API = "https://public.api.openprocurement.org/api/2.5/tenders";
+const MAXP = Number(process.env.MAXP || 8); // сторінок по 20 на запит
+const SEARCH = "https://prozorro.gov.ua/api/search/tenders";
 
-const KEYWORDS = [
-  /дорог|асфальт|ямков|автошлях|вулиц/i,
-  /демонтаж|знесення|руйнув/i,
-  /котлован|траншей|земляні|ґрунт|грунт|планування|розчистк/i,
-  /бетон|фундамент/i,
-  /покрівл|дах(?:у|и|а|ів)?\b|кровл/i,
-  /капітальн.*ремонт|поточн.*ремонт|реконструкц/i,
-  /оренд.*(екскаватор|техніки|спецтехніки|автокран|самоскид)|послуги спецтехніки/i,
+// Місцевість Миколаївської області (адреса замовника в пошуку без області, тому фільтруємо за текстом).
+const MYK = /миколаї|вознесенськ|первомайськ|південноукраїнськ|южноукраїнськ|очаків|баштанк|снігурівк|нова одеса|новий буг|казанк|доманівк|братськ|веселинів|вітовськ|арбузинк|врадіївськ|кривоозер|березнегуват|жовтнев|корабельн|інгульськ|коблев|парутин|рибаківськ/i;
+
+const CATEGORIES = [
+  { name: "Дороги", icon: "🛣", q: ["ремонт дороги", "ремонт доріг", "ямковий ремонт", "асфальтобетонне покриття"] },
+  { name: "Земляні роботи, котловани", icon: "⛏", q: ["земляні роботи", "котлован", "траншея", "планування території", "вивезення ґрунту"] },
+  { name: "Демонтаж", icon: "🏚", q: ["демонтаж", "знесення будівлі"] },
+  { name: "Бетон, фундаменти", icon: "🧱", q: ["бетонні роботи", "бетон", "фундамент"] },
+  { name: "Покрівлі, дахи", icon: "🏠", q: ["ремонт покрівлі", "ремонт даху", "покрівля"] },
+  { name: "Послуги техніки", icon: "🚜", q: ["послуги екскаватора", "оренда екскаватора", "послуги спецтехніки", "оренда автокрана", "послуги самоскида", "послуги навантажувача"] },
 ];
-const CPV_OK = /^(4[5]|4[3]|7[1]|6[0])/; // будівництво/техніка, лише як підказка
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-async function getJson(url, tries = 3) {
+
+async function search(body, tries = 3) {
   for (let i = 0; i < tries; i++) {
     try {
-      const r = await fetch(url, { headers: { accept: "application/json" } });
-      if (!r.ok) throw new Error(`HTTP ${r.status} ${url}`);
-      return await r.json();
+      const r = await fetch(SEARCH, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          accept: "application/json",
+          origin: "https://prozorro.gov.ua",
+          referer: "https://prozorro.gov.ua/search/tender",
+          "user-agent": "Mozilla/5.0",
+        },
+        body: JSON.stringify(body),
+      });
+      if (r.status === 422) return { status: 422, json: await r.json().catch(() => null) };
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      return { status: r.status, json: await r.json() };
     } catch (e) {
       if (i === tries - 1) throw e;
       await sleep(1500 * (i + 1));
@@ -34,99 +47,121 @@ async function getJson(url, tries = 3) {
   }
 }
 
-const candidates = [];
-const SEARCH = "https://prozorro.gov.ua/api/search/tenders";
-async function search(body) {
-  const r = await fetch(SEARCH, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      accept: "application/json",
-      origin: "https://prozorro.gov.ua",
-      referer: "https://prozorro.gov.ua/search/tender",
-      "user-agent": "Mozilla/5.0",
-    },
-    body: JSON.stringify(body),
-  });
-  const raw = await r.text();
-  let json = null;
-  try { json = JSON.parse(raw); } catch {}
-  return { status: r.status, json, raw };
-}
-const probes = [
-  { text: "демонтаж", status: ["active.tendering"] },
-  { text: "демонтаж", status: ["active.tendering"], region: ["UA-48"] },
-  { text: "демонтаж", status: ["active.tendering"], region: [48] },
-  { text: "демонтаж", status: ["active.tendering"], region: ["48"] },
-  { text: "демонтаж", status: ["active.tendering"], region: ["Миколаївська область"] },
-  { text: "демонтаж", status: ["active.tendering"], region: ["Миколаївська"] },
-];
-for (const b of probes) {
+// Чи приймає пошук фільтр за областю (формат невідомий, пробуємо кілька і логуємо результат).
+let regionValue = null;
+for (const cand of ["Миколаївська область", "Миколаївська", "UA-48", "48", "Миколаївська обл."]) {
   try {
-    const r = await search(b);
-    const d = r.json?.data || [];
-    console.log("DIAG", JSON.stringify(b), "->", r.status, "total", r.json?.total, "items", d.length, r.json?.errors ? JSON.stringify(r.json.errors) : "");
-    if (r.status !== 200 && !r.json) console.log("DIAG raw:", r.raw.slice(0, 300));
-    if (d[0]) console.log("DIAG keys:", Object.keys(d[0]).join(","));
-    for (const x of d.slice(0, 3)) {
-      console.log("DIAG item:", JSON.stringify({ id: x.id, tenderID: x.tenderID, title: x.title, status: x.status, value: x.value, addr: x.procuringEntity?.address, mod: x.dateModified, tp: x.tenderPeriod }).slice(0, 450));
+    const r = await search({ text: "демонтаж", status: ["active.tendering"], region: cand }, 1);
+    console.log("DIAG region", JSON.stringify(cand), "->", r.status, r.json?.total ?? JSON.stringify(r.json?.errors || {}));
+    if (r.status === 200 && r.json?.total) { regionValue = cand; break; }
+  } catch (e) {
+    console.log("DIAG region помилка", cand, e.message);
+  }
+}
+console.log("Фільтр області на сервері:", regionValue || "немає, фільтруємо локально");
+
+const all = new Map(); // tenderID -> tender + cats
+const now = Date.now();
+for (const cat of CATEGORIES) {
+  for (const q of cat.q) {
+    let got = 0;
+    for (let page = 0; page < MAXP; page++) {
+      let res;
+      try {
+        res = await search({ text: q, status: ["active.tendering"], page, ...(regionValue ? { region: regionValue } : {}) });
+      } catch (e) {
+        console.log("пропуск", q, page, e.message);
+        break;
+      }
+      const d = res.json?.data || [];
+      for (const t of d) {
+        if (!t.tenderID) continue;
+        const e = all.get(t.tenderID) || { ...t, cats: new Set() };
+        e.cats.add(cat.name);
+        all.set(t.tenderID, e);
+      }
+      got += d.length;
+      if (d.length < 20) break;
+      await sleep(150);
     }
-  } catch (e) {
-    console.log("DIAG помилка:", JSON.stringify(b), e.message);
+    console.log(`DIAG запит "${q}": отримано ${got}`);
   }
 }
-const found = [];
-for (const id of candidates) {
-  try {
-    const { data: t } = await getJson(`${API}/${id}`);
-    const addr = t.procuringEntity?.address || {};
-    const region = `${addr.region || ""} ${addr.locality || ""}`;
-    const itemRegions = (t.items || []).map((i) => i.deliveryAddress?.region || "").join(" ");
-    if (!REGION.test(region) && !REGION.test(itemRegions)) continue;
-    if (!["active.tendering", "active.enquiries"].includes(t.status)) continue;
-    found.push({
-      title: t.title,
-      customer: t.procuringEntity?.name,
-      amount: t.value?.amount,
-      cur: t.value?.currency || "UAH",
-      end: t.tenderPeriod?.endDate,
-      id: t.tenderID,
-      link: `https://prozorro.gov.ua/tender/${t.tenderID}`,
-    });
-    await sleep(120);
-  } catch (e) {
-    console.log("пропуск", id, e.message);
-  }
-}
-found.sort((a, b) => (b.amount || 0) - (a.amount || 0));
 
-const fmt = (n) => (n ? Math.round(n).toLocaleString("uk-UA").replace(/\s/g, " ") : "—");
+const isMyk = (t) => {
+  const pe = t.procuringEntity || {};
+  const blob = [t.title, pe.name, pe.identifier?.legalName, pe.address?.locality, pe.address?.region].join(" ");
+  return MYK.test(blob);
+};
+const mine = [...all.values()].filter(isMyk);
+console.log(`Усього знайдено: ${all.size}, по Миколаївщині: ${mine.length}`);
+
+const fmt = (n) => (n ? Math.round(n).toLocaleString("uk-UA").replace(/\s/g, " ") : "0");
 const esc = (s) => String(s || "").replace(/[<>&]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]));
-const date = new Date().toLocaleDateString("uk-UA");
-let msg = `📊 <b>ТехМайданчик: тендери, Миколаївська обл.</b> (${date})\n`;
-if (!found.length) {
-  msg += `\nЗа ${DAYS} днів відкритих тендерів за ключовими словами не знайдено.`;
-} else {
-  msg += `\nВідкриті тендери зараз: ${found.length}\n`;
-  for (const t of found.slice(0, 10)) {
-    msg += `\n• <b>${esc(t.title).slice(0, 140)}</b>\n  ${fmt(t.amount)} ${t.cur} · ${esc(t.customer).slice(0, 80)}\n`;
-    if (t.end) msg += `  Подача до ${new Date(t.end).toLocaleDateString("uk-UA")}\n`;
-    msg += `  ${t.link}\n`;
-  }
-  if (found.length > 10) msg += `\n…і ще ${found.length - 10} на prozorro.gov.ua`;
-}
-msg += `\n\nДжерело: Prozorro (відкриті дані). Перевіряйте умови на сторінці тендеру.`;
+const cut = (s, n) => (String(s).length > n ? String(s).slice(0, n - 1) + "…" : String(s));
+const isNew = (t) => {
+  const s = t.enquiryPeriod?.startDate;
+  return s && now - new Date(s).getTime() <= DAYS * 864e5;
+};
 
+const date = new Date().toLocaleDateString("uk-UA");
+const lines = [];
+lines.push(`📊 <b>ТехМайданчик: ринок, Миколаївська обл.</b> (${date})`);
+lines.push(`Відкриті тендери зараз: <b>${mine.length}</b>, нових за ${DAYS} днів: <b>${mine.filter(isNew).length}</b>`);
+const total = mine.reduce((s, t) => s + (t.value?.amount || 0), 0);
+lines.push(`Загальна сума: <b>${fmt(total)} грн</b>`);
+
+for (const cat of CATEGORIES) {
+  const list = mine.filter((t) => t.cats.has(cat.name)).sort((a, b) => (b.value?.amount || 0) - (a.value?.amount || 0));
+  if (!list.length) {
+    lines.push(`\n${cat.icon} <b>${cat.name}</b>: відкритих немає`);
+    continue;
+  }
+  const sum = list.reduce((s, t) => s + (t.value?.amount || 0), 0);
+  lines.push(`\n${cat.icon} <b>${cat.name}</b>: ${list.length} шт., ${fmt(sum)} грн`);
+  for (const t of list.slice(0, 3)) {
+    const end = t.tenderPeriod?.endDate ? new Date(t.tenderPeriod.endDate).toLocaleDateString("uk-UA") : "—";
+    lines.push(`• ${esc(cut(t.title, 90))}\n  ${fmt(t.value?.amount)} грн · ${esc(cut(t.procuringEntity?.name || "", 60))} · до ${end}\n  https://prozorro.gov.ua/tender/${t.tenderID}`);
+  }
+}
+
+// Найбільші замовники
+const byCust = new Map();
+for (const t of mine) {
+  const n = t.procuringEntity?.name || "—";
+  const c = byCust.get(n) || { n: 0, sum: 0 };
+  c.n++; c.sum += t.value?.amount || 0;
+  byCust.set(n, c);
+}
+const top = [...byCust.entries()].sort((a, b) => b[1].sum - a[1].sum).slice(0, 5);
+if (top.length) {
+  lines.push(`\n🏢 <b>Найбільші замовники</b>`);
+  for (const [n, c] of top) lines.push(`• ${esc(cut(n, 70))}: ${c.n} шт., ${fmt(c.sum)} грн`);
+}
+lines.push(`\nДжерело: Prozorro (відкриті дані). Область визначено за адресою та назвою замовника, тож перевіряйте тендер на сторінці. Ціни за годину роботи техніки в такому списку не видно, лише загальні суми.`);
+
+const text = lines.join("\n");
 if (DRY || !TOKEN || !CHAT) {
-  console.log(msg);
+  console.log(text);
   if (!DRY) { console.error("Немає TG_REPORT_TOKEN / TG_REPORT_CHAT"); process.exit(1); }
   process.exit(0);
 }
-const r = await fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage`, {
-  method: "POST",
-  headers: { "content-type": "application/json" },
-  body: JSON.stringify({ chat_id: CHAT, text: msg.slice(0, 4000), parse_mode: "HTML", disable_web_page_preview: true }),
-});
-const out = await r.json();
-if (!out.ok) { console.error("Telegram:", out.description); process.exit(1); }
-console.log("Надіслано");
+
+// Telegram: до 4096 символів, ріжемо по рядках.
+const chunks = [];
+let cur = "";
+for (const l of lines) {
+  if ((cur + "\n" + l).length > 3800) { chunks.push(cur); cur = l; } else cur = cur ? cur + "\n" + l : l;
+}
+if (cur) chunks.push(cur);
+for (const c of chunks) {
+  const r = await fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ chat_id: CHAT, text: c, parse_mode: "HTML", disable_web_page_preview: true }),
+  });
+  const out = await r.json();
+  if (!out.ok) { console.error("Telegram:", out.description); process.exit(1); }
+  await sleep(500);
+}
+console.log("Надіслано, повідомлень:", chunks.length);
