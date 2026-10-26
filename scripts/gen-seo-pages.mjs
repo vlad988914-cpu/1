@@ -59,6 +59,12 @@ const CITIES = [
   { slug: "mykolaiv", name: "Миколаїв", loc: "у Миколаєві", obl: "Миколаївська область" },
   { slug: "odesa", name: "Одеса", loc: "в Одесі", obl: "Одеська область" },
   { slug: "kyiv", name: "Київ", loc: "у Києві", obl: "Київ і область" },
+  { slug: "voznesensk", name: "Вознесенськ", loc: "у Вознесенську", obl: "Миколаївська область" },
+  { slug: "pervomaisk", name: "Первомайськ", loc: "у Первомайську", obl: "Миколаївська область" },
+  { slug: "pivdennoukrainsk", name: "Южноукраїнськ", loc: "в Южноукраїнську", obl: "Миколаївська область" },
+  { slug: "ochakiv", name: "Очаків", loc: "в Очакові", obl: "Миколаївська область" },
+  { slug: "dnipro", name: "Дніпро", loc: "у Дніпрі", obl: "Дніпропетровська область" },
+  { slug: "lviv", name: "Львів", loc: "у Львові", obl: "Львівська область" },
 ];
 
 const cut160 = (t) => { t = String(t); if (t.length <= 160) return t; const c = t.slice(0, 157); return c.slice(0, c.lastIndexOf(" ")).replace(/[,;:\s—-]+$/, "") + "…"; };
