@@ -228,3 +228,15 @@ input.hero-search:focus { outline: none; border-color: #FFB81C !important; box-s
 .badge-pulse { animation: none !important; color: #FFFFFF !important; font-weight: 800 !important; text-shadow: 0 1px 2px rgba(90,45,0,.55); background: linear-gradient(135deg, #FFC21F 0%, #F59E0B 55%, #E8860C 100%) !important; border: 1px solid rgba(255,236,170,.9) !important; box-shadow: 0 6px 18px -8px rgba(255,170,30,.8), inset 0 1px 0 rgba(255,255,255,.55); cursor: default; transition: box-shadow .3s, transform .3s, filter .3s; }
 .badge-pulse:hover { transform: translateY(-2px); filter: brightness(1.08); box-shadow: 0 0 0 3px rgba(255,200,60,.4), 0 0 28px 4px rgba(255,190,40,.85), inset 0 1px 0 rgba(255,255,255,.65); }
 @media (prefers-reduced-motion: reduce) { .badge-pulse, .badge-pulse:hover { transform: none; } }
+
+/* вузькі екрани: назви без виходу за межі карток (ширший шрифт Unbounded) */
+.cat-card { min-width: 0; }
+.cat-name, .cat-desc, .cat-count { max-width: 100%; overflow-wrap: anywhere; }
+@media (max-width: 700px) {
+  .cat-name { font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important; font-weight: 800; font-size: 14px; letter-spacing: -.01em; hyphens: auto; -webkit-hyphens: auto; }
+  .cat-card::before { font-size: 38px !important; opacity: .55; right: 10px; bottom: 6px; }
+}
+.lp-key-i { min-width: 0; }
+.lp-key-i span { overflow-wrap: anywhere; hyphens: auto; letter-spacing: .04em; }
+.lp-key-i b { overflow-wrap: anywhere; }
+@media (max-width: 400px) { .lp-key { grid-template-columns: repeat(2, minmax(0, 1fr)); } .lp-key-i { padding: 12px 10px 10px; } .lp-key-i b { font-size: 17px !important; } .lp-key-i span { font-size: 10px; } }
