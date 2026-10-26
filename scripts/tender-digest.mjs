@@ -38,7 +38,7 @@ const since = new Date(Date.now() - DAYS * 864e5).toISOString();
 let url = `${API}?descending=0&limit=1000&offset=${encodeURIComponent(since)}&opt_fields=title,status`;
 const candidates = [];
 let pages = 0;
-while (url && pages < 40) {
+while (url && pages < 1) {
   const j = await getJson(url);
   pages++;
   if (pages === 1) {
@@ -63,18 +63,34 @@ try {
 } catch (e) {
   console.log("DIAG остання сторінка помилка:", e.message);
 }
-for (const probe of [
-  "https://prozorro.gov.ua/api/search/tenders?text=%D0%B4%D0%B5%D0%BC%D0%BE%D0%BD%D1%82%D0%B0%D0%B6&status=active.tendering",
-]) {
+const SEARCH = "https://prozorro.gov.ua/api/search/tenders";
+const bodies = [
+  {},
+  { text: "демонтаж" },
+  { filterType: "tenders", text: "демонтаж" },
+  { query: "демонтаж", page: 1 },
+  { filters: { text: "демонтаж", status: ["active.tendering"] }, page: 1 },
+  { text: "демонтаж", status: "active.tendering", region: "UA-48" },
+];
+for (const b of bodies) {
   try {
-    const r = await fetch(probe, { headers: { accept: "application/json" } });
+    const r = await fetch(SEARCH, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        accept: "application/json",
+        origin: "https://prozorro.gov.ua",
+        referer: "https://prozorro.gov.ua/search/tender",
+        "user-agent": "Mozilla/5.0",
+      },
+      body: JSON.stringify(b),
+    });
     const t = await r.text();
-    console.log("DIAG probe", r.status, t.slice(0, 700).replace(/\s+/g, " "));
+    console.log("DIAG POST", JSON.stringify(b), "->", r.status, t.slice(0, 500).replace(/\s+/g, " "));
   } catch (e) {
-    console.log("DIAG probe помилка:", e.message);
+    console.log("DIAG POST помилка:", JSON.stringify(b), e.message);
   }
 }
-
 const found = [];
 for (const id of candidates) {
   try {
