@@ -41,6 +41,13 @@ let pages = 0;
 while (url && pages < 40) {
   const j = await getJson(url);
   pages++;
+  if (pages === 1) {
+    const d = j.data || [];
+    console.log("DIAG перша сторінка:", url);
+    console.log("DIAG елементів:", d.length, "з title:", d.filter((x) => x.title).length);
+    console.log("DIAG приклад:", JSON.stringify(d.slice(0, 2)));
+    console.log("DIAG next_page:", j.next_page?.uri);
+  }
   for (const t of j.data || []) {
     if (KEYWORDS.some((k) => k.test(t.title || ""))) candidates.push(t.id);
   }
@@ -49,6 +56,24 @@ while (url && pages < 40) {
   url = next.includes("opt_fields") ? next : next + "&opt_fields=title,status";
 }
 console.log(`Сторінок: ${pages}, кандидатів за ключовими словами: ${candidates.length}`);
+try {
+  const last = await getJson(url);
+  const d = last.data || [];
+  console.log("DIAG остання сторінка: елементів", d.length, "dateModified", d[d.length - 1]?.dateModified);
+} catch (e) {
+  console.log("DIAG остання сторінка помилка:", e.message);
+}
+for (const probe of [
+  "https://prozorro.gov.ua/api/search/tenders?text=%D0%B4%D0%B5%D0%BC%D0%BE%D0%BD%D1%82%D0%B0%D0%B6&status=active.tendering",
+]) {
+  try {
+    const r = await fetch(probe, { headers: { accept: "application/json" } });
+    const t = await r.text();
+    console.log("DIAG probe", r.status, t.slice(0, 700).replace(/\s+/g, " "));
+  } catch (e) {
+    console.log("DIAG probe помилка:", e.message);
+  }
+}
 
 const found = [];
 for (const id of candidates) {
