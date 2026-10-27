@@ -1,3 +1,4 @@
+import { trackLead } from "./track.js";
 import React, { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { supabase } from "./supabaseClient";
@@ -1663,6 +1664,7 @@ export default function EquipmentMarketplace() {
       return false;
     }
     deals.notifyDispatcher(data); // Telegram диспетчера (лише для тих, хто увійшов)
+    trackLead();
     setShowRequestForm(false);
     setAiPrefill(null);
     flashToast(data.isPublic ? "Заявку прийнято й вивішено на «Дошці оголошень». Відгуки — у «Моєму кабінеті»" : "Заявку прийнято. Хід і відповіді — у «Моєму кабінеті»");
@@ -2240,6 +2242,7 @@ export default function EquipmentMarketplace() {
       return false;
     }
     deals.notifyDispatcher({ type: l.type, region: l.region, comment, contact: user.phone || user.email || "не вказано", requesterName: user.name });
+    trackLead();
     flashToast("Запит надіслано диспетчеру. Відповідь побачите в «Моєму кабінеті»");
     setTimeout(() => loadClientData(), 600);
     return true;
