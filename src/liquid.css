@@ -172,7 +172,7 @@ h1,h2,h3{font-weight:800;letter-spacing:-.01em}
 .lp-page { background:
   radial-gradient(70% 45% at 85% -5%, rgba(255,120,30,.28), transparent 70%),
   radial-gradient(60% 40% at 5% 105%, rgba(255,170,70,.12), transparent 70%),
-  repeating-linear-gradient(90deg, rgba(255,255,255,.022) 0, rgba(255,255,255,0) 3px, rgba(0,0,0,.05) 22px, rgba(0,0,0,0) 24px),
+  repeating-linear-gradient(90deg, rgba(124,240,174,.05) 0, rgba(124,240,174,0) 3px, rgba(0,0,0,.05) 22px, rgba(0,0,0,0) 24px),
   linear-gradient(180deg, #170D08 0%, #0C0807 55%, #090706 100%); }
 .lp-hero { border-color: rgba(255,170,90,.55); box-shadow: 0 0 0 1px rgba(255,150,60,.18), 0 18px 50px -18px rgba(255,110,30,.45); }
 .lp-city { display: inline-flex; align-items: center; gap: 7px; margin-top: 10px; padding: 7px 14px 7px 11px; border-radius: 980px; font: 700 14px/1 'Manrope', sans-serif; color: #2A0E03; background: linear-gradient(180deg, #FFE8C4, #FFC98A); box-shadow: 0 6px 18px -8px rgba(255,150,50,.8), inset 0 1px 0 rgba(255,255,255,.7); }
