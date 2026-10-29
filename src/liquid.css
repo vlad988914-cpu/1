@@ -286,3 +286,14 @@ input[style*="rgb(165, 60, 13)"]:focus, textarea[style*="rgb(165, 60, 13)"]:focu
 @media (prefers-reduced-motion: reduce) {
   div[style*="border: 1px solid rgb(233, 150, 96)"]:hover, div[style*="border: 1px solid rgb(255, 227, 189)"]:hover, .glow-card:hover { transform: none; }
 }
+
+/* Выпадающие списки: читаемый тёмный список вместо белого с белым текстом */
+select { color-scheme: dark; }
+select option, select optgroup {
+  background-color: #3A1405;
+  color: #FFF4E6;
+}
+select option:checked, select option:hover {
+  background-color: #FF6A1A;
+  color: #FFFFFF;
+}
