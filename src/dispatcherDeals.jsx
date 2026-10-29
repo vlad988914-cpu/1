@@ -402,7 +402,7 @@ function Stat({ label, value, accent, big }) {
   );
 }
 
-export function UsersBoard({ users: allUsers, requests, bookings, listings, currentUserId, seenSince, onSetRole, onDelete, lockRole }) {
+export function UsersBoard({ users: allUsers, requests, bookings, listings, currentUserId, seenSince, onSetRole, onDelete, onBlock, lockRole }) {
   const users = lockRole ? allUsers.filter((u) => u.role === lockRole) : allUsers;
   const [q, setQ] = useState("");
   const [role, setRole] = useState("all");
@@ -417,8 +417,6 @@ export function UsersBoard({ users: allUsers, requests, bookings, listings, curr
   const clients = users.filter((u) => u.role === "client").length;
   const owners = users.filter((u) => u.role === "owner").length;
   const newWeek = users.filter(isNew).length;
-  const newToday = users.filter((u) => !isStaff(u) && age(u) < DAY_MS).length;
-  const unseen = users.filter(isUnseen).length;
 
   const ownerOfListing = (id) => (listings.find((l) => l.id === id) || {}).ownerId;
   const activeRentals = (u) =>
@@ -426,6 +424,7 @@ export function UsersBoard({ users: allUsers, requests, bookings, listings, curr
       (b) => ["reserved", "confirmed"].includes(b.status) && b.date_to >= today && (b.client_id === u.id || ownerOfListing(b.listing_id) === u.id)
     ).length;
 
+  const blockedCount = users.filter((u) => u.blocked).length;
   const filters = lockRole
     ? [
         ["all", "Усі", total],
@@ -436,10 +435,10 @@ export function UsersBoard({ users: allUsers, requests, bookings, listings, curr
         ["new", "Нові (7 днів)", newWeek],
         ["client", "Клієнти", clients],
         ["owner", "Власники", owners],
-        ["dispatcher", "Диспетчери", users.filter(isStaff).length],
+        ["blocked", "Заблоковані", blockedCount],
       ];
   const shown = users
-    .filter((u) => (role === "all" ? true : role === "new" ? isNew(u) : u.role === role))
+    .filter((u) => (role === "all" ? true : role === "new" ? isNew(u) : role === "blocked" ? !!u.blocked : u.role === role))
     .filter((u) => !q || `${u.name} ${u.org || ""} ${u.phone} ${u.email}`.toLowerCase().includes(q.toLowerCase()))
     .sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
 
@@ -450,18 +449,16 @@ export function UsersBoard({ users: allUsers, requests, bookings, listings, curr
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-      <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-        <Stat big label={lockRole === "owner" ? "Усього власників" : lockRole === "client" ? "Усього клієнтів" : "Усього зареєстровано"} value={total} />
-        {!lockRole && <Stat label="Клієнтів" value={clients} />}
-        {!lockRole && <Stat label="Власників" value={owners} />}
-        <Stat label="Нових за 7 днів" value={newWeek} accent={newWeek > 0} />
-        <Stat label="Нових сьогодні" value={newToday} accent={newToday > 0} />
-        <Stat label="Після вашого останнього візиту" value={unseen} accent={unseen > 0} />
+      <div style={{ fontFamily: FONT, fontSize: 14, color: "#FFE6D0" }}>
+        Усього <b style={{ color: "#F4F4F1" }}>{total}</b>
+        {!lockRole && <> · клієнтів <b style={{ color: "#F4F4F1" }}>{clients}</b> · власників <b style={{ color: "#F4F4F1" }}>{owners}</b></>}
+        {newWeek > 0 && <> · нових за тиждень <b style={{ color: "#BFF5D4" }}>{newWeek}</b></>}
+        {blockedCount > 0 && <> · заблоковано <b style={{ color: "#FFB9B9" }}>{blockedCount}</b></>}
       </div>
 
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
         {filters.map(([k, label, count]) => (
-          <button key={k} onClick={() => setRole(k)} style={{ ...smallBtn, padding: "5px 12px", fontSize: 12, borderColor: role === k ? "#FFE3BD" : "rgba(255,255,255,0.18)", color: role === k ? "#FFE3BD" : "#ffffff" }}>
+          <button key={k} onClick={() => setRole(k)} style={{ ...smallBtn, padding: "5px 12px", fontSize: 12, borderColor: role === k ? "#7CF0AE" : "rgba(255,255,255,0.18)", color: role === k ? "#BFF5D4" : "#ffffff", boxShadow: role === k ? "0 0 0 2px rgba(124,240,174,.25)" : "none" }}>
             {label} ({count})
           </button>
         ))}
@@ -476,11 +473,12 @@ export function UsersBoard({ users: allUsers, requests, bookings, listings, curr
         const mine = u.id === currentUserId;
         const canDelete = !isStaff(u) && !mine;
         return (
-          <div key={u.id} style={{ border: `1px solid ${isUnseen(u) ? "#FFE3BD" : "#E99660"}`, padding: "10px 14px", fontFamily: FONT, fontSize: 12.5, display: "flex", flexDirection: "column", gap: 4 }}>
+          <div key={u.id} style={{ border: `1px solid ${u.blocked ? RED : isUnseen(u) ? "#FFE3BD" : "#E99660"}`, background: u.blocked ? "rgba(255,77,77,.08)" : "transparent", padding: "10px 14px", fontFamily: FONT, fontSize: 12.5, display: "flex", flexDirection: "column", gap: 4 }}>
             <div style={{ display: "flex", justifyContent: "space-between", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
               <span>
                 <b style={{ fontSize: 14 }}>{u.name}</b>
                 {u.org ? <span style={{ color: "#FFE6D0" }}> · {u.org}</span> : null}
+                {u.blocked && <span style={{ marginLeft: 8, background: "#C9402F", color: "#fff", fontSize: 10.5, fontWeight: 700, padding: "2px 7px", letterSpacing: "0.04em" }}>ЗАБЛОКОВАНО</span>}
                 {isNew(u) && <span style={{ marginLeft: 8, background: "#FFE3BD", color: "#3A1405", fontSize: 10.5, fontWeight: 700, padding: "2px 7px", letterSpacing: "0.04em" }}>НОВИЙ</span>}
               </span>
               <span style={{ color: ROLE_COLOR[u.role], border: `1px solid ${ROLE_COLOR[u.role]}`, padding: "2px 8px", fontSize: 11.5 }}>{ROLE_LABEL[u.role] || u.role}</span>
@@ -493,6 +491,19 @@ export function UsersBoard({ users: allUsers, requests, bookings, listings, curr
             </div>
             {!isStaff(u) && (
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap", paddingTop: 4 }}>
+                {!mine && onBlock && (
+                  <button
+                    onClick={() => {
+                      const msg = u.blocked
+                        ? `Розблокувати «${u.name}»? Він знову зможе входити на сайт.`
+                        : `Заблокувати «${u.name}» (${u.email})?\n\nВхід на сайт буде закрито, заявки неможливі${u.role === "owner" ? ", а його техніка зникне з каталогу" : ""}. Розблокувати можна будь-коли.`;
+                      if (window.confirm(msg)) onBlock(u.id, !u.blocked);
+                    }}
+                    style={miniBtn(u.blocked ? GREEN : AMBER)}
+                  >
+                    {u.blocked ? "Розблокувати" : "Заблокувати"}
+                  </button>
+                )}
                 <button
                   onClick={() => {
                     const to = u.role === "owner" ? "client" : "owner";

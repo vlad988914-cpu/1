@@ -39,6 +39,8 @@ export const REASON_TEXT = {
   bad_price: "Вкажіть ціну більше нуля",
   bad_unit: "Невірна одиниця ціни",
   bad_role: "Недопустима роль",
+  blocked: "Ваш акаунт заблоковано. Зв'яжіться з диспетчером",
+  too_many_days: "Забагато днів за раз — позначайте до року",
 };
 export const reasonText = (res) => REASON_TEXT[res?.reason] || res?.message || "Не вдалося виконати дію";
 
@@ -66,6 +68,14 @@ export const declineListingRequest = (requestId, reason) =>
   call("decline_listing_request", { p_request_id: requestId, p_reason: reason || null });
 export const setUserRole = (userId, role) => call("set_user_role", { p_user_id: userId, p_role: role });
 export const deleteUser = (userId) => call("delete_user", { p_user_id: userId });
+export const setUserBlocked = (userId, blocked) => call("set_user_blocked", { p_user_id: userId, p_blocked: !!blocked });
+
+// ---- Календар техніки: дні, які власник позначив зайнятими вручну ----
+export const setListingDays = (listingId, days, busy) => call("set_listing_days", { p_listing_id: listingId, p_days: days, p_busy: !!busy });
+export async function fetchBlockDays() {
+  const res = await call("listing_block_days", {});
+  return res.ok && Array.isArray(res.data) ? res.data : [];
+}
 
 // Повідомлення в Telegram диспетчера: лише для користувачів, що увійшли (сервер перевіряє токен)
 export async function notifyDispatcher(payload) {

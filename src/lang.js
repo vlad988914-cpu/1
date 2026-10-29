@@ -183,7 +183,7 @@ export const TX = {
     weekdays: ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Нд"],
     calPick: "Оберіть дати оренди", pickStart: "Натисніть перший день оренди", pickEnd: "Тепер натисніть останній день (можна той самий)",
     chosen: "Ви обрали", daysShort: "дн.", pickClash: "У цьому періоді є зайняті дні. Оберіть інші дати.", orderBtn: "Замовити техніку",
-    orderNeed: "Спершу оберіть дати на календарі", clearDates: "Скинути", changeDates: "Змінити дати", prevM: "Попередні місяці", nextM: "Наступні місяці", pickedLegend: "ваш вибір", datesLabel: "Дати оренди",
+    orderNeed: "Спершу оберіть дати на календарі", clearDates: "Скинути", changeDates: "Змінити дати", prevM: "Попередні місяці", nextM: "Наступні місяці", pickedLegend: "ваш вибір", datesLabel: "Дати оренди", manageTitle: "Календар: ви керуєте зайнятістю", mgHint: "Натискайте на дні — вони стануть зайнятими (червоні) для всіх відвідувачів. Натисніть ще раз — день знову вільний.", mgDays: "Окремі дні", mgRange: "Період", mgRangeHint: "Натисніть перший і останній день періоду", mgMarkBusy: "Позначити зайнятими", mgMarkFree: "Звільнити", mgBookedNote: "Дні з орендою змінити не можна", mgManual: "зайнято вами", mgSaved: "Збережено — усі бачать актуальний календар", mgCancel: "Скасувати",
   },
   ru: {
     back: "Назад в каталог", isNew: "НОВОЕ",
@@ -207,7 +207,7 @@ export const TX = {
     weekdays: ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"],
     calPick: "Выберите даты аренды", pickStart: "Нажмите первый день аренды", pickEnd: "Теперь нажмите последний день (можно тот же)",
     chosen: "Вы выбрали", daysShort: "дн.", pickClash: "В этом периоде есть занятые дни. Выберите другие даты.", orderBtn: "Заказать технику",
-    orderNeed: "Сначала выберите даты в календаре", clearDates: "Сбросить", changeDates: "Изменить даты", prevM: "Предыдущие месяцы", nextM: "Следующие месяцы", pickedLegend: "ваш выбор", datesLabel: "Даты аренды",
+    orderNeed: "Сначала выберите даты в календаре", clearDates: "Сбросить", changeDates: "Изменить даты", prevM: "Предыдущие месяцы", nextM: "Следующие месяцы", pickedLegend: "ваш выбор", datesLabel: "Даты аренды", manageTitle: "Календарь: вы управляете занятостью", mgHint: "Нажимайте на дни — они станут занятыми (красные) для всех посетителей. Нажмите ещё раз — день снова свободен.", mgDays: "Отдельные дни", mgRange: "Период", mgRangeHint: "Нажмите первый и последний день периода", mgMarkBusy: "Отметить занятыми", mgMarkFree: "Освободить", mgBookedNote: "Дни с арендой изменить нельзя", mgManual: "занято вами", mgSaved: "Сохранено — все видят актуальный календарь", mgCancel: "Отмена",
   },
   en: {
     back: "Back to catalog", isNew: "NEW",
@@ -231,7 +231,7 @@ export const TX = {
     weekdays: ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"],
     calPick: "Choose rental dates", pickStart: "Tap the first day of the rental", pickEnd: "Now tap the last day (it can be the same day)",
     chosen: "You chose", daysShort: "days", pickClash: "This period includes booked days. Pick other dates.", orderBtn: "Order equipment",
-    orderNeed: "Please choose dates on the calendar first", clearDates: "Clear", changeDates: "Change dates", prevM: "Earlier months", nextM: "Later months", pickedLegend: "your choice", datesLabel: "Rental dates",
+    orderNeed: "Please choose dates on the calendar first", clearDates: "Clear", changeDates: "Change dates", prevM: "Earlier months", nextM: "Later months", pickedLegend: "your choice", datesLabel: "Rental dates", manageTitle: "Calendar: you manage availability", mgHint: "Tap days to mark them busy (red) for every visitor. Tap again to free the day.", mgDays: "Single days", mgRange: "Period", mgRangeHint: "Tap the first and the last day of the period", mgMarkBusy: "Mark busy", mgMarkFree: "Free up", mgBookedNote: "Days with a rental cannot be changed", mgManual: "busy (set by you)", mgSaved: "Saved — everyone sees the updated calendar", mgCancel: "Cancel",
   },
 };
 export const useTx = () => { const l = useLang(); return TX[l] || TX.uk; };

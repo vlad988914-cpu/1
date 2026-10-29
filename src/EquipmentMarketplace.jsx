@@ -1257,6 +1257,7 @@ export default function EquipmentMarketplace() {
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [busyRanges, setBusyRanges] = useState([]); // зайнятість техніки для каталогу
+  const [blockDays, setBlockDays] = useState([]); // дні, які власники позначили зайнятими вручну
   const [dealsData, setDealsData] = useState({ offers: [], bookings: [], events: [] }); // для диспетчера
   const [dispatchUsers, setDispatchUsers] = useState([]); // усі зареєстровані користувачі (для диспетчера)
   const [bookingListing, setBookingListing] = useState(null); // техніка, яку клієнт зараз бронює
@@ -1852,6 +1853,13 @@ export default function EquipmentMarketplace() {
       }
       const { data: p } = await supabase.from("profiles").select("*").eq("id", session.user.id).maybeSingle();
       if (!active) return;
+      if (p && p.blocked) {
+        // Диспетчер заблокував цей акаунт: виходимо одразу
+        await supabase.auth.signOut();
+        setUser(null);
+        flashToast("Ваш акаунт заблоковано. Зв'яжіться з диспетчером: +380 98 131 97 25");
+        return;
+      }
       if (p) {
         setUser({ id: p.id, name: p.name, org: p.org || "", phone: p.phone, email: p.email, role: p.role, hasProfile: true });
       } else {
@@ -1980,6 +1988,16 @@ export default function EquipmentMarketplace() {
     await loadDispatcherData();
     refreshListings();
     refreshBusy();
+  };
+  const handleBlockUser = async (userId, blocked) => {
+    const res = await deals.setUserBlocked(userId, blocked);
+    if (!res.ok) {
+      flashToast(deals.reasonText(res));
+      return;
+    }
+    flashToast(blocked ? "Користувача заблоковано: вхід закрито, техніка знята з каталогу" : "Користувача розблоковано");
+    await loadDispatcherData();
+    refreshListings();
   };
   const [dispatcherViewRequest, setDispatcherViewRequest] = useState(null);
   const handleSetRole = async (userId, role) => {
@@ -2210,7 +2228,18 @@ export default function EquipmentMarketplace() {
   };
 
   // ---- Зайнятість техніки в каталозі ----
-  const refreshBusy = async () => setBusyRanges(await deals.fetchListingBusy());
+  const refreshBusy = async () => {
+    const [ranges, blocks] = await Promise.all([deals.fetchListingBusy(), deals.fetchBlockDays()]);
+    setBusyRanges(ranges);
+    setBlockDays(blocks);
+  };
+  // Власник/диспетчер натискає дні в календарі: зберігаємо в базі, усі інші одразу бачать
+  const applyDays = async (listingId, days, busy) => {
+    const res = await deals.setListingDays(listingId, days, busy);
+    if (!res.ok) flashToast(deals.reasonText(res));
+    await refreshBusy();
+    return res.ok;
+  };
   useEffect(() => {
     refreshBusy();
     const timer = setInterval(refreshBusy, 120000);
@@ -3466,15 +3495,15 @@ export default function EquipmentMarketplace() {
             ? "Знайдіть техніку поруч — за годину, а не за тиждень"
             : role === "owner"
             ? "Здавайте техніку простою — заявки клієнтів щодня"
-            : "Диспетчерська: вручну обирайте, кому піде заявка"}
+            : "Диспетчерська"}
         </h2>
-        <p style={{ color: "#FFE6D0", marginTop: 10, maxWidth: 560, fontSize: 15 }}>
+        {role !== "dispatcher" && <p style={{ color: "#FFE6D0", marginTop: 10, maxWidth: 560, fontSize: 15 }}>
           {role === "client"
             ? "Оберіть дати — покажемо, яка техніка вільна. Натисніть на картку: побачите, для чого вона, де використовується, параметри й календар зайнятості."
             : role === "owner"
             ? "Додайте техніку з характеристиками одноразово — заявки клієнтів з вашого регіону приходитимуть автоматично."
-            : "Жодна заявка не йде власникам автоматично. Ви бачите рекомендації системи й вирішуєте, кому надіслати."}
-        </p>
+            : ""}
+        </p>}
         {role === "owner" && user && (
           <div style={{ marginTop: 14, display: "flex", gap: 20 }}>
             <div>
@@ -3540,7 +3569,7 @@ export default function EquipmentMarketplace() {
       )}
 
       {role === "dispatcher" && (
-        <DispatcherPanel requests={requests} owners={dispatchOwners} listings={listings} allBookings={dealsData.bookings} offers={dealsData.offers} onDispatch={handleDispatch} onOwnerAction={handleOwnerAction} onRefresh={loadDispatcherData} onPropose={handlePropose} onManual={handleManualBooking} onConfirm={handleConfirmBooking} onCancel={handleCancelBooking} onDecline={handleDeclineRequest} users={dispatchUsers} onSetRole={handleSetRole} onDeleteUser={handleDeleteUser} viewRequest={dispatcherViewRequest} user={user} t={t} />
+        <DispatcherPanel requests={requests} owners={dispatchOwners} listings={listings} allBookings={dealsData.bookings} offers={dealsData.offers} onDispatch={handleDispatch} onOwnerAction={handleOwnerAction} onRefresh={loadDispatcherData} onPropose={handlePropose} onManual={handleManualBooking} onConfirm={handleConfirmBooking} onCancel={handleCancelBooking} onDecline={handleDeclineRequest} users={dispatchUsers} onSetRole={handleSetRole} onDeleteUser={handleDeleteUser} onBlockUser={handleBlockUser} viewRequest={dispatcherViewRequest} user={user} t={t} />
       )}
 
       {/* Категорії (client view) */}
@@ -3810,24 +3839,42 @@ export default function EquipmentMarketplace() {
                 ● ЗАЙНЯТА до {deals.fmtDate(busyNowUntil(detailListing.id))}
               </div>
             )}
-            {!busyNowUntil(detailListing.id) && busyNextRange(detailListing.id) && (
+            {!(user && detailListing.ownerId && (user.id === detailListing.ownerId || user.role === "dispatcher")) && !busyNowUntil(detailListing.id) && busyNextRange(detailListing.id) && (
               <div style={{ padding: "10px 14px", border: "1px solid #FFF0D2", background: "rgba(255,226,170,0.08)", color: "#FFF0D2", fontSize: 13 }}>
-                Найближча оренда: {deals.fmtDate(busyNextRange(detailListing.id).date_from)} — {deals.fmtDate(busyNextRange(detailListing.id).date_to)}. Обирайте вільні дати.
+                Найближча зайнятість: {deals.fmtDate(busyNextRange(detailListing.id).date_from)} — {deals.fmtDate(busyNextRange(detailListing.id).date_to)}. Обирайте вільні дати.
               </div>
             )}
-            <section id="lp-dates" aria-labelledby="lp-dates-h" style={{ scrollMarginTop: 80 }}>
-              <h2 id="lp-dates-h" style={{ margin: "0 0 10px", fontFamily: "-apple-system, sans-serif", fontSize: 18, fontWeight: 700, color: "#FFF0D2" }}>{TX[lang]?.calPick || TX.uk.calPick}</h2>
-              <AvailabilityCalendar
-                key={detailListing.id}
-                ranges={busyRanges.filter((r) => r.listing_id === detailListing.id)}
-                months={2}
-                selectFrom={pickFrom}
-                selectTo={pickTo}
-                onChange={(a, b) => { setPickFrom(a); setPickTo(b); }}
-                price={detailListing.price}
-                unit={detailListing.unit}
-              />
-            </section>
+            {(() => {
+              const canManage = !!(user && detailListing.ownerId && (user.id === detailListing.ownerId || user.role === "dispatcher"));
+              const T0 = TX[lang] || TX.uk;
+              const rng = busyRanges.filter((r) => r.listing_id === detailListing.id);
+              return (
+                <section id="lp-dates" aria-labelledby="lp-dates-h" style={{ scrollMarginTop: 80 }}>
+                  <h2 id="lp-dates-h" style={{ margin: "0 0 10px", fontFamily: "-apple-system, sans-serif", fontSize: 18, fontWeight: 700, color: "#FFF0D2" }}>{canManage ? T0.manageTitle : T0.calPick}</h2>
+                  {canManage ? (
+                    <AvailabilityCalendar
+                      key={"m" + detailListing.id}
+                      ranges={rng}
+                      months={2}
+                      manage
+                      manual={blockDays.filter((b) => b.listing_id === detailListing.id).map((b) => b.day)}
+                      onApply={(days, busy) => applyDays(detailListing.id, days, busy)}
+                    />
+                  ) : (
+                    <AvailabilityCalendar
+                      key={detailListing.id}
+                      ranges={rng}
+                      months={2}
+                      selectFrom={pickFrom}
+                      selectTo={pickTo}
+                      onChange={(a, b) => { setPickFrom(a); setPickTo(b); }}
+                      price={detailListing.price}
+                      unit={detailListing.unit}
+                    />
+                  )}
+                </section>
+              );
+            })()}
 
             {detailListing.ownerId && user && (user.id === detailListing.ownerId || user.role === "dispatcher") && (
               <div style={{ display: "flex", gap: 8, paddingTop: 4, borderTop: "1px dashed #FFDCC0" }}>
@@ -3852,6 +3899,7 @@ export default function EquipmentMarketplace() {
               />
             </div>
           </div>
+          {!(user && detailListing.ownerId && (user.id === detailListing.ownerId || user.role === "dispatcher")) && (
           <div className="lp-sticky lp-sticky-c">
             {pickFrom && pickTo && (
               <div className="lp-sum">{deals.fmtDate(pickFrom)} — {deals.fmtDate(pickTo)} · {deals.daysInclusive(pickFrom, pickTo)} {TX[lang]?.daysShort || "дн."}</div>
@@ -3872,6 +3920,7 @@ export default function EquipmentMarketplace() {
               {TX[lang]?.orderBtn || TX.uk.orderBtn}
             </button>
           </div>
+          )}
         </PageShell>
       )}
 
@@ -4004,6 +4053,7 @@ export default function EquipmentMarketplace() {
         onViewListing={(l) => openDetail(l)}
       />
 
+      {role !== "dispatcher" && (
       <div className="sticky-cta">
         <span style={{ fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 12.5, color: "#FFE6D0" }}>
           {role === "owner" ? "Готові здати техніку?" : "Потрібна техніка зараз?"}
@@ -4015,6 +4065,7 @@ export default function EquipmentMarketplace() {
           {role === "owner" ? "Додати" : "Залишити заявку"}
         </button>
       </div>
+      )}
 
       {toast && (
         <div
@@ -4048,7 +4099,7 @@ export default function EquipmentMarketplace() {
 // Диспетчерська: три вкладки. «Заявки» — основна робота; «Техніка» — хто хоче кожну одиницю;
 // «Користувачі» — усі зареєстровані.
 function DispatcherPanel(props) {
-  const { requests, listings, allBookings, offers, users, onSetRole, onManual, onDecline, onConfirm, onDeleteUser, viewRequest, user } = props;
+  const { requests, listings, allBookings, offers, users, onSetRole, onManual, onDecline, onConfirm, onDeleteUser, onBlockUser, viewRequest, user } = props;
   const [view, setView] = useState("pairs");
   // Нові користувачі від вашого останнього візиту у вкладку «Користувачі»
   const SEEN_KEY = "techmaydanchik_users_seen";
@@ -4068,50 +4119,33 @@ function DispatcherPanel(props) {
     }
   }, [view]);
   useEffect(() => {
-    if (viewRequest && viewRequest.view) setView(viewRequest.view);
+    if (viewRequest && viewRequest.view) setView(viewRequest.view === "clients" || viewRequest.view === "owners" ? "users" : viewRequest.view);
   }, [viewRequest]);
   const attention = requests.filter((r) => r.status === "new" || r.status === "booked").length;
   const wanted = requests.filter((r) => r.listingId && ["new", "dispatched", "offered"].includes(r.status)).length;
   const decide =
     requests.filter((r) => ["new", "dispatched", "offered"].includes(r.status) && (r.listingId || (r.responses || []).some((x) => ["sent", "chosen"].includes(x.status)))).length +
     allBookings.filter((b) => b.status === "reserved").length;
-  const clientsCount = users.filter((u) => u.role === "client").length;
-  const ownersCount = users.filter((u) => u.role === "owner").length;
-  // Дві сторони ринку: «Візьму в оренду» (клієнти) і «Здам в оренду» (власники з технікою)
+  // Простое меню з чотирьох вкладок; клієнти й власники — фільтри всередині «Користувачі»
   const groups = [
     {
-      title: "Візьму в оренду",
-      color: "#B9F6CA",
+      title: "",
+      color: "#7CF0AE",
       tabs: [
-        ["pairs", "Хто в кого", decide],
+        ["pairs", "Рішення", decide],
         ["requests", "Заявки", attention],
-        ["clients", "Клієнти", clientsCount],
-      ],
-    },
-    {
-      title: "Здам в оренду",
-      color: "#FFE3BD",
-      tabs: [
         ["equipment", "Техніка", wanted],
-        ["owners", "Власники", ownersCount],
+        ["users", "Користувачі", unseenUsers > 0 ? unseenUsers : users.length],
       ],
-    },
-    {
-      title: "Облік",
-      color: "#FFE6D0",
-      tabs: [["users", "Користувачі", unseenUsers > 0 ? unseenUsers : users.length]],
     },
   ];
   const sansFont = "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif";
-  const quiet = (key) => (key === "users" && unseenUsers === 0) || key === "clients" || key === "owners";
+  const quiet = (key) => key === "users" && unseenUsers === 0;
   return (
     <div>
       <div role="tablist" aria-label="Розділи диспетчерської" style={{ display: "flex", flexWrap: "wrap", gap: "10px 30px", padding: "0 24px", borderBottom: "1px solid #EFA06A", margin: "0 0 14px" }}>
         {groups.map((g) => (
           <div key={g.title} role="presentation" style={{ display: "flex", flexDirection: "column" }}>
-            <div style={{ fontFamily: sansFont, fontSize: 12.5, fontWeight: 700, letterSpacing: "0.09em", textTransform: "uppercase", color: g.color, padding: "4px 14px 0", borderTop: `2px solid ${g.color}` }}>
-              {g.title}
-            </div>
             <SlidingTabs
               tabs={g.tabs.map(([key, label, count]) => ({ key, label, count }))}
               value={view}
@@ -4154,14 +4188,9 @@ function DispatcherPanel(props) {
           <EquipmentBoard listings={listings} requests={requests} allBookings={allBookings} onConfirm={(r) => onManual(r.id, r.listingId, r.dateFrom, r.dateTo)} onDecline={onDecline} />
         </div>
       )}
-      {(view === "clients" || view === "owners") && (
-        <div style={{ padding: "0 24px 48px" }}>
-          <UsersBoard users={users} requests={requests} bookings={allBookings} listings={listings} currentUserId={user && user.id} seenSince={seenAt} onSetRole={onSetRole} onDelete={onDeleteUser} lockRole={view === "clients" ? "client" : "owner"} />
-        </div>
-      )}
       {view === "users" && (
         <div style={{ padding: "0 24px 48px" }}>
-          <UsersBoard users={users} requests={requests} bookings={allBookings} listings={listings} currentUserId={user && user.id} seenSince={seenAt} onSetRole={onSetRole} onDelete={onDeleteUser} />
+          <UsersBoard users={users} requests={requests} bookings={allBookings} listings={listings} currentUserId={user && user.id} seenSince={seenAt} onSetRole={onSetRole} onDelete={onDeleteUser} onBlock={onBlockUser} />
         </div>
       )}
     </div>

@@ -173,8 +173,9 @@ input:not([type="checkbox"]):not([type="radio"]):focus, select:focus, textarea:f
   left: 0;
   bottom: 0;
   width: 100px;
-  height: 2px;
-  background: #FFE3BD;
+  height: 3px;
+  background: #7CF0AE;
+  box-shadow: 0 0 10px rgba(124, 240, 174, .55);
   transform-origin: 0 0;
   transition: transform 460ms var(--mo-ease-out), opacity 220ms var(--mo-ease-soft);
   pointer-events: none;

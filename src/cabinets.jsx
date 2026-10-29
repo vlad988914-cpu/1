@@ -1,6 +1,6 @@
 // Кабінети клієнта й власника та панель сповіщень.
 // Принцип екрана: «що мені тут зробити далі?» — активна дія завжди найпомітніша.
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { Plate, Label, Field, ErrorText, RoleTag, primaryBtn, smallBtn, selectStyle, inputStyle } from "./ui.jsx";
 import { bookingPhase, fmtDate, fmtPeriod, fmtDateTime, daysInclusive, rangesOverlap, todayLocal, unitLabel } from "./services/deals.js";
 import { OwnerResponses } from "./wanted.jsx";
@@ -796,11 +796,21 @@ const endFor = (startIso, spec) => {
 };
 const MAX_MONTHS = 12; // скільки місяців уперед можна переглядати
 
-export function AvailabilityCalendar({ ranges, months = 2, selectFrom, selectTo, onChange, price, unit }) {
+export function AvailabilityCalendar({ ranges, months = 2, selectFrom: selFromProp, selectTo: selToProp, onChange, price, unit, manage = false, manual, onApply }) {
   const lang = useLang();
   const T = useTx();
   const today = todayLocal();
-  const interactive = typeof onChange === "function";
+  const interactive = manage || typeof onChange === "function";
+  // Режим «власник керує днями»: клік по дню зберігає його як зайнятий/вільний у базі
+  const [mmode, setMmode] = useState("days"); // days | range
+  const [mFrom, setMFrom] = useState("");
+  const [mTo, setMTo] = useState("");
+  const [pend, setPend] = useState({});
+  const [saving, setSaving] = useState(false);
+  const [okMsg, setOkMsg] = useState(false);
+  const manualSet = new Set(manual || []);
+  const selectFrom = manage ? (mmode === "range" ? mFrom : "") : selFromProp;
+  const selectTo = manage ? (mmode === "range" ? mTo : "") : selToProp;
   const visible = Math.max(1, months);
   const maxOffset = Math.max(0, MAX_MONTHS - visible);
   const [offset, setOffset] = useState(0);
@@ -811,10 +821,38 @@ export function AvailabilityCalendar({ ranges, months = 2, selectFrom, selectTo,
   const clashIn = (a, b) => list.some((r) => rangesOverlap(r.date_from, r.date_to, a, b));
   const hasFrom = !!selectFrom;
   const hasRange = !!(selectFrom && selectTo && selectTo >= selectFrom);
-  const previewTo = interactive && hasFrom && !hasRange && hover && hover >= selectFrom && !clashIn(selectFrom, hover) ? hover : "";
+  const previewTo = interactive && hasFrom && !hasRange && hover && hover >= selectFrom && (manage || !clashIn(selectFrom, hover)) ? hover : "";
 
+  const okTimer = useRef(null);
+  const flash = () => { setOkMsg(true); clearTimeout(okTimer.current); okTimer.current = setTimeout(() => setOkMsg(false), 2600); };
+  const dayBusy = (iso) => (pend[iso] !== undefined ? pend[iso] : list.some((r) => r.date_from <= iso && iso <= r.date_to));
+  const dayBooked = (iso) => pend[iso] === undefined && list.some((r) => r.date_from <= iso && iso <= r.date_to) && !manualSet.has(iso);
+  const applyDays = async (days, busy) => {
+    if (!days.length || !onApply) return;
+    setSaving(true);
+    setPend((o) => { const n = { ...o }; days.forEach((d) => { n[d] = busy; }); return n; });
+    try { await onApply(days, busy); flash(); } finally {
+      setPend((o) => { const n = { ...o }; days.forEach((d) => { delete n[d]; }); return n; });
+      setSaving(false);
+    }
+  };
+  const rangeDays = () => {
+    if (!(mFrom && mTo && mTo >= mFrom)) return [];
+    const out = [];
+    for (let d = new Date(mFrom + "T00:00:00"); isoOf(d) <= mTo; d.setDate(d.getDate() + 1)) {
+      const iso = isoOf(d);
+      if (iso >= today && !dayBooked(iso)) out.push(iso);
+    }
+    return out;
+  };
   const pick = (iso) => {
     if (!interactive) return;
+    if (manage) {
+      if (mmode === "days") { applyDays([iso], !dayBusy(iso)); return; }
+      if (!mFrom || (mFrom && mTo) || iso < mFrom) { setMFrom(iso); setMTo(""); return; }
+      setMTo(iso);
+      return;
+    }
     setHint("");
     setDur("");
     if (!hasFrom || hasRange || iso < selectFrom) { onChange(iso, ""); return; }
@@ -854,7 +892,9 @@ export function AvailabilityCalendar({ ranges, months = 2, selectFrom, selectTo,
       cells.push({
         d,
         iso,
-        busy: list.some((r) => r.date_from <= iso && iso <= r.date_to),
+        busy: manage ? dayBusy(iso) : list.some((r) => r.date_from <= iso && iso <= r.date_to),
+        booked: manage ? dayBooked(iso) : false,
+        manual: manage ? manualSet.has(iso) || pend[iso] === true : false,
         past: iso < today,
         today: iso === today,
         edge,
@@ -878,7 +918,8 @@ export function AvailabilityCalendar({ ranges, months = 2, selectFrom, selectTo,
     else if (c.mid) Object.assign(st, { background: "rgba(46,204,113,.72)", borderColor: "rgba(155,245,192,.7)", color: "#05260F" });
     else if (c.prev) Object.assign(st, { background: "rgba(46,204,113,.34)", borderColor: "rgba(155,245,192,.6)", color: "#EFFFF5" });
     else Object.assign(st, { background: "rgba(46,204,113,.33)", borderColor: "rgba(46,204,113,.85)", color: "#D9FFE8" });
-    if (c.today) Object.assign(st, { outline: "2px solid #FFE3BD", outlineOffset: -2 });
+    if (c.today) Object.assign(st, { outline: "2px solid #8FF5BA", outlineOffset: -2, boxShadow: "0 0 0 3px rgba(143,245,186,.28), 0 0 14px rgba(46,204,113,.45)" });
+    if (manage && !c.past && (c.edge || c.mid || c.prev)) Object.assign(st, { outline: "2px solid #FFE3BD", outlineOffset: -2 });
     return st;
   };
 
@@ -897,11 +938,11 @@ export function AvailabilityCalendar({ ranges, months = 2, selectFrom, selectTo,
       style={{
         display: "flex", flexDirection: "column", gap: 14, padding: 16, borderRadius: 20,
         background: "linear-gradient(165deg, #2A130A 0%, #170A05 100%)",
-        border: "1px solid rgba(255,190,120,.45)",
-        boxShadow: "0 18px 44px -22px rgba(0,0,0,.9), inset 0 1px 0 rgba(255,225,190,.14)",
+        border: "1.5px solid rgba(124,240,174,.55)",
+        boxShadow: "0 18px 44px -22px rgba(0,0,0,.9), 0 0 0 1px rgba(46,204,113,.12), inset 0 1px 0 rgba(190,255,215,.14)",
       }}
     >
-      {interactive && (
+      {interactive && !manage && (
         <div className="lp-dur" role="group" aria-label={T.quick}>
           {DURS.map(([k, label, spec]) => (
             <button type="button" key={k} data-on={dur === k ? "1" : "0"} onClick={() => pickDuration(k, spec)}>{label}</button>
@@ -912,7 +953,7 @@ export function AvailabilityCalendar({ ranges, months = 2, selectFrom, selectTo,
       <div style={{ display: "flex", gap: 16, fontFamily: FONT, fontSize: 12, color: "#FFE6D0", flexWrap: "wrap" }}>
         <span><span style={dot("rgba(46,204,113,.5)", "rgba(46,204,113,.95)")} />{T.free}</span>
         <span><span style={dot("rgba(255,77,77,.4)", "rgba(255,110,110,.8)")} />{T.busy}</span>
-        {interactive && <span><span style={dot("#2ECC71", "#9BF5C0")} />{T.pickedLegend}</span>}
+        {interactive && !manage && <span><span style={dot("#2ECC71", "#9BF5C0")} />{T.pickedLegend}</span>}
       </div>
 
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
@@ -934,15 +975,15 @@ export function AvailabilityCalendar({ ranges, months = 2, selectFrom, selectTo,
               {b.cells.map((cell, i) => {
                 if (!cell) return <div key={`e${i}`} />;
                 const label = `${cell.d} ${b.title}, ${cell.busy ? T.busyCap : T.freeCap}`;
-                const canClick = interactive && !cell.busy && !cell.past;
+                const canClick = interactive && !cell.past && (manage ? !cell.booked : !cell.busy);
                 return canClick ? (
                   <button
                     key={cell.iso}
                     type="button"
                     role="gridcell"
                     aria-label={label}
-                    aria-pressed={cell.edge || cell.mid ? "true" : "false"}
-                    data-busy="0"
+                    aria-pressed={manage ? (cell.busy ? "true" : "false") : (cell.edge || cell.mid ? "true" : "false")}
+                    data-busy={cell.busy ? "1" : "0"}
                     onClick={() => pick(cell.iso)}
                     onMouseEnter={() => setHover(cell.iso)}
                     style={{ ...cellStyle(cell), cursor: "pointer" }}
@@ -960,7 +1001,33 @@ export function AvailabilityCalendar({ ranges, months = 2, selectFrom, selectTo,
         ))}
       </div>
 
-      {interactive && (
+      {manage && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 10, fontFamily: FONT }}>
+          <div style={{ fontSize: 13, color: "#FFE6D0", lineHeight: 1.45 }}>{T.mgHint}</div>
+          <div className="lp-dur" role="group" aria-label={T.mgDays}>
+            <button type="button" data-on={mmode === "days" ? "1" : "0"} onClick={() => { setMmode("days"); setMFrom(""); setMTo(""); }}>{T.mgDays}</button>
+            <button type="button" data-on={mmode === "range" ? "1" : "0"} onClick={() => setMmode("range")}>{T.mgRange}</button>
+          </div>
+          {mmode === "range" && (
+            <div aria-live="polite" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <div style={{ fontSize: 14, color: "#FFE6D0" }}>
+                {mFrom && mTo ? <b>{fmtDate(mFrom)} — {fmtDate(mTo)} · {daysInclusive(mFrom, mTo)} {T.daysShort}</b> : mFrom ? T.pickEnd : T.mgRangeHint}
+              </div>
+              {mFrom && mTo && (
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  <button type="button" disabled={saving} onClick={async () => { await applyDays(rangeDays(), true); setMFrom(""); setMTo(""); }} style={{ ...primaryBtn, minHeight: 44, padding: "0 18px" }}>{T.mgMarkBusy}</button>
+                  <button type="button" disabled={saving} onClick={async () => { await applyDays(rangeDays(), false); setMFrom(""); setMTo(""); }} style={{ ...smallBtn, minHeight: 44 }}>{T.mgMarkFree}</button>
+                  <button type="button" onClick={() => { setMFrom(""); setMTo(""); }} style={{ ...smallBtn, minHeight: 44 }}>{T.mgCancel}</button>
+                </div>
+              )}
+            </div>
+          )}
+          <div aria-live="polite" style={{ minHeight: 20, fontSize: 13, color: "#BFF5D4", fontWeight: 600 }}>{okMsg ? "✓ " + T.mgSaved : ""}</div>
+          <div style={{ fontSize: 12, color: "#FFD3B0" }}>{T.mgBookedNote}</div>
+        </div>
+      )}
+
+      {interactive && !manage && (
         <div aria-live="polite" style={{ fontFamily: FONT, fontSize: 14, minHeight: 22 }}>
           {hint ? (
             <span style={{ color: "#FFB9B9", fontWeight: 600 }}>{hint}</span>
