@@ -69,11 +69,12 @@ const CITIES = [
 
 const cut160 = (t) => { t = String(t); if (t.length <= 160) return t; const c = t.slice(0, 157); return c.slice(0, c.lastIndexOf(" ")).replace(/[,;:\s—-]+$/, "") + "…"; };
 const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-const css = `*{box-sizing:border-box}html{scroll-behavior:smooth}
-body{margin:0;min-height:100vh;background:repeating-linear-gradient(90deg,rgba(255,214,150,0) 0,rgba(255,214,150,.16) 1px,rgba(255,184,28,.07) 2.5px,rgba(255,150,50,.03) 6px,rgba(255,255,255,.012) 10px,rgba(0,0,0,.16) 19px,rgba(0,0,0,.26) 24px) fixed,linear-gradient(180deg,#1B0B0A,#0B0506) fixed;color:#F7F1EA;font:16px/1.65 Manrope,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;position:relative;overflow-x:hidden}
-body:before,body:after{content:"";position:fixed;z-index:-1;border-radius:50%;filter:blur(70px);pointer-events:none}
+const css = `*{box-sizing:border-box}html{scroll-behavior:smooth;background:repeating-linear-gradient(90deg,rgba(255,214,150,0) 0,rgba(255,214,150,.16) 1px,rgba(255,184,28,.07) 2.5px,rgba(255,150,50,.03) 6px,rgba(255,255,255,.012) 10px,rgba(0,0,0,.16) 19px,rgba(0,0,0,.26) 24px),linear-gradient(180deg,#1B0B0A,#0B0506);background-color:#0B0506;-webkit-text-size-adjust:100%}
+body{margin:0;min-height:100vh;background:transparent;color:#F7F1EA;font:16px/1.65 Manrope,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;position:relative;overflow-x:hidden}
+body:before,body:after{content:"";position:fixed;z-index:-1;border-radius:50%;pointer-events:none}
 body:before{width:70vmax;height:70vmax;left:-25vmax;top:-30vmax;background:radial-gradient(circle,rgba(255,106,26,.42),rgba(255,106,26,0) 68%);animation:orb1 22s ease-in-out infinite alternate}
 body:after{width:60vmax;height:60vmax;right:-22vmax;bottom:-26vmax;background:radial-gradient(circle,rgba(255,184,28,.30),rgba(226,52,86,.14) 45%,rgba(0,0,0,0) 70%);animation:orb2 26s ease-in-out infinite alternate}
+@media (max-width:900px){body:before,body:after{display:none}}
 @keyframes orb1{to{transform:translate(18vmax,12vmax) scale(1.15)}}@keyframes orb2{to{transform:translate(-16vmax,-10vmax) scale(1.2)}}
 a{color:#FFD9A8}
 .w{max-width:880px;margin:0 auto;padding:0 20px}
