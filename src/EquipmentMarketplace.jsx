@@ -3815,11 +3815,7 @@ export default function EquipmentMarketplace() {
             </div>
             <button
               disabled={!detailListing.available}
-              onClick={() => {
-                const dl = detailListing;
-                dropListingPage();
-                openBooking(dl);
-              }}
+              onClick={() => openBooking(detailListing)}
               style={{ ...primaryBtn, width: "100%", opacity: detailListing.available ? 1 : 0.4, cursor: detailListing.available ? "pointer" : "not-allowed" }}
             >
               ЗАБРОНЮВАТИ НА ДАТИ
@@ -3856,7 +3852,7 @@ export default function EquipmentMarketplace() {
             <button
               type="button"
               disabled={!detailListing.available}
-              onClick={() => { const dl = detailListing; dropListingPage(); openBooking(dl); }}
+              onClick={() => openBooking(detailListing)}
               style={{ ...primaryBtn, opacity: detailListing.available ? 1 : 0.4, cursor: detailListing.available ? "pointer" : "not-allowed" }}
             >
               Обрати дати й забронювати
