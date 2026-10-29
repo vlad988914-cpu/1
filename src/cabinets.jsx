@@ -692,6 +692,7 @@ export function OwnerInbox({ items, onRespond, onRefresh }) {
 
 
 // ---- Бронювання техніки клієнтом: техніка + дати → заявка диспетчеру ----
+// Дати обирають кліками по календарю (як у світових сервісах бронювання): перший день → останній день.
 export function BookingForm({ listing, busyRanges, onSubmit, initialFrom = "", initialTo = "" }) {
   const lang = useLang();
   const T = useTx();
@@ -701,39 +702,17 @@ export function BookingForm({ listing, busyRanges, onSubmit, initialFrom = "", i
   const [operator, setOperator] = useState(false);
   const [comment, setComment] = useState("");
   const [busy, setBusy] = useState(false);
+  // Дати вже обрано на сторінці техніки — календар згорнуто, його можна відкрити кнопкою «Змінити дати»
+  const [showCal, setShowCal] = useState(!(initialFrom && initialTo));
 
-  // Календар зайнятості видно ДО відправки — як у світових сервісах бронювання
   const taken = (busyRanges || [])
     .filter((r) => r.listing_id === listing.id && r.date_to >= today)
     .sort((a, b) => (a.date_from < b.date_from ? -1 : 1));
-  const reversed = !!(from && to && to < from);
-  const clash = from && to && !reversed ? taken.find((r) => rangesOverlap(r.date_from, r.date_to, from, to)) : null;
+  const ready = !!(from && to && to >= from);
+  const clash = ready ? taken.find((r) => rangesOverlap(r.date_from, r.date_to, from, to)) : null;
   const days = daysInclusive(from, to);
   const estimate = days > 0 && (listing.unit === "добу" || listing.unit === "зміну") ? days * Number(listing.price) : null;
-  const canSend = !!from && !!to && !reversed && !clash && !busy;
-
-  // Швидкий вибір строку: тиждень, 1–3 місяці. Початок — найближча дата, коли техніка вільна весь строк.
-  const [dur, setDur] = useState("");
-  const isoOf = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-  const endFor = (startIso, spec) => {
-    const d = new Date(startIso + "T00:00:00");
-    if (spec.days) { d.setDate(d.getDate() + spec.days - 1); return isoOf(d); }
-    const day = d.getDate();
-    d.setDate(1); d.setMonth(d.getMonth() + spec.months);
-    d.setDate(Math.min(day, new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate()));
-    d.setDate(d.getDate() - 1);
-    return isoOf(d);
-  };
-  const pickDuration = (key, spec) => {
-    let start = from && from >= today ? from : today;
-    for (let i = 0; i < 400; i++) {
-      const end = endFor(start, spec);
-      if (!taken.some((r) => rangesOverlap(r.date_from, r.date_to, start, end))) { setFrom(start); setTo(end); setDur(key); return; }
-      const d = new Date(start + "T00:00:00"); d.setDate(d.getDate() + 1); start = isoOf(d);
-    }
-    setDur(key);
-  };
-  const DURS = [["w", T.week, { days: 7 }], ["m1", T.m1, { months: 1 }], ["m2", T.m2, { months: 2 }], ["m3", T.m3, { months: 3 }]];
+  const canSend = ready && !clash && !busy;
 
   const submit = async (e) => {
     e.preventDefault();
@@ -751,41 +730,29 @@ export function BookingForm({ listing, busyRanges, onSubmit, initialFrom = "", i
       <div>
         <div style={{ fontFamily: FONT, fontSize: 18, fontWeight: 600 }}>{listing.brand}</div>
         <div style={{ fontFamily: FONT, fontSize: 12.5, color: "#FFE6D0" }}>
-          {trType(listing.type, lang)} · {listing.region} · {listing.price} ₴/{trUnit(listing.unit, lang)}
+          {trType(listing.type, lang)} · {listing.region} · {listing.price > 0 ? `${listing.price} ₴/${trUnit(listing.unit, lang)}` : "Договірна"}
         </div>
       </div>
 
-      {taken.length > 0 ? (
-        <div style={{ padding: "10px 12px", border: "1px solid #FFD0C4", background: "rgba(255,208,196,0.08)", fontFamily: FONT, fontSize: 12.5 }}>
-          <div style={{ color: "#FFD8CC", fontWeight: 600, marginBottom: 4 }}>{T.busyDates}</div>
-          {taken.map((r, i) => (
-            <div key={i} style={{ color: "#FFD8CC" }}>
-              {fmtDate(r.date_from)} — {fmtDate(r.date_to)}
-            </div>
-          ))}
-        </div>
+      {showCal ? (
+        <AvailabilityCalendar
+          ranges={taken}
+          months={2}
+          selectFrom={from}
+          selectTo={to}
+          onChange={(a, b) => { setFrom(a); setTo(b); }}
+          price={listing.price}
+          unit={listing.unit}
+        />
       ) : (
-        <div style={{ fontFamily: FONT, fontSize: 12.5, color: GREEN }}>{T.freeSoon}</div>
-      )}
-
-      <div>
-        <div style={{ fontFamily: FONT, fontSize: 12.5, color: "#FFE6D0", marginBottom: 6 }}>{T.quick}</div>
-        <div className="lp-dur">
-          {DURS.map(([k, label, spec]) => (
-            <button type="button" key={k} data-on={dur === k ? "1" : "0"} onClick={() => pickDuration(k, spec)}>{label}</button>
-          ))}
+        <div style={{ border: "1px solid rgba(124,240,174,.55)", background: "rgba(46,204,113,.12)", borderRadius: 16, padding: "12px 14px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap", fontFamily: FONT }}>
+          <div>
+            <div style={{ fontSize: 11.5, color: "#BFF5D4" }}>{T.datesLabel}</div>
+            <div style={{ fontSize: 16, fontWeight: 700 }}>{fmtDate(from)} — {fmtDate(to)} <span style={{ fontWeight: 500, fontSize: 13, color: "#BFF5D4" }}>· {days} {T.daysShort}</span></div>
+          </div>
+          <button type="button" onClick={() => setShowCal(true)} style={{ ...smallBtn, minHeight: 40 }}>{T.changeDates}</button>
         </div>
-      </div>
-      <AvailabilityCalendar ranges={taken} months={dur === "m3" ? 4 : dur === "m2" ? 3 : 2} selectFrom={from && to && !reversed ? from : ""} selectTo={from && to && !reversed ? to : ""} />
-      <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-        <Field label={T.fromDay} style={{ flex: "1 1 140px" }}>
-          <input type="date" aria-label={T.fromDay} min={today} value={from} onChange={(e) => { setFrom(e.target.value); setDur(""); }} style={inputStyle} required />
-        </Field>
-        <Field label={T.toDay} style={{ flex: "1 1 140px" }}>
-          <input type="date" aria-label={T.toDay} min={from || today} value={to} onChange={(e) => { setTo(e.target.value); setDur(""); }} style={inputStyle} required />
-        </Field>
-      </div>
-      {reversed && <ErrorText>{T.reversed}</ErrorText>}
+      )}
       {clash && <ErrorText>{T.clash(fmtDate(clash.date_from), fmtDate(clash.date_to))}</ErrorText>}
 
       {estimate !== null && !clash && (
@@ -815,74 +782,202 @@ export function BookingForm({ listing, busyRanges, onSubmit, initialFrom = "", i
 }
 
 
-// ---- Календар зайнятості техніки (2 місяці): червоним — зайнято ----
-const WEEKDAYS = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Нд"];
+// ---- Календар: зеленим — вільно, червоним — зайнято; клік по днях обирає період (можна через кілька місяців) ----
+const isoOf = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+// Кінець періоду: за кількістю днів або за календарними місяцями («1 місяць» від 12.11 = до 11.12)
+const endFor = (startIso, spec) => {
+  const d = new Date(startIso + "T00:00:00");
+  if (spec.days) { d.setDate(d.getDate() + spec.days - 1); return isoOf(d); }
+  const day = d.getDate();
+  d.setDate(1); d.setMonth(d.getMonth() + spec.months);
+  d.setDate(Math.min(day, new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate()));
+  d.setDate(d.getDate() - 1);
+  return isoOf(d);
+};
+const MAX_MONTHS = 12; // скільки місяців уперед можна переглядати
 
-export function AvailabilityCalendar({ ranges, months = 2, selectFrom, selectTo }) {
+export function AvailabilityCalendar({ ranges, months = 2, selectFrom, selectTo, onChange, price, unit }) {
   const lang = useLang();
   const T = useTx();
   const today = todayLocal();
+  const interactive = typeof onChange === "function";
+  const visible = Math.max(1, months);
+  const maxOffset = Math.max(0, MAX_MONTHS - visible);
+  const [offset, setOffset] = useState(0);
+  const [hover, setHover] = useState("");
+  const [hint, setHint] = useState("");
+  const [dur, setDur] = useState("");
+  const list = ranges || [];
+  const clashIn = (a, b) => list.some((r) => rangesOverlap(r.date_from, r.date_to, a, b));
+  const hasFrom = !!selectFrom;
+  const hasRange = !!(selectFrom && selectTo && selectTo >= selectFrom);
+  const previewTo = interactive && hasFrom && !hasRange && hover && hover >= selectFrom && !clashIn(selectFrom, hover) ? hover : "";
+
+  const pick = (iso) => {
+    if (!interactive) return;
+    setHint("");
+    setDur("");
+    if (!hasFrom || hasRange || iso < selectFrom) { onChange(iso, ""); return; }
+    if (clashIn(selectFrom, iso)) { setHint(T.pickClash); onChange(iso, ""); return; }
+    onChange(selectFrom, iso);
+  };
+
+  // Швидкий вибір строку: початок — найближча дата, коли техніка вільна весь строк
+  const pickDuration = (key, spec) => {
+    let start = selectFrom && selectFrom >= today ? selectFrom : today;
+    for (let i = 0; i < 400; i++) {
+      const end = endFor(start, spec);
+      if (!clashIn(start, end)) {
+        const now = new Date();
+        const s = new Date(start + "T00:00:00");
+        const diff = (s.getFullYear() - now.getFullYear()) * 12 + (s.getMonth() - now.getMonth());
+        setOffset(Math.max(0, Math.min(maxOffset, diff)));
+        setHint(""); setDur(key); onChange(start, end);
+        return;
+      }
+      const d = new Date(start + "T00:00:00"); d.setDate(d.getDate() + 1); start = isoOf(d);
+    }
+    setDur(key);
+  };
+  const DURS = [["w", T.week, { days: 7 }], ["m1", T.m1, { months: 1 }], ["m2", T.m2, { months: 2 }], ["m3", T.m3, { months: 3 }]];
+
   const base = new Date();
   const blocks = [];
-  for (let m = 0; m < months; m++) {
-    const first = new Date(base.getFullYear(), base.getMonth() + m, 1);
+  for (let m = 0; m < visible; m++) {
+    const first = new Date(base.getFullYear(), base.getMonth() + offset + m, 1);
     const daysInMonth = new Date(first.getFullYear(), first.getMonth() + 1, 0).getDate();
     const lead = (first.getDay() + 6) % 7; // тиждень починається з понеділка
     const cells = Array(lead).fill(null);
     for (let d = 1; d <= daysInMonth; d++) {
       const iso = `${first.getFullYear()}-${String(first.getMonth() + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+      const edge = iso === selectFrom || (hasRange && iso === selectTo);
       cells.push({
         d,
         iso,
-        busy: (ranges || []).some((r) => r.date_from <= iso && iso <= r.date_to),
+        busy: list.some((r) => r.date_from <= iso && iso <= r.date_to),
         past: iso < today,
         today: iso === today,
-        sel: !!(selectFrom && selectTo && iso >= selectFrom && iso <= selectTo),
+        edge,
+        mid: !edge && hasRange && iso > selectFrom && iso < selectTo,
+        prev: !edge && !!previewTo && iso > selectFrom && iso <= previewTo,
       });
     }
-    blocks.push({ title: first.toLocaleDateString(LOCALES[lang] || "uk-UA", { month: "long", year: "numeric" }), cells });
+    const title = first.toLocaleDateString(LOCALES[lang] || "uk-UA", { month: "long", year: "numeric" });
+    blocks.push({ key: `${first.getFullYear()}-${first.getMonth()}`, title: title.charAt(0).toUpperCase() + title.slice(1), cells });
   }
+
+  const cellStyle = (c) => {
+    const st = {
+      minHeight: 42, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center",
+      fontFamily: FONT, fontSize: 14, fontWeight: 600, border: "1px solid transparent", padding: 0, margin: 0,
+      transition: "background .15s, border-color .15s, transform .15s", WebkitTapHighlightColor: "transparent",
+    };
+    if (c.past) Object.assign(st, { color: "rgba(244,244,241,.26)", fontWeight: 400 });
+    else if (c.busy) Object.assign(st, { background: "rgba(255,77,77,.24)", borderColor: "rgba(255,110,110,.6)", color: "#FFC2C2", textDecoration: "line-through", textDecorationThickness: 1 });
+    else if (c.edge) Object.assign(st, { background: "#2ECC71", borderColor: "#9BF5C0", color: "#05260F", fontWeight: 800, boxShadow: "0 0 0 2px rgba(46,204,113,.35)" });
+    else if (c.mid) Object.assign(st, { background: "rgba(46,204,113,.72)", borderColor: "rgba(155,245,192,.7)", color: "#05260F" });
+    else if (c.prev) Object.assign(st, { background: "rgba(46,204,113,.34)", borderColor: "rgba(155,245,192,.6)", color: "#EFFFF5" });
+    else Object.assign(st, { background: "rgba(46,204,113,.33)", borderColor: "rgba(46,204,113,.85)", color: "#D9FFE8" });
+    if (c.today) Object.assign(st, { outline: "2px solid #FFE3BD", outlineOffset: -2 });
+    return st;
+  };
+
+  const days = hasRange ? daysInclusive(selectFrom, selectTo) : 0;
+  const estimate = days > 0 && price > 0 && (unit === "добу" || unit === "зміну") ? days * Number(price) : null;
+  const navBtn = (disabled) => ({
+    width: 44, height: 44, borderRadius: 980, border: "1px solid rgba(255,190,120,.55)", background: "rgba(255,255,255,.06)",
+    color: "#FFF0D2", fontSize: 20, lineHeight: 1, cursor: disabled ? "not-allowed" : "pointer", opacity: disabled ? 0.35 : 1, fontFamily: FONT,
+  });
+  const dot = (bg, bd) => ({ display: "inline-block", width: 12, height: 12, borderRadius: 4, background: bg, border: `1px solid ${bd}`, marginRight: 6, verticalAlign: "middle" });
+
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 14 }} aria-label={T.calLabel}>
-      <div style={{ display: "flex", gap: 14, fontFamily: FONT, fontSize: 11.5, color: "#FFE6D0", flexWrap: "wrap" }}>
-        <span><span style={{ display: "inline-block", width: 10, height: 10, background: "rgba(255,208,196,0.55)", marginRight: 6, verticalAlign: "middle" }} />{T.busy}</span>
-        <span><span style={{ display: "inline-block", width: 10, height: 10, border: "1px solid #FFDCC0", marginRight: 6, verticalAlign: "middle" }} />{T.free}</span>
-        {selectFrom && selectTo && <span><span style={{ display: "inline-block", width: 10, height: 10, border: "1px solid #FFE3BD", marginRight: 6, verticalAlign: "middle" }} />{T.yours}</span>}
+    <section
+      aria-label={T.calLabel}
+      className="av-cal"
+      style={{
+        display: "flex", flexDirection: "column", gap: 14, padding: 16, borderRadius: 20,
+        background: "linear-gradient(165deg, #2A130A 0%, #170A05 100%)",
+        border: "1px solid rgba(255,190,120,.45)",
+        boxShadow: "0 18px 44px -22px rgba(0,0,0,.9), inset 0 1px 0 rgba(255,225,190,.14)",
+      }}
+    >
+      {interactive && (
+        <div className="lp-dur" role="group" aria-label={T.quick}>
+          {DURS.map(([k, label, spec]) => (
+            <button type="button" key={k} data-on={dur === k ? "1" : "0"} onClick={() => pickDuration(k, spec)}>{label}</button>
+          ))}
+        </div>
+      )}
+
+      <div style={{ display: "flex", gap: 16, fontFamily: FONT, fontSize: 12, color: "#FFE6D0", flexWrap: "wrap" }}>
+        <span><span style={dot("rgba(46,204,113,.5)", "rgba(46,204,113,.95)")} />{T.free}</span>
+        <span><span style={dot("rgba(255,77,77,.4)", "rgba(255,110,110,.8)")} />{T.busy}</span>
+        {interactive && <span><span style={dot("#2ECC71", "#9BF5C0")} />{T.pickedLegend}</span>}
       </div>
-      <div style={{ display: "flex", gap: 18, flexWrap: "wrap" }}>
+
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+        <button type="button" aria-label={T.prevM} disabled={offset <= 0} onClick={() => setOffset((o) => Math.max(0, o - 1))} style={navBtn(offset <= 0)}>‹</button>
+        <div style={{ fontFamily: FONT, fontSize: 12, color: "#FFD3B0", textAlign: "center" }}>
+          {blocks[0].title}{blocks.length > 1 ? ` — ${blocks[blocks.length - 1].title}` : ""}
+        </div>
+        <button type="button" aria-label={T.nextM} disabled={offset >= maxOffset} onClick={() => setOffset((o) => Math.min(maxOffset, o + 1))} style={navBtn(offset >= maxOffset)}>›</button>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 22 }}>
         {blocks.map((b) => (
-          <div key={b.title} style={{ flex: "1 1 220px", minWidth: 210 }}>
-            <div style={{ fontFamily: FONT, fontSize: 13, fontWeight: 600, marginBottom: 6 }}>{b.title ? b.title.charAt(0).toUpperCase() + b.title.slice(1) : ""}</div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 2, fontFamily: FONT, fontSize: 11.5, textAlign: "center" }}>
+          <div key={b.key} role="grid" aria-label={b.title} onMouseLeave={() => setHover("")}>
+            <div style={{ fontFamily: FONT, fontSize: 15, fontWeight: 700, marginBottom: 8, color: "#FFF0D2" }}>{b.title}</div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4, textAlign: "center" }}>
               {T.weekdays.map((w) => (
-                <div key={w} style={{ color: "#FFD3B0", padding: "2px 0" }}>{w}</div>
+                <div key={w} style={{ color: "#FFD3B0", fontFamily: FONT, fontSize: 12, padding: "2px 0" }}>{w}</div>
               ))}
-              {b.cells.map((cell, i) =>
-                cell ? (
-                  <div
+              {b.cells.map((cell, i) => {
+                if (!cell) return <div key={`e${i}`} />;
+                const label = `${cell.d} ${b.title}, ${cell.busy ? T.busyCap : T.freeCap}`;
+                const canClick = interactive && !cell.busy && !cell.past;
+                return canClick ? (
+                  <button
                     key={cell.iso}
-                    title={cell.busy ? T.busyCap : T.freeCap}
-                    data-busy={cell.busy ? "1" : "0"}
-                    style={{
-                      padding: "5px 0",
-                      background: cell.busy ? "rgba(255,208,196,0.45)" : "transparent",
-                      color: cell.busy ? "#FFE2D8" : "#F4F4F1",
-                      opacity: cell.past ? 0.35 : 1,
-                      outline: cell.sel ? "1px solid #FFE3BD" : "none",
-                      fontWeight: cell.today ? 700 : 400,
-                      textDecoration: cell.today ? "underline" : "none",
-                    }}
+                    type="button"
+                    role="gridcell"
+                    aria-label={label}
+                    aria-pressed={cell.edge || cell.mid ? "true" : "false"}
+                    data-busy="0"
+                    onClick={() => pick(cell.iso)}
+                    onMouseEnter={() => setHover(cell.iso)}
+                    style={{ ...cellStyle(cell), cursor: "pointer" }}
                   >
                     {cell.d}
-                  </div>
+                  </button>
                 ) : (
-                  <div key={`e${i}`} />
-                )
-              )}
+                  <div key={cell.iso} role="gridcell" aria-label={label} aria-disabled="true" data-busy={cell.busy ? "1" : "0"} title={cell.busy ? T.busyCap : T.freeCap} style={cellStyle(cell)}>
+                    {cell.d}
+                  </div>
+                );
+              })}
             </div>
           </div>
         ))}
       </div>
-    </div>
+
+      {interactive && (
+        <div aria-live="polite" style={{ fontFamily: FONT, fontSize: 14, minHeight: 22 }}>
+          {hint ? (
+            <span style={{ color: "#FFB9B9", fontWeight: 600 }}>{hint}</span>
+          ) : hasRange ? (
+            <span style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
+              <span>
+                <span style={{ color: "#BFF5D4" }}>{T.chosen}: </span>
+                <b>{fmtDate(selectFrom)} — {fmtDate(selectTo)}</b> · {days} {T.daysShort}
+                {estimate !== null && <b style={{ color: "#FFF0D2" }}> · ≈ {estimate.toLocaleString(LOCALES[lang] || "uk-UA")} ₴</b>}
+              </span>
+              <button type="button" onClick={() => { setDur(""); setHint(""); onChange("", ""); }} style={{ ...smallBtn, minHeight: 36, padding: "0 14px" }}>{T.clearDates}</button>
+            </span>
+          ) : (
+            <span style={{ color: "#FFE6D0" }}>{hasFrom ? T.pickEnd : T.pickStart}</span>
+          )}
+        </div>
+      )}
+    </section>
   );
 }

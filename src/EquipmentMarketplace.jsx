@@ -1260,6 +1260,8 @@ export default function EquipmentMarketplace() {
   const [dealsData, setDealsData] = useState({ offers: [], bookings: [], events: [] }); // для диспетчера
   const [dispatchUsers, setDispatchUsers] = useState([]); // усі зареєстровані користувачі (для диспетчера)
   const [bookingListing, setBookingListing] = useState(null); // техніка, яку клієнт зараз бронює
+  const [pickFrom, setPickFrom] = useState(""); // дати, обрані кліками по календарю на сторінці техніки
+  const [pickTo, setPickTo] = useState("");
   const loginBtnRef = useRef(null);
   const [wantedItems, setWantedItems] = useState([]); // публічна «Дошка запитів»
   const [wantedLoaded, setWantedLoaded] = useState(false);
@@ -1352,6 +1354,12 @@ export default function EquipmentMarketplace() {
   const scrollToApp = () => appSectionRef.current?.scrollIntoView({ behavior: "smooth" });
 
   const datesChosen = !!(catFrom && catTo && catTo >= catFrom);
+  // Відкрили сторінку техніки — підтягуємо дати з фільтра каталогу (якщо були), інакше чистий календар
+  useEffect(() => {
+    setPickFrom(datesChosen ? catFrom : "");
+    setPickTo(datesChosen ? catTo : "");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [detailListing && detailListing.id]);
   // Коли зайнята техніка на вибрані дати: повертає останню дату звільнення або null
   const busyOnChosen = (l) => {
     if (!datesChosen) return null;
@@ -3807,19 +3815,19 @@ export default function EquipmentMarketplace() {
                 Найближча оренда: {deals.fmtDate(busyNextRange(detailListing.id).date_from)} — {deals.fmtDate(busyNextRange(detailListing.id).date_to)}. Обирайте вільні дати.
               </div>
             )}
-            <div>
-              <Label>Коли техніка вільна</Label>
-              <div style={{ marginTop: 10 }}>
-                <AvailabilityCalendar ranges={busyRanges.filter((r) => r.listing_id === detailListing.id)} selectFrom={datesChosen ? catFrom : ""} selectTo={datesChosen ? catTo : ""} />
-              </div>
-            </div>
-            <button
-              disabled={!detailListing.available}
-              onClick={() => openBooking(detailListing)}
-              style={{ ...primaryBtn, width: "100%", opacity: detailListing.available ? 1 : 0.4, cursor: detailListing.available ? "pointer" : "not-allowed" }}
-            >
-              ЗАБРОНЮВАТИ НА ДАТИ
-            </button>
+            <section id="lp-dates" aria-labelledby="lp-dates-h" style={{ scrollMarginTop: 80 }}>
+              <h2 id="lp-dates-h" style={{ margin: "0 0 10px", fontFamily: "-apple-system, sans-serif", fontSize: 18, fontWeight: 700, color: "#FFF0D2" }}>{TX[lang]?.calPick || TX.uk.calPick}</h2>
+              <AvailabilityCalendar
+                key={detailListing.id}
+                ranges={busyRanges.filter((r) => r.listing_id === detailListing.id)}
+                months={2}
+                selectFrom={pickFrom}
+                selectTo={pickTo}
+                onChange={(a, b) => { setPickFrom(a); setPickTo(b); }}
+                price={detailListing.price}
+                unit={detailListing.unit}
+              />
+            </section>
 
             {detailListing.ownerId && user && (user.id === detailListing.ownerId || user.role === "dispatcher") && (
               <div style={{ display: "flex", gap: 8, paddingTop: 4, borderTop: "1px dashed #FFDCC0" }}>
@@ -3844,18 +3852,24 @@ export default function EquipmentMarketplace() {
               />
             </div>
           </div>
-          <div className="lp-sticky">
-            <div className="lp-price">
-              {detailListing.price > 0 ? `${detailListing.price} ₴` : "Договірна"}
-              {detailListing.price > 0 && <small>за {detailListing.unit}</small>}
-            </div>
+          <div className="lp-sticky lp-sticky-c">
+            {pickFrom && pickTo && (
+              <div className="lp-sum">{deals.fmtDate(pickFrom)} — {deals.fmtDate(pickTo)} · {deals.daysInclusive(pickFrom, pickTo)} {TX[lang]?.daysShort || "дн."}</div>
+            )}
             <button
               type="button"
               disabled={!detailListing.available}
-              onClick={() => openBooking(detailListing)}
+              onClick={() => {
+                if (!(pickFrom && pickTo)) {
+                  flashToast(TX[lang]?.orderNeed || TX.uk.orderNeed);
+                  document.getElementById("lp-dates")?.scrollIntoView({ behavior: "smooth", block: "center" });
+                  return;
+                }
+                openBooking(detailListing);
+              }}
               style={{ ...primaryBtn, opacity: detailListing.available ? 1 : 0.4, cursor: detailListing.available ? "pointer" : "not-allowed" }}
             >
-              Обрати дати й забронювати
+              {TX[lang]?.orderBtn || TX.uk.orderBtn}
             </button>
           </div>
         </PageShell>
@@ -3900,7 +3914,7 @@ export default function EquipmentMarketplace() {
 
       {bookingListing && (
         <Modal onClose={() => setBookingListing(null)} title="Бронювання техніки" wide>
-          <BookingForm listing={bookingListing} busyRanges={busyRanges} onSubmit={handleBook} initialFrom={datesChosen ? catFrom : ""} initialTo={datesChosen ? catTo : ""} />
+          <BookingForm listing={bookingListing} busyRanges={busyRanges} onSubmit={handleBook} initialFrom={detailListing ? pickFrom : (datesChosen ? catFrom : "")} initialTo={detailListing ? pickTo : (datesChosen ? catTo : "")} />
         </Modal>
       )}
 

@@ -181,6 +181,9 @@ export const TX = {
     dispInfo: "Диспетчер перевірить дати й підтвердить — зазвичай протягом години в робочий час. Контакт власника відкриється у вашому кабінеті після підтвердження.",
     calLabel: "Календар зайнятості", busy: "зайнято", free: "вільно", yours: "ваші дати", busyCap: "Зайнято", freeCap: "Вільно",
     weekdays: ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Нд"],
+    calPick: "Оберіть дати оренди", pickStart: "Натисніть перший день оренди", pickEnd: "Тепер натисніть останній день (можна той самий)",
+    chosen: "Ви обрали", daysShort: "дн.", pickClash: "У цьому періоді є зайняті дні. Оберіть інші дати.", orderBtn: "Замовити техніку",
+    orderNeed: "Спершу оберіть дати на календарі", clearDates: "Скинути", changeDates: "Змінити дати", prevM: "Попередні місяці", nextM: "Наступні місяці", pickedLegend: "ваш вибір", datesLabel: "Дати оренди",
   },
   ru: {
     back: "Назад в каталог", isNew: "НОВОЕ",
@@ -202,6 +205,9 @@ export const TX = {
     dispInfo: "Диспетчер проверит даты и подтвердит — обычно в течение часа в рабочее время. Контакт владельца откроется в вашем кабинете после подтверждения.",
     calLabel: "Календарь занятости", busy: "занято", free: "свободно", yours: "ваши даты", busyCap: "Занято", freeCap: "Свободно",
     weekdays: ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"],
+    calPick: "Выберите даты аренды", pickStart: "Нажмите первый день аренды", pickEnd: "Теперь нажмите последний день (можно тот же)",
+    chosen: "Вы выбрали", daysShort: "дн.", pickClash: "В этом периоде есть занятые дни. Выберите другие даты.", orderBtn: "Заказать технику",
+    orderNeed: "Сначала выберите даты в календаре", clearDates: "Сбросить", changeDates: "Изменить даты", prevM: "Предыдущие месяцы", nextM: "Следующие месяцы", pickedLegend: "ваш выбор", datesLabel: "Даты аренды",
   },
   en: {
     back: "Back to catalog", isNew: "NEW",
@@ -223,6 +229,9 @@ export const TX = {
     dispInfo: "The dispatcher will check the dates and confirm — usually within an hour during business hours. The owner's contact opens in your account after confirmation.",
     calLabel: "Availability calendar", busy: "booked", free: "free", yours: "your dates", busyCap: "Booked", freeCap: "Free",
     weekdays: ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"],
+    calPick: "Choose rental dates", pickStart: "Tap the first day of the rental", pickEnd: "Now tap the last day (it can be the same day)",
+    chosen: "You chose", daysShort: "days", pickClash: "This period includes booked days. Pick other dates.", orderBtn: "Order equipment",
+    orderNeed: "Please choose dates on the calendar first", clearDates: "Clear", changeDates: "Change dates", prevM: "Earlier months", nextM: "Later months", pickedLegend: "your choice", datesLabel: "Rental dates",
   },
 };
 export const useTx = () => { const l = useLang(); return TX[l] || TX.uk; };

@@ -297,3 +297,12 @@ select option:checked, select option:hover {
   background-color: #FF6A1A;
   color: #FFFFFF;
 }
+
+/* Сторінка техніки: одна кнопка «Замовити техніку» знизу по центру */
+/* .lp-page — прокручуваний контейнер з transform, тому position:fixed усередині нього прокручується разом зі сторінкою; sticky працює завжди */
+.lp-body > .lp-sticky { position: sticky; left: auto; right: auto; bottom: 0; margin: 24px -16px 0; z-index: 5; }
+.lp-body:has(> .lp-sticky) { padding-bottom: 0; }
+.lp-sticky.lp-sticky-c { flex-direction: column; justify-content: center; align-items: center; gap: 8px; }
+.lp-sticky.lp-sticky-c button { flex: none; width: 100%; max-width: 420px; margin: 0 auto; min-height: 52px; }
+.lp-sticky .lp-sum { font: 600 13px/1.2 -apple-system, sans-serif; color: #BFF5D4; text-align: center; }
+.av-cal button:focus-visible { outline: 2px solid #FFE3BD; outline-offset: 2px; }
