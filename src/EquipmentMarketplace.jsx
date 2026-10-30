@@ -1209,6 +1209,7 @@ export default function EquipmentMarketplace() {
   });
   const [filterRegion, setFilterRegion] = useState("Усі");
   const [showAddForm, setShowAddForm] = useState(false);
+  const [editListing, setEditListing] = useState(null);
   const [showRequestForm, setShowRequestForm] = useState(false);
   const [detailListing, setDetailListing] = useState(null);
   const [modelId, setModelId] = useState(null); // відкрита сторінка моделі з каталогу
@@ -1252,6 +1253,8 @@ export default function EquipmentMarketplace() {
   const [showInbox, setShowInbox] = useState(false);
   const [ownerBookings, setOwnerBookings] = useState([]); // оренди техніки цього власника
   const [ownerTab, setOwnerTab] = useState("rentals");
+  const [ownerStats, setOwnerStats] = useState([]);
+  const [listingStats, setListingStats] = useState([]);
   const [clientData, setClientData] = useState({ requests: [], offers: [], bookings: [] }); // кабінет клієнта
   const [clientTab, setClientTab] = useState(null);
   const [notifications, setNotifications] = useState([]);
@@ -1433,6 +1436,15 @@ export default function EquipmentMarketplace() {
     setListings(data.map(mapListingRow));
     setListingsFromDb(data.length > 0);
   };
+  // Хтось відредагував оголошення — коли відвідувач повертається на вкладку, каталог підтягує свіжі дані
+  useEffect(() => {
+    let last = Date.now();
+    const onVis = () => {
+      if (document.visibilityState === "visible" && Date.now() - last > 60000) { last = Date.now(); refreshListings(); }
+    };
+    document.addEventListener("visibilitychange", onVis);
+    return () => document.removeEventListener("visibilitychange", onVis);
+  }, []);
 
   // Рейтинги: { [listingId]: { sum, count, mine } }. Таблиці ще може не бути — тоді просто без оцінок.
   const [ratings, setRatings] = useState({});
@@ -1507,6 +1519,11 @@ export default function EquipmentMarketplace() {
   const modelListings = useMemo(() => { const m = modelId && findModel(modelId); return m ? listings.filter((l) => modelMatchesListing(m, l)) : []; }, [modelId, listings]);
   const modelSelected = modelListings.find((l) => String(l.id) === String(modelSel)) || modelListings[0] || null;
   const reviewTarget = modelId ? modelSelected : detailListing;
+  // Лічильник переглядів: сторінка техніки або вибраний варіант на сторінці моделі
+  const viewedId = modelId ? (modelSelected && modelSelected.id) : detailListing && detailListing.id;
+  useEffect(() => {
+    if (viewedId && typeof viewedId === "number") deals.trackView(viewedId);
+  }, [viewedId]);
   useEffect(() => { if (reviewTarget) loadReviews(reviewTarget.id); else setListingReviews({ items: [], ok: true }); }, [reviewTarget && reviewTarget.id]); // eslint-disable-line
   const submitReview = async (body) => {
     if (!user || !user.id) { setShowAuthForm(true); return false; }
@@ -1607,7 +1624,64 @@ export default function EquipmentMarketplace() {
     setListings((prev) => [mapListingRow(row), ...(listingsFromDb ? prev : [])]);
     setListingsFromDb(true);
     setShowAddForm(false);
+    deals.notifyDispatcher({ kind: "new_listing", listingId: row.id }); // Telegram диспетчера: нова техніка
     flashToast(photoFailed ? "Техніку додано, але частину фото завантажити не вдалося" : "Техніку додано в каталог");
+    return true;
+  };
+
+  // Редагування оголошення власником (або диспетчером): зміни одразу видно в каталозі
+  const handleUpdateListing = async (l, data) => {
+    if (!supabase || !user?.id) {
+      flashToast("Не вдалося зберегти: увійдіть у акаунт");
+      return false;
+    }
+    const urls = [];
+    let photoFailed = false;
+    for (let i = 0; i < (data.photos || []).length; i++) {
+      const ph = data.photos[i];
+      if (!/^(data|blob):/.test(ph)) { urls.push(ph); continue; } // вже завантажене фото лишається
+      try {
+        const blob = await (await fetch(ph)).blob();
+        const path = `${user.id}/${Date.now()}-${i}.jpg`;
+        const { error: upErr } = await supabase.storage.from("listing-photos").upload(path, blob, { contentType: "image/jpeg" });
+        if (upErr) throw upErr;
+        urls.push(supabase.storage.from("listing-photos").getPublicUrl(path).data.publicUrl);
+      } catch (e) {
+        console.error("Photo upload failed:", e.message || e);
+        photoFailed = true;
+      }
+    }
+    const available = data.busyUntil ? false : l.busyUntil ? true : l.available;
+    const { data: rows, error } = await supabase
+      .from("listings")
+      .update({
+        type: data.type,
+        brand: data.brand,
+        region: data.region,
+        price: data.price,
+        unit: data.unit,
+        specs: data.specs,
+        owner_name: data.owner,
+        busy_until: data.busyUntil || null,
+        available,
+        photos: urls,
+      })
+      .eq("id", l.id)
+      .select();
+    if (error || !rows || rows.length === 0) {
+      flashToast(error ? "Не вдалося зберегти: " + error.message : "Немає прав змінювати це оголошення");
+      return false;
+    }
+    const mapped = mapListingRow(rows[0]);
+    setListings((prev) => prev.map((x) => (x.id === l.id ? mapped : x)));
+    setDetailListing((d) => (d && d.id === l.id ? mapped : d));
+    // фото, які прибрали у формі, видаляємо зі сховища
+    try {
+      const gone = (l.photos || []).filter((u) => !urls.includes(u)).map((u) => u.split("/listing-photos/")[1]).filter(Boolean);
+      if (gone.length) await supabase.storage.from("listing-photos").remove(gone);
+    } catch (e) {}
+    setEditListing(null);
+    flashToast(photoFailed ? "Збережено, але частину фото завантажити не вдалося" : "Збережено — каталог оновлено");
     return true;
   };
 
@@ -1862,6 +1936,8 @@ export default function EquipmentMarketplace() {
       }
       if (p) {
         setUser({ id: p.id, name: p.name, org: p.org || "", phone: p.phone, email: p.email, role: p.role, hasProfile: true });
+        // Нова реєстрація: один раз повідомляємо диспетчера в Telegram (сервер сам не дасть продублювати)
+        if (p.role !== "dispatcher") deals.claimRegistrationNotice().then((first) => { if (first) deals.notifyDispatcher({ kind: "new_user" }); }).catch(() => {});
       } else {
         const m = session.user.user_metadata || {};
         setUser({
@@ -1890,6 +1966,7 @@ export default function EquipmentMarketplace() {
     if (!supabase || user?.role !== "dispatcher") return;
     const dealsRes = await deals.fetchDispatcherDeals();
     setDealsData(dealsRes);
+    deals.fetchListingStats().then(setListingStats);
     const [profRes, listRes, reqRes, dispRes] = await Promise.all([
       supabase.from("profiles").select("id,name,org,phone,email,role,created_at"),
       supabase.from("listings").select("owner_id,type,region,available"),
@@ -2082,7 +2159,9 @@ export default function EquipmentMarketplace() {
   // ---- Оренди техніки власника ----
   const loadOwnerBookings = async () => {
     if (!supabase || user?.role !== "owner") return;
-    setOwnerBookings(await deals.fetchOwnerCabinet());
+    const [rows, stats] = await Promise.all([deals.fetchOwnerCabinet(), deals.fetchListingStats()]);
+    setOwnerBookings(rows);
+    setOwnerStats(stats);
   };
 
   // ---- Дошка запитів: публічні заявки, відгуки власників, вибір клієнта ----
@@ -2203,6 +2282,7 @@ export default function EquipmentMarketplace() {
     if (user?.role === "dispatcher") {
       setRole("dispatcher");
       if (n.kind === "new_user") setDispatcherViewRequest({ view: "users", n: Date.now() });
+      if (n.kind === "new_listing") setDispatcherViewRequest({ view: "equipment", n: Date.now() });
       loadDispatcherData();
       return;
     }
@@ -3569,7 +3649,7 @@ export default function EquipmentMarketplace() {
       )}
 
       {role === "dispatcher" && (
-        <DispatcherPanel requests={requests} owners={dispatchOwners} listings={listings} allBookings={dealsData.bookings} offers={dealsData.offers} onDispatch={handleDispatch} onOwnerAction={handleOwnerAction} onRefresh={loadDispatcherData} onPropose={handlePropose} onManual={handleManualBooking} onConfirm={handleConfirmBooking} onCancel={handleCancelBooking} onDecline={handleDeclineRequest} users={dispatchUsers} onSetRole={handleSetRole} onDeleteUser={handleDeleteUser} onBlockUser={handleBlockUser} viewRequest={dispatcherViewRequest} user={user} t={t} />
+        <DispatcherPanel requests={requests} owners={dispatchOwners} listings={listings} allBookings={dealsData.bookings} offers={dealsData.offers} onDispatch={handleDispatch} onOwnerAction={handleOwnerAction} onRefresh={loadDispatcherData} onPropose={handlePropose} onManual={handleManualBooking} onConfirm={handleConfirmBooking} onCancel={handleCancelBooking} onDecline={handleDeclineRequest} users={dispatchUsers} onSetRole={handleSetRole} onDeleteUser={handleDeleteUser} onBlockUser={handleBlockUser} viewRequest={dispatcherViewRequest} stats={listingStats} user={user} t={t} />
       )}
 
       {/* Категорії (client view) */}
@@ -3878,6 +3958,9 @@ export default function EquipmentMarketplace() {
 
             {detailListing.ownerId && user && (user.id === detailListing.ownerId || user.role === "dispatcher") && (
               <div style={{ display: "flex", gap: 8, paddingTop: 4, borderTop: "1px dashed #FFDCC0" }}>
+                <button type="button" onClick={() => setEditListing(detailListing)} style={{ ...smallBtn, flex: 1 }}>
+                  Редагувати
+                </button>
                 <button type="button" onClick={() => toggleAvailability(detailListing)} style={{ ...smallBtn, flex: 1 }}>
                   {detailListing.available ? "Позначити зайнятою" : "Позначити вільною"}
                 </button>
@@ -3927,6 +4010,11 @@ export default function EquipmentMarketplace() {
       {showAddForm && (
         <Modal onClose={() => setShowAddForm(false)} title={t("add_listing_title")}>
           <AddListingForm onSubmit={handleAddListing} user={user} lang={lang} />
+        </Modal>
+      )}
+      {editListing && (
+        <Modal onClose={() => setEditListing(null)} title="Редагувати техніку">
+          <AddListingForm key={editListing.id} editing={editListing} onSubmit={(d) => handleUpdateListing(editListing, d)} user={user} lang={lang} />
         </Modal>
       )}
       {showRequestForm && (
@@ -3986,6 +4074,10 @@ export default function EquipmentMarketplace() {
             onRespondRequest={respondToRequest}
             onRefreshInbox={() => loadInbox(false)}
             onRefreshBookings={loadOwnerBookings}
+            myListings={listings.filter((l) => l.ownerId === user.id)}
+            stats={ownerStats}
+            onOpenListing={(l) => { setShowInbox(false); openDetail(l); }}
+            onEditListing={(l) => { setShowInbox(false); setEditListing(l); }}
           />
         </Modal>
       )}
@@ -4099,7 +4191,7 @@ export default function EquipmentMarketplace() {
 // Диспетчерська: три вкладки. «Заявки» — основна робота; «Техніка» — хто хоче кожну одиницю;
 // «Користувачі» — усі зареєстровані.
 function DispatcherPanel(props) {
-  const { requests, listings, allBookings, offers, users, onSetRole, onManual, onDecline, onConfirm, onDeleteUser, onBlockUser, viewRequest, user } = props;
+  const { requests, listings, allBookings, offers, users, onSetRole, onManual, onDecline, onConfirm, onDeleteUser, onBlockUser, viewRequest, user, stats } = props;
   const [view, setView] = useState("pairs");
   // Нові користувачі від вашого останнього візиту у вкладку «Користувачі»
   const SEEN_KEY = "techmaydanchik_users_seen";
@@ -4185,7 +4277,7 @@ function DispatcherPanel(props) {
       {view === "requests" && <DispatcherRequests {...props} />}
       {view === "equipment" && (
         <div style={{ padding: "0 24px 48px" }}>
-          <EquipmentBoard listings={listings} requests={requests} allBookings={allBookings} onConfirm={(r) => onManual(r.id, r.listingId, r.dateFrom, r.dateTo)} onDecline={onDecline} />
+          <EquipmentBoard listings={listings} requests={requests} allBookings={allBookings} stats={stats || []} onConfirm={(r) => onManual(r.id, r.listingId, r.dateFrom, r.dateTo)} onDecline={onDecline} />
         </div>
       )}
       {view === "users" && (
@@ -5499,21 +5591,44 @@ const mapListingRow = (r) => ({
 });
 
 // ---- Add listing form (owner side) ----
-function AddListingForm({ onSubmit, user, lang }) {
-  const [form, setForm, draft] = useDraft(`techmaydanchik_draft_listing_${user?.id || "guest"}`, {
-    type: TYPES[0],
-    brand: "",
-    region: user?.region || REGIONS[0],
-    price: "",
-    unit: "год",
-    spec1Key: "Вага",
-    spec1Val: "",
-    spec2Key: "Об'єм / вантажопідйомність",
-    spec2Val: "",
-    photos: [],
-    owner: user ? user.org || user.name : "",
-    busyUntil: "",
-  });
+function AddListingForm({ onSubmit, user, lang, editing }) {
+  // Редагування: форма заповнюється даними оголошення, чернетки не відновлюються
+  const specPairs = editing ? Object.entries(editing.specs || {}) : [];
+  const specVal = (v) => (v === undefined || v === "—" ? "" : String(v));
+  const [form, setForm, draft] = useDraft(
+    editing ? `techmaydanchik_draft_listing_edit_${editing.id}` : `techmaydanchik_draft_listing_${user?.id || "guest"}`,
+    editing
+      ? {
+          type: editing.type,
+          brand: editing.brand || "",
+          region: REGIONS.includes(editing.region) ? editing.region : "Інше",
+          customRegion: REGIONS.includes(editing.region) ? "" : editing.region || "",
+          price: editing.price ? String(editing.price) : "",
+          unit: editing.unit || "год",
+          spec1Key: specPairs[0] ? specPairs[0][0] : "Вага",
+          spec1Val: specPairs[0] ? specVal(specPairs[0][1]) : "",
+          spec2Key: specPairs[1] ? specPairs[1][0] : "Об'єм / вантажопідйомність",
+          spec2Val: specPairs[1] ? specVal(specPairs[1][1]) : "",
+          photos: editing.photos || [],
+          owner: editing.owner || "",
+          busyUntil: editing.busyUntil || "",
+        }
+      : {
+          type: TYPES[0],
+          brand: "",
+          region: user?.region || REGIONS[0],
+          price: "",
+          unit: "год",
+          spec1Key: "Вага",
+          spec1Val: "",
+          spec2Key: "Об'єм / вантажопідйомність",
+          spec2Val: "",
+          photos: [],
+          owner: user ? user.org || user.name : "",
+          busyUntil: "",
+        },
+    { skipRestore: !!editing }
+  );
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
@@ -5552,6 +5667,7 @@ function AddListingForm({ onSubmit, user, lang }) {
       specs: {
         [form.spec1Key]: form.spec1Val || "—",
         [form.spec2Key]: form.spec2Val || "—",
+        ...Object.fromEntries(specPairs.slice(2)), // інші параметри, додані раніше, не губимо
       },
       });
       if (ok) draft.clear();
@@ -5562,8 +5678,12 @@ function AddListingForm({ onSubmit, user, lang }) {
 
   return (
     <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-      <DraftBanner draft={draft} />
-      {user ? (
+      {!editing && <DraftBanner draft={draft} />}
+      {editing ? (
+        <div style={{ fontSize: 12, color: "#B9F6CA", fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif" }}>
+          ✎ Редагуєте: {editing.brand}. Після збереження каталог оновиться автоматично.
+        </div>
+      ) : user ? (
         <div style={{ fontSize: 12, color: "#B9F6CA", fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif" }}>
           ✓ Дані підтягнуто з кабінету — {user.org || user.name}
         </div>
@@ -5655,7 +5775,7 @@ function AddListingForm({ onSubmit, user, lang }) {
         disabled={submitting}
         style={{ ...primaryBtn, marginTop: 8, width: "100%", opacity: submitting ? 0.6 : 1, cursor: submitting ? "default" : "pointer" }}
       >
-        {submitting ? "Зберігаємо..." : "Додати в каталог"}
+        {submitting ? "Зберігаємо..." : editing ? "Зберегти зміни" : "Додати в каталог"}
       </button>
     </form>
   );

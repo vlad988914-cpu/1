@@ -77,6 +77,40 @@ export async function fetchBlockDays() {
   return res.ok && Array.isArray(res.data) ? res.data : [];
 }
 
+// ---- Перегляди техніки: лічильник, кабінет власника ----
+const visitorId = () => {
+  try {
+    let v = localStorage.getItem("tm_vid");
+    if (!v || v.length < 8) {
+      v = (window.crypto && crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(36).slice(2)).replace(/[^A-Za-z0-9_-]/g, "");
+      localStorage.setItem("tm_vid", v);
+    }
+    return v;
+  } catch (e) {
+    return null;
+  }
+};
+const seenNow = new Set();
+// Один виклик на техніку за сесію сторінки; сервер ще раз рахує лише один перегляд на добу від одного відвідувача.
+export async function trackView(listingId) {
+  if (!supabase || !listingId || seenNow.has(listingId)) return;
+  seenNow.add(listingId);
+  await call("track_listing_view", { p_listing_id: listingId, p_visitor: visitorId() });
+}
+export async function fetchListingStats() {
+  const res = await call("listing_stats", {});
+  return res.ok && Array.isArray(res.data) ? res.data : [];
+}
+export async function fetchListingViewers(listingId, limit = 50) {
+  const res = await call("listing_viewers", { p_listing_id: listingId, p_limit: limit });
+  return res.ok && Array.isArray(res.data) ? res.data : [];
+}
+// true лише один раз для щойно зареєстрованого акаунта — тоді надсилаємо Telegram-повідомлення диспетчеру
+export async function claimRegistrationNotice() {
+  const res = await call("claim_registration_notice", {});
+  return res.ok && res.data === true;
+}
+
 // Повідомлення в Telegram диспетчера: лише для користувачів, що увійшли (сервер перевіряє токен)
 export async function notifyDispatcher(payload) {
   if (!supabase) return;
@@ -87,7 +121,7 @@ export async function notifyDispatcher(payload) {
     const r = await fetch("/api/notify", {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ ...payload, contact: String(payload.contact || "").trim().length >= 5 ? payload.contact : "не вказано" }),
+      body: JSON.stringify(payload.kind ? payload : { ...payload, contact: String(payload.contact || "").trim().length >= 5 ? payload.contact : "не вказано" }),
     });
     if (!r.ok) console.warn("notify failed:", r.status);
   } catch (e) {

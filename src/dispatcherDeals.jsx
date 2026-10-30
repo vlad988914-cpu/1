@@ -325,8 +325,20 @@ export function DealsSection({ req, listings, users = [], allBookings, onPropose
 
 
 // ---- Вкладка «Техніка»: хто хоче кожну одиницю, коли вона зайнята ----
-export function EquipmentBoard({ listings, requests, allBookings, onConfirm, onDecline }) {
+const NEW_DAYS = 7;
+const isFresh = (l) => !!l.createdAt && Date.now() - new Date(l.createdAt).getTime() < NEW_DAYS * 86400000;
+const fmtAgo = (iso) => {
+  const h = Math.floor((Date.now() - new Date(iso).getTime()) / 3600000);
+  if (h < 1) return "щойно";
+  if (h < 24) return `${h} год тому`;
+  const d = Math.floor(h / 24);
+  return d === 1 ? "вчора" : `${d} дн. тому`;
+};
+
+export function EquipmentBoard({ listings, requests, allBookings, onConfirm, onDecline, stats = [] }) {
   const [q, setQ] = useState("");
+  const [onlyNew, setOnlyNew] = useState(false);
+  const statOf = (id) => stats.find((x) => x.listing_id === id) || {};
   const today = todayLocal();
   const rows = listings
     .filter((l) => l.ownerId)
@@ -338,7 +350,9 @@ export function EquipmentBoard({ listings, requests, allBookings, onConfirm, onD
         .sort((a, b) => (a.date_from < b.date_from ? -1 : 1)),
     }))
     .filter(({ l }) => !q || `${l.brand} ${l.owner} ${l.type} ${l.region}`.toLowerCase().includes(q.toLowerCase()))
-    .sort((a, b) => b.wanting.length - a.wanting.length || String(a.l.brand).localeCompare(String(b.l.brand)));
+    .filter(({ l }) => !onlyNew || isFresh(l))
+    .sort((a, b) => Number(isFresh(b.l)) - Number(isFresh(a.l)) || b.wanting.length - a.wanting.length || String(b.l.createdAt || "").localeCompare(String(a.l.createdAt || "")) || String(a.l.brand).localeCompare(String(b.l.brand)));
+  const freshCount = listings.filter((l) => l.ownerId && isFresh(l)).length;
 
   const allRows = listings.filter((l) => l.ownerId);
   const busyNowCount = allRows.filter((l) => !l.available || allBookings.some((b) => b.listing_id === l.id && ["reserved", "confirmed"].includes(b.status) && b.date_from <= today && b.date_to >= today)).length;
@@ -347,24 +361,37 @@ export function EquipmentBoard({ listings, requests, allBookings, onConfirm, onD
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
         <Stat big label="Техніки в каталозі" value={allRows.length} />
+        <Stat label={`Нова за ${NEW_DAYS} днів`} value={freshCount} accent={freshCount > 0} />
         <Stat label="Вільна зараз" value={allRows.length - busyNowCount} />
         <Stat label="Зайнята зараз" value={busyNowCount} />
         <Stat label="На яку є запити" value={demandCount} accent={demandCount > 0} />
       </div>
-      <input aria-label="Пошук техніки" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Пошук: марка, власник, тип, місто" style={{ ...inputStyle, maxWidth: 360 }} />
-      {rows.length === 0 && <div style={{ fontFamily: FONT, fontSize: 13, color: "#FFE6D0" }}>Техніки в каталозі поки немає.</div>}
+      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+        <input aria-label="Пошук техніки" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Пошук: марка, власник, тип, місто" style={{ ...inputStyle, maxWidth: 360 }} />
+        <button type="button" aria-pressed={onlyNew} onClick={() => setOnlyNew((v) => !v)} style={{ ...smallBtn, ...(onlyNew ? { borderColor: "#7CF0AE", color: "#7CF0AE" } : {}) }}>
+          Тільки нова{freshCount ? ` (${freshCount})` : ""}
+        </button>
+      </div>
+      {rows.length === 0 && <div style={{ fontFamily: FONT, fontSize: 13, color: "#FFE6D0" }}>{onlyNew ? "За останні 7 днів нової техніки не додавали." : "Техніки в каталозі поки немає."}</div>}
       {rows.map(({ l, wanting, bookings }) => {
         const nowBooking = bookings.find((b) => b.date_from <= today && b.date_to >= today);
         return (
-          <div key={l.id} style={{ border: `1px solid ${wanting.length ? "#FFE3BD" : "#E99660"}`, padding: "12px 14px", display: "flex", flexDirection: "column", gap: 8, fontFamily: FONT, fontSize: 12.5 }}>
+          <div key={l.id} style={{ border: `1px solid ${isFresh(l) ? "rgba(124,240,174,.65)" : wanting.length ? "#FFE3BD" : "#E99660"}`, padding: "12px 14px", display: "flex", flexDirection: "column", gap: 8, fontFamily: FONT, fontSize: 12.5 }}>
             <div style={{ display: "flex", justifyContent: "space-between", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
               <span style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                 <RoleTag kind="lease" />
+                {isFresh(l) && <span style={{ background: "#7CF0AE", color: "#052B14", fontWeight: 800, fontSize: 10.5, letterSpacing: ".04em", padding: "2px 7px", borderRadius: 4 }}>НОВА</span>}
                 <span>
                   <b style={{ fontSize: 15 }}>{l.brand}</b> · {l.type} · {l.owner} · {l.region} · {l.price} ₴/{l.unit}
                 </span>
               </span>
               {!l.available ? <span style={{ color: RED }}>недоступна</span> : nowBooking ? <span style={{ color: RED }}>зайнята до {fmtDate(nowBooking.date_to)}</span> : <span style={{ color: GREEN }}>вільна</span>}
+            </div>
+            <div style={{ color: "#FFE6D0" }}>
+              {l.createdAt ? `Додана ${fmtAgo(l.createdAt)}` : ""}
+              {l.createdAt ? " · " : ""}
+              Перегляди: сьогодні {Number(statOf(l.id).views_today || 0)}, за 7 днів {Number(statOf(l.id).views_7d || 0)}, всього {Number(statOf(l.id).views_total || 0)}
+              {Number(statOf(l.id).members) > 0 ? ` (зареєстрованих: ${statOf(l.id).members})` : ""}
             </div>
             {bookings.length > 0 && (
               <div style={{ color: "#FFE6D0" }}>

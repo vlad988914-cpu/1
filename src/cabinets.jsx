@@ -2,7 +2,7 @@
 // Принцип екрана: «що мені тут зробити далі?» — активна дія завжди найпомітніша.
 import React, { useState, useRef } from "react";
 import { Plate, Label, Field, ErrorText, RoleTag, primaryBtn, smallBtn, selectStyle, inputStyle } from "./ui.jsx";
-import { bookingPhase, fmtDate, fmtPeriod, fmtDateTime, daysInclusive, rangesOverlap, todayLocal, unitLabel } from "./services/deals.js";
+import { fetchListingViewers, bookingPhase, fmtDate, fmtPeriod, fmtDateTime, daysInclusive, rangesOverlap, todayLocal, unitLabel } from "./services/deals.js";
 import { OwnerResponses } from "./wanted.jsx";
 import { SlidingTabs } from "./motion/index.jsx";
 import { useLang, useTx, LOCALES, trType, trUnit } from "./lang.js";
@@ -510,13 +510,103 @@ export function OwnerBookings({ bookings, onRefresh }) {
   );
 }
 
-export function OwnerCabinet({ tab, setTab, inboxItems, bookings, responses = [], onWithdrawResponse, onRefreshResponses, onRespondRequest, onRefreshInbox, onRefreshBookings }) {
+// ---- «Моя техніка»: уся техніка власника, скільки разів дивились і хто ----
+function StatCell({ label, value, hot }) {
+  return (
+    <div style={{ minWidth: 64 }}>
+      <div style={{ fontSize: 18, fontWeight: 700, color: hot ? "#B9F6CA" : "#F4F4F1", lineHeight: 1.1 }}>{value}</div>
+      <div style={{ fontSize: 11, color: "#FFE6D0" }}>{label}</div>
+    </div>
+  );
+}
+
+function ViewersList({ listingId }) {
+  const [rows, setRows] = useState(null);
+  React.useEffect(() => {
+    let alive = true;
+    fetchListingViewers(listingId, 50).then((r) => { if (alive) setRows(r); });
+    return () => { alive = false; };
+  }, [listingId]);
+  if (rows === null) return <Empty>Завантажуємо…</Empty>;
+  if (rows.length === 0) return <Empty>Перегляди з'являться тут, коли хтось відкриє вашу техніку.</Empty>;
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 0, fontFamily: FONT, fontSize: 12.5 }}>
+      {rows.map((v, i) => (
+        <div key={i} style={{ display: "flex", justifyContent: "space-between", gap: 10, padding: "7px 0", borderTop: i ? "1px dashed #F2AE7C" : "none" }}>
+          <span>
+            <span style={{ color: v.is_member ? "#B9F6CA" : "#FFE6D0" }}>{v.is_member ? "● " : "○ "}</span>
+            {v.name ? <b>{v.name}</b> : v.is_member ? "Зареєстрований клієнт" : "Гість сайту"}
+            {v.phone ? ` · ${v.phone}` : ""}
+            {v.hits > 1 ? ` · ${v.hits}×` : ""}
+          </span>
+          <span style={{ color: "#FFE6D0", whiteSpace: "nowrap" }}>{fmtDateTime(v.last_at)}</span>
+        </div>
+      ))}
+      <div style={{ fontSize: 11, color: "#FFE6D0", paddingTop: 6 }}>
+        Контакти клієнтів бачить диспетчер — він підбирає техніку під заявки та зв'язується з вами.
+      </div>
+    </div>
+  );
+}
+
+function OwnerListings({ listings, stats, onOpen, onEdit, onRefresh }) {
+  const [openId, setOpenId] = useState(null);
+  const byId = {};
+  (stats || []).forEach((x) => { byId[x.listing_id] = x; });
+  const sum = (k) => listings.reduce((a, l) => a + Number((byId[l.id] || {})[k] || 0), 0);
+  const sorted = [...listings].sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      <div style={{ display: "flex", gap: 22, flexWrap: "wrap", alignItems: "flex-end" }}>
+        <StatCell label="одиниць техніки" value={listings.length} />
+        <StatCell label="переглядів сьогодні" value={sum("views_today")} hot={sum("views_today") > 0} />
+        <StatCell label="за 7 днів" value={sum("views_7d")} />
+        <StatCell label="за весь час" value={sum("views_total")} />
+        <button onClick={onRefresh} style={{ ...smallBtn, marginLeft: "auto", padding: "5px 12px", fontSize: 12 }}>Оновити</button>
+      </div>
+      {sorted.length === 0 && <Empty>Ви ще не додали жодної техніки. Натисніть «Додати техніку» на головній сторінці.</Empty>}
+      {sorted.map((l) => {
+        const st = byId[l.id] || {};
+        const open = openId === l.id;
+        return (
+          <div key={l.id} style={{ border: `1px solid ${Number(st.views_today) > 0 ? "rgba(124,240,174,.55)" : "#E99660"}`, padding: "12px 14px", display: "flex", flexDirection: "column", gap: 10, fontFamily: FONT, fontSize: 12.5 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+              <span>
+                <b style={{ fontSize: 15 }}>{l.brand}</b> · {l.type} · {l.region} · {l.price} ₴/{l.unit}
+              </span>
+              {l.available ? <span style={{ color: GREEN }}>вільна</span> : <span style={{ color: RED }}>зайнята</span>}
+            </div>
+            <div style={{ display: "flex", gap: 22, flexWrap: "wrap" }}>
+              <StatCell label="сьогодні" value={Number(st.views_today || 0)} hot={Number(st.views_today) > 0} />
+              <StatCell label="за 7 днів" value={Number(st.views_7d || 0)} />
+              <StatCell label="всього" value={Number(st.views_total || 0)} />
+              <StatCell label="відвідувачів" value={Number(st.visitors || 0)} />
+              <StatCell label="заявок" value={Number(st.requests_total || 0)} hot={Number(st.requests_total) > 0} />
+            </div>
+            {st.last_view_at && <div style={{ color: "#FFE6D0" }}>Останній перегляд: {fmtDateTime(st.last_view_at)}</div>}
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <button onClick={() => setOpenId(open ? null : l.id)} aria-expanded={open} style={smallBtn}>
+                {open ? "Сховати переглядачів" : "Хто дивився"}
+              </button>
+              <button onClick={() => onEdit && onEdit(l)} style={{ ...smallBtn, borderColor: "#FFE3BD", color: "#FFE3BD" }}>Редагувати</button>
+              <button onClick={() => onOpen(l)} style={smallBtn}>Відкрити сторінку</button>
+            </div>
+            {open && <ViewersList listingId={l.id} />}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+export function OwnerCabinet({ tab, setTab, inboxItems, bookings, responses = [], onWithdrawResponse, onRefreshResponses, onRespondRequest, onRefreshInbox, onRefreshBookings, myListings = [], stats = [], onOpenListing, onEditListing }) {
   const pendingRequests = inboxItems.filter((x) => x.dispatch_status === "sent" && x.req_status !== "taken").length;
   const reserved = bookings.filter((b) => b.status === "reserved").length;
   return (
     <div>
       <Tabs
         tabs={[
+          { key: "mine", label: "Моя техніка", count: 0 },
           { key: "rentals", label: "Оренди моєї техніки", count: reserved, alert: true },
           { key: "responses", label: "Мої відгуки", count: responses.filter((x) => x.status === "chosen" && x.request.status !== "taken").length, alert: true },
           { key: "requests", label: "Запити від диспетчера", count: pendingRequests, alert: true },
@@ -524,7 +614,9 @@ export function OwnerCabinet({ tab, setTab, inboxItems, bookings, responses = []
         value={tab}
         onChange={setTab}
       />
-      {tab === "rentals" ? (
+      {tab === "mine" ? (
+        <OwnerListings listings={myListings} stats={stats} onOpen={onOpenListing || (() => {})} onEdit={onEditListing} onRefresh={onRefreshBookings} />
+      ) : tab === "rentals" ? (
         <OwnerBookings bookings={bookings} onRefresh={onRefreshBookings} />
       ) : tab === "responses" ? (
         <OwnerResponses items={responses} onWithdraw={onWithdrawResponse} onRefresh={onRefreshResponses} />
@@ -550,6 +642,7 @@ const KIND_COLOR = {
   request_cancelled: "#FFD3B0",
   role_changed: GREEN,
   new_user: AMBER,
+  new_listing: GREEN,
   wanted_response: AMBER,
   response_chosen: GREEN,
   response_closed: "#FFD3B0",

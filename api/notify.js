@@ -39,22 +39,66 @@ export default async function handler(req, res) {
   if (!token || !chatId) return res.status(500).json({ error: "Telegram is not configured" });
 
   const b = req.body || {};
-  if (typeof b.type !== "string" || typeof b.contact !== "string" || b.contact.trim().length < 5) {
-    return res.status(400).json({ error: "Invalid request" });
-  }
+  let lines;
 
-  const lines = [
-    "🆕 <b>Нова заявка на сайті ТехМайданчик</b>",
-    "",
-    `<b>Техніка:</b> ${cut(b.type, 50)}`,
-    `<b>Регіон:</b> ${cut(b.region, 50) || "—"}`,
-    `<b>Коли потрібно:</b> ${cut(b.dateFrom, 20) || "—"}`,
-    `<b>Бюджет:</b> ${b.budget ? cut(b.budget, 12) + " ₴" : "—"}`,
-    `<b>Опис:</b> ${cut(b.comment, 500) || "—"}`,
-    "",
-    `<b>Клієнт:</b> ${cut(b.requesterName, 60) || "—"}`,
-    `<b>Контакт:</b> ${cut(b.contact, 40)}`,
-  ];
+  if (b.kind === "new_user" || b.kind === "new_listing") {
+    // Дані беремо з бази, а не з запиту: так ніхто не підробить повідомлення. Права — токен самого користувача.
+    const sbHeaders = { apikey: SB_KEY, Authorization: req.headers.authorization };
+    try {
+      if (b.kind === "new_user") {
+        const rr = await fetch(`${SB_URL}/rest/v1/profiles?id=eq.${encodeURIComponent(user.id)}&select=name,org,phone,email,role`, { headers: sbHeaders });
+        const p = (await rr.json().catch(() => []))[0];
+        if (!p) return res.status(404).json({ error: "Profile not found" });
+        lines = [
+          p.role === "owner" ? "🚜 <b>Нова реєстрація: ВЛАСНИК техніки</b>" : "👤 <b>Нова реєстрація: клієнт</b>",
+          "",
+          `<b>Ім'я:</b> ${cut(p.name, 60) || "—"}`,
+          p.org ? `<b>Компанія:</b> ${cut(p.org, 80)}` : null,
+          `<b>Телефон:</b> ${cut(p.phone, 30) || "—"}`,
+          `<b>Email:</b> ${cut(p.email, 80) || "—"}`,
+        ].filter((x) => x !== null);
+      } else {
+        const id = Number(b.listingId);
+        if (!Number.isFinite(id)) return res.status(400).json({ error: "Invalid listing" });
+        const rr = await fetch(`${SB_URL}/rest/v1/listings?id=eq.${id}&select=id,owner_id,type,brand,region,price,unit,owner_name,specs`, { headers: sbHeaders });
+        const l = (await rr.json().catch(() => []))[0];
+        if (!l || l.owner_id !== user.id) return res.status(403).json({ error: "Not your listing" });
+        const pr = await fetch(`${SB_URL}/rest/v1/profiles?id=eq.${encodeURIComponent(user.id)}&select=name,org,phone,email`, { headers: sbHeaders });
+        const p = (await pr.json().catch(() => []))[0] || {};
+        const specs = Object.entries(l.specs || {}).slice(0, 4).map(([k, v]) => `${cut(k, 30)}: ${cut(v, 30)}`).join(", ");
+        lines = [
+          "🆕 <b>Нова техніка на сайті ТехМайданчик</b>",
+          "",
+          `<b>${cut(l.type, 50)}</b> · ${cut(l.brand, 60)}`,
+          `<b>Місто:</b> ${cut(l.region, 50)}`,
+          `<b>Ціна:</b> ${cut(l.price, 12)} ₴/${cut(l.unit, 10)}`,
+          specs ? `<b>Параметри:</b> ${specs}` : null,
+          "",
+          `<b>Власник:</b> ${cut(l.owner_name || p.name, 60) || "—"}${p.org ? " · " + cut(p.org, 60) : ""}`,
+          `<b>Телефон:</b> ${cut(p.phone, 30) || "—"}`,
+          `<b>Email:</b> ${cut(p.email, 80) || "—"}`,
+        ].filter((x) => x !== null);
+      }
+    } catch (e) {
+      return res.status(502).json({ error: "Database unreachable" });
+    }
+  } else {
+    if (typeof b.type !== "string" || typeof b.contact !== "string" || b.contact.trim().length < 5) {
+      return res.status(400).json({ error: "Invalid request" });
+    }
+    lines = [
+      "🆕 <b>Нова заявка на сайті ТехМайданчик</b>",
+      "",
+      `<b>Техніка:</b> ${cut(b.type, 50)}`,
+      `<b>Регіон:</b> ${cut(b.region, 50) || "—"}`,
+      `<b>Коли потрібно:</b> ${cut(b.dateFrom, 20) || "—"}`,
+      `<b>Бюджет:</b> ${b.budget ? cut(b.budget, 12) + " ₴" : "—"}`,
+      `<b>Опис:</b> ${cut(b.comment, 500) || "—"}`,
+      "",
+      `<b>Клієнт:</b> ${cut(b.requesterName, 60) || "—"}`,
+      `<b>Контакт:</b> ${cut(b.contact, 40)}`,
+    ];
+  }
 
   try {
     const r = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
