@@ -10,11 +10,13 @@ import { ListingReviews } from "./reviews.jsx";
 import { GROUPS as MODEL_GROUPS } from "../shared/models-data.js";
 import HeaderForge from "./forge/Forge.jsx";
 import ScrollStory from "./story/ScrollStory.jsx";
+import PhotoGallery from "./PhotoGallery.jsx";
 import { WEBM_ALPHA_OK } from "./env.js";
 import ScrambleText from "./ScrambleText.jsx";
 import { SplitWords, CountUp, SlidingTabs, ScrollProgress, SceneAura, useSpotlight, useMagnetic, useReveal, useScenes } from "./motion/index.jsx";
-import { DealsSection, EventLog, EquipmentBoard, UsersBoard, PairsBoard } from "./dispatcherDeals.jsx";
+import { DealsSection, EventLog, EquipmentBoard, CatalogBoard, UsersBoard, PairsBoard } from "./dispatcherDeals.jsx";
 import * as deals from "./services/deals.js";
+import { fieldsFor, specsToForm, formToSpecs, orderSpecs, groupSpecs, keyTiles, summaryLine, visibleSpecs } from "./listingSpecs.js";
 import { LangContext, useLang, TX, trType, trGroup, plural, STAT_FORMS, trKind, trLabel, trVal, trNote, trUnit, perUnit, trInfo } from "./lang.js";
 
 // ---- Bot API config ----
@@ -929,6 +931,7 @@ function ModelPage({ model, listings, user, ratings, busyRanges, selectedId, onS
               </div>
             )}
             <div style={{ border: "1px solid #EFA06A", borderRadius: 16, padding: 14, background: "#7A2807", display: "flex", flexDirection: "column", gap: 10 }}>
+              {sel.photos && sel.photos.length > 0 && <PhotoGallery key={sel.id} photos={sel.photos} alt={`${tType(sel.type, lang)} ${sel.brand} — ${sel.region}`} />}
               <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap", fontFamily: FONT }}>
                 <div>
                   <div style={{ fontWeight: 700, fontSize: 16 }}>{sel.brand}</div>
@@ -3649,7 +3652,7 @@ export default function EquipmentMarketplace() {
       )}
 
       {role === "dispatcher" && (
-        <DispatcherPanel requests={requests} owners={dispatchOwners} listings={listings} allBookings={dealsData.bookings} offers={dealsData.offers} onDispatch={handleDispatch} onOwnerAction={handleOwnerAction} onRefresh={loadDispatcherData} onPropose={handlePropose} onManual={handleManualBooking} onConfirm={handleConfirmBooking} onCancel={handleCancelBooking} onDecline={handleDeclineRequest} users={dispatchUsers} onSetRole={handleSetRole} onDeleteUser={handleDeleteUser} onBlockUser={handleBlockUser} viewRequest={dispatcherViewRequest} stats={listingStats} user={user} t={t} />
+        <DispatcherPanel requests={requests} owners={dispatchOwners} listings={listings} allBookings={dealsData.bookings} offers={dealsData.offers} onDispatch={handleDispatch} onOwnerAction={handleOwnerAction} onRefresh={loadDispatcherData} onPropose={handlePropose} onManual={handleManualBooking} onConfirm={handleConfirmBooking} onCancel={handleCancelBooking} onDecline={handleDeclineRequest} users={dispatchUsers} onSetRole={handleSetRole} onDeleteUser={handleDeleteUser} onBlockUser={handleBlockUser} viewRequest={dispatcherViewRequest} stats={listingStats} onOpenListing={openDetail} user={user} t={t} />
       )}
 
       {/* Категорії (client view) */}
@@ -3817,34 +3820,13 @@ export default function EquipmentMarketplace() {
             {listingVideo(detailListing) && (
               <video src={listingVideo(detailListing).src} poster={listingVideo(detailListing).poster} controls muted loop playsInline preload="metadata" style={{ width: "100%", borderRadius: 12, background: "#000", display: "block" }} />
             )}
-            <div className="lp-hero">
-              {isNewListing(detailListing) && <span className="lp-badge-new card-new">{(TX[lang] || TX.uk).isNew}</span>}
-              {detailListing.photos && detailListing.photos.length > 0 ? (
-                <img className="lp-photo" src={detailListing.photos[detailPhotoIndex] || detailListing.photos[0]} alt={detailListing.brand} />
-              ) : (
-                <div style={{ color: "#FFE3BD" }}><EquipmentIcon type={detailListing.type} size={110} /></div>
-              )}
-            </div>
-            {detailListing.photos && detailListing.photos.length > 1 && (
-              <div style={{ display: "flex", gap: 6, justifyContent: "center" }}>
-                {detailListing.photos.map((p, i) => (
-                  <img
-                    key={i}
-                    src={p}
-                    alt={`Фото ${i + 1}`}
-                    onClick={() => setDetailPhotoIndex(i)}
-                    style={{
-                      width: 44,
-                      height: 44,
-                      objectFit: "cover",
-                      cursor: "pointer",
-                      borderRadius: 6,
-                      border: i === detailPhotoIndex ? "2px solid #FFE3BD" : "1px solid #F2AE7C",
-                    }}
-                  />
-                ))}
-              </div>
-            )}
+            <PhotoGallery
+              key={detailListing.id}
+              photos={detailListing.photos}
+              alt={`${tType(detailListing.type, lang)} ${detailListing.brand} — ${detailListing.region}`}
+              badge={isNewListing(detailListing) ? <span className="lp-badge-new card-new" style={{ zIndex: 2 }}>{(TX[lang] || TX.uk).isNew}</span> : null}
+              empty={<div style={{ color: "#FFE3BD" }}><EquipmentIcon type={detailListing.type} size={110} /></div>}
+            />
 
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
               <span className={detailListing.available ? "status-dot-available" : ""} style={{ width: 6, height: 6, borderRadius: "50%", background: detailListing.available ? "#B9F6CA" : "#FFD3B0" }} />
@@ -3858,13 +3840,31 @@ export default function EquipmentMarketplace() {
               </div>
               <div className="lp-city"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 22s7-6.2 7-12a7 7 0 1 0-14 0c0 5.8 7 12 7 12z"/><circle cx="12" cy="10" r="2.6"/></svg>{detailListing.region}</div>
             </div>
-            {(() => { const keyS = Object.entries(detailListing.specs).filter(([k, v]) => v && v !== "—" && !k.startsWith("_")).slice(0, 4); return keyS.length > 0 && (
+            {(() => { const tiles = keyTiles(detailListing.specs); return tiles.length > 0 && (
               <div className="lp-key">
-                {keyS.map(([k, v]) => (
+                {tiles.map(([k, v]) => (
                   <div key={k} className="lp-key-i"><b>{trVal(v, lang)}</b><span>{trLabel(k, lang)}</span></div>
                 ))}
               </div>
             ); })()}
+
+            {groupSpecs(detailListing.specs).map((g) => (
+              <section key={g.id} className="lp-specs" aria-label={g.title}>
+                <h2 className="lp-specs-h">{lang === "ru" ? ({ main: "Основные характеристики", engine: "Двигатель", state: "Состояние", extra: "Дополнительно" })[g.id] : lang === "en" ? ({ main: "Main specifications", engine: "Engine", state: "Condition", extra: "Additional" })[g.id] : g.title}</h2>
+                <dl className="lp-specs-l">
+                  {g.rows.map(([k, v]) => (
+                    <div key={k} className="lp-specs-r"><dt>{trLabel(k, lang)}</dt><dd>{trVal(v, lang)}</dd></div>
+                  ))}
+                </dl>
+              </section>
+            ))}
+
+            {detailListing.specs && typeof detailListing.specs._description === "string" && detailListing.specs._description.trim() && (
+              <section className="lp-specs" aria-label="Опис">
+                <h2 className="lp-specs-h">{lang === "ru" ? "Описание" : lang === "en" ? "Description" : "Опис"}</h2>
+                <p className="lp-desc">{detailListing.specs._description}</p>
+              </section>
+            )}
 
             {EQUIPMENT_INFO[detailListing.type] && (
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -3882,19 +3882,6 @@ export default function EquipmentMarketplace() {
                 </div>
               </div>
             )}
-
-            {Object.entries(detailListing.specs).filter(([k, v]) => v && v !== "—" && !k.startsWith("_")).length > 4 && (
-            <div style={{ borderTop: "1px solid #EFA06A", borderBottom: "1px solid #EFA06A", padding: "12px 0" }}>
-              <Label>{lang === "ru" ? "Параметры" : lang === "en" ? "Parameters" : "Параметри"}</Label>
-              <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 8 }}>
-                {[...Object.entries(detailListing.specs).filter(([k, v]) => v && v !== "—" && !k.startsWith("_")).slice(4).map(([k, v]) => [trLabel(k, lang), trVal(v, lang)])].map(([k, v]) => (
-                  <div key={k} style={{ display: "flex", justifyContent: "space-between", gap: 12, fontSize: 13 }}>
-                    <span style={{ color: "#FFE6D0" }}>{k}</span>
-                    <span style={{ textAlign: "right" }}>{v}</span>
-                  </div>
-                ))}
-              </div>
-            </div>)}
 
             <div className="lp-deal">
             <div
@@ -4191,7 +4178,7 @@ export default function EquipmentMarketplace() {
 // Диспетчерська: три вкладки. «Заявки» — основна робота; «Техніка» — хто хоче кожну одиницю;
 // «Користувачі» — усі зареєстровані.
 function DispatcherPanel(props) {
-  const { requests, listings, allBookings, offers, users, onSetRole, onManual, onDecline, onConfirm, onDeleteUser, onBlockUser, viewRequest, user, stats } = props;
+  const { requests, listings, allBookings, offers, users, onSetRole, onManual, onDecline, onConfirm, onDeleteUser, onBlockUser, viewRequest, user, stats, onOpenListing } = props;
   const [view, setView] = useState("pairs");
   // Нові користувачі від вашого останнього візиту у вкладку «Користувачі»
   const SEEN_KEY = "techmaydanchik_users_seen";
@@ -4227,6 +4214,7 @@ function DispatcherPanel(props) {
         ["pairs", "Рішення", decide],
         ["requests", "Заявки", attention],
         ["equipment", "Техніка", wanted],
+        ["catalog", "Каталог", listings.filter((l) => l.ownerId).length],
         ["users", "Користувачі", unseenUsers > 0 ? unseenUsers : users.length],
       ],
     },
@@ -4277,7 +4265,12 @@ function DispatcherPanel(props) {
       {view === "requests" && <DispatcherRequests {...props} />}
       {view === "equipment" && (
         <div style={{ padding: "0 24px 48px" }}>
-          <EquipmentBoard listings={listings} requests={requests} allBookings={allBookings} stats={stats || []} onConfirm={(r) => onManual(r.id, r.listingId, r.dateFrom, r.dateTo)} onDecline={onDecline} />
+          <EquipmentBoard listings={listings} requests={requests} allBookings={allBookings} stats={stats || []} onOpen={onOpenListing} onConfirm={(r) => onManual(r.id, r.listingId, r.dateFrom, r.dateTo)} onDecline={onDecline} />
+        </div>
+      )}
+      {view === "catalog" && (
+        <div style={{ padding: "0 24px 48px" }}>
+          <CatalogBoard listings={listings} stats={stats || []} allBookings={allBookings} onOpen={onOpenListing} types={TYPES} />
         </div>
       )}
       {view === "users" && (
@@ -5577,12 +5570,7 @@ const mapListingRow = (r) => ({
   region: r.region,
   price: Number(r.price),
   unit: r.unit,
-  specs: (() => { // jsonb втрачає порядок ключів — виводимо в логічному порядку
-    const o = r.specs || {}, order = ["Вантажопідйомність", "Довжина авто", "Довжина платформи", "Кран"], out = {};
-    order.forEach((k) => { if (k in o) out[k] = o[k]; });
-    Object.keys(o).forEach((k) => { if (!(k in out)) out[k] = o[k]; });
-    return out;
-  })(),
+  specs: orderSpecs(r.specs), // jsonb втрачає порядок ключів — порядок лежить у specs._order
   owner: r.owner_name || "Власник",
   photos: r.photos || [],
   available: r.available,
@@ -5591,12 +5579,46 @@ const mapListingRow = (r) => ({
 });
 
 // ---- Add listing form (owner side) ----
+const MAX_PHOTOS = 8;
+
+function FormSection({ title, hint, children }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 12, paddingTop: 14, borderTop: "1px solid #EFA06A" }}>
+      <div>
+        <div style={{ fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 14, fontWeight: 700, color: "#FFF0D2" }}>{title}</div>
+        {hint && <div style={{ fontSize: 11.5, color: "#FFE6D0", marginTop: 3 }}>{hint}</div>}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function SpecInput({ f, value, onChange }) {
+  const inp = { ...inputStyle, width: "100%", boxSizing: "border-box", minWidth: 0 };
+  if (f.kind === "select") {
+    return (
+      <select value={value || ""} onChange={(e) => onChange(e.target.value)} style={inp}>
+        <option value="">—</option>
+        {f.options.map((o) => <option key={o} value={o}>{o}</option>)}
+      </select>
+    );
+  }
+  if (f.kind === "number") {
+    return (
+      <div style={{ position: "relative" }}>
+        <input type="number" inputMode="decimal" step={f.step || "any"} min={f.min} max={f.max} value={value || ""} onChange={(e) => onChange(e.target.value)} placeholder={f.ph || ""} style={{ ...inp, paddingRight: f.unit ? 56 : undefined }} />
+        {f.unit && <span style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", fontSize: 12, color: "#FFE6D0", pointerEvents: "none" }}>{f.unit}</span>}
+      </div>
+    );
+  }
+  return <input value={value || ""} onChange={(e) => onChange(e.target.value)} placeholder={f.ph || ""} maxLength={80} style={inp} />;
+}
+
 function AddListingForm({ onSubmit, user, lang, editing }) {
   // Редагування: форма заповнюється даними оголошення, чернетки не відновлюються
-  const specPairs = editing ? Object.entries(editing.specs || {}) : [];
-  const specVal = (v) => (v === undefined || v === "—" ? "" : String(v));
+  const fromSpecs = editing ? specsToForm(editing.specs) : null;
   const [form, setForm, draft] = useDraft(
-    editing ? `techmaydanchik_draft_listing_edit_${editing.id}` : `techmaydanchik_draft_listing_${user?.id || "guest"}`,
+    editing ? `techmaydanchik_draft_listing_edit_${editing.id}` : `techmaydanchik_draft_listing_v2_${user?.id || "guest"}`,
     editing
       ? {
           type: editing.type,
@@ -5605,10 +5627,9 @@ function AddListingForm({ onSubmit, user, lang, editing }) {
           customRegion: REGIONS.includes(editing.region) ? "" : editing.region || "",
           price: editing.price ? String(editing.price) : "",
           unit: editing.unit || "год",
-          spec1Key: specPairs[0] ? specPairs[0][0] : "Вага",
-          spec1Val: specPairs[0] ? specVal(specPairs[0][1]) : "",
-          spec2Key: specPairs[1] ? specPairs[1][0] : "Об'єм / вантажопідйомність",
-          spec2Val: specPairs[1] ? specVal(specPairs[1][1]) : "",
+          vals: fromSpecs.vals,
+          extras: fromSpecs.extras,
+          description: fromSpecs.description,
           photos: editing.photos || [],
           owner: editing.owner || "",
           busyUntil: editing.busyUntil || "",
@@ -5619,10 +5640,9 @@ function AddListingForm({ onSubmit, user, lang, editing }) {
           region: user?.region || REGIONS[0],
           price: "",
           unit: "год",
-          spec1Key: "Вага",
-          spec1Val: "",
-          spec2Key: "Об'єм / вантажопідйомність",
-          spec2Val: "",
+          vals: {},
+          extras: [],
+          description: "",
           photos: [],
           owner: user ? user.org || user.name : "",
           busyUntil: "",
@@ -5631,16 +5651,20 @@ function AddListingForm({ onSubmit, user, lang, editing }) {
   );
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
+  const setVal = (id) => (v) => setForm((f) => ({ ...f, vals: { ...f.vals, [id]: v } }));
+  const setExtra = (i, j) => (e) => setForm((f) => ({ ...f, extras: f.extras.map((r, idx) => (idx === i ? (j === 0 ? [e.target.value, r[1]] : [r[0], e.target.value]) : r)) }));
+  const addExtra = () => setForm((f) => ({ ...f, extras: [...(f.extras || []), ["", ""]] }));
+  const delExtra = (i) => setForm((f) => ({ ...f, extras: f.extras.filter((_, idx) => idx !== i) }));
 
   const [submitting, setSubmitting] = useState(false);
 
   const handlePhoto = async (e) => {
     const input = e.target;
-    const files = Array.from(input.files || []).slice(0, 3 - form.photos.length);
+    const files = Array.from(input.files || []).slice(0, MAX_PHOTOS - form.photos.length);
     for (const file of files) {
       try {
-        const dataUrl = await resizeImageToDataUrl(file);
-        setForm((f) => ({ ...f, photos: [...f.photos, dataUrl].slice(0, 3) }));
+        const dataUrl = await resizeImageToDataUrl(file, 1280, 0.8);
+        setForm((f) => ({ ...f, photos: [...f.photos, dataUrl].slice(0, MAX_PHOTOS) }));
       } catch (err) {
         console.error("Photo resize failed:", err.message);
       }
@@ -5648,6 +5672,10 @@ function AddListingForm({ onSubmit, user, lang, editing }) {
     input.value = "";
   };
   const removePhoto = (i) => setForm((f) => ({ ...f, photos: f.photos.filter((_, idx) => idx !== i) }));
+  const makeCover = (i) => setForm((f) => ({ ...f, photos: [f.photos[i], ...f.photos.filter((_, idx) => idx !== i)] }));
+
+  const fields = fieldsFor(form.type);
+  const byGroup = (g) => fields.filter((f) => f.group === g);
 
   const submit = async (e) => {
     e.preventDefault();
@@ -5655,20 +5683,16 @@ function AddListingForm({ onSubmit, user, lang, editing }) {
     setSubmitting(true);
     try {
       const ok = await onSubmit({
-      type: form.type,
-      brand: form.brand,
-      region: form.region === "Інше" ? (form.customRegion || "Інше") : form.region,
-      price: Number(form.price),
-      unit: form.unit,
-      photos: form.photos,
-      owner: form.owner,
-      busyUntil: form.busyUntil || null,
-      available: !form.busyUntil,
-      specs: {
-        [form.spec1Key]: form.spec1Val || "—",
-        [form.spec2Key]: form.spec2Val || "—",
-        ...Object.fromEntries(specPairs.slice(2)), // інші параметри, додані раніше, не губимо
-      },
+        type: form.type,
+        brand: form.brand,
+        region: form.region === "Інше" ? (form.customRegion || "Інше") : form.region,
+        price: Number(form.price),
+        unit: form.unit,
+        photos: form.photos,
+        owner: form.owner,
+        busyUntil: form.busyUntil || null,
+        available: !form.busyUntil,
+        specs: formToSpecs(form.type, form.vals || {}, form.extras || [], form.description, editing ? editing.specs : null),
       });
       if (ok) draft.clear();
     } finally {
@@ -5676,104 +5700,127 @@ function AddListingForm({ onSubmit, user, lang, editing }) {
     }
   };
 
+  const ui = "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif";
+  const grid = { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: 12 };
+  const renderGroup = (g) => byGroup(g).map((f) => (
+    <Field key={f.id} label={f.key + (f.unit ? `, ${f.unit}` : "")} style={{ minWidth: 0 }}>
+      <SpecInput f={f} value={(form.vals || {})[f.id]} onChange={setVal(f.id)} />
+    </Field>
+  ));
+
   return (
-    <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+    <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
       {!editing && <DraftBanner draft={draft} />}
       {editing ? (
-        <div style={{ fontSize: 12, color: "#B9F6CA", fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif" }}>
+        <div style={{ fontSize: 12, color: "#B9F6CA", fontFamily: ui }}>
           ✎ Редагуєте: {editing.brand}. Після збереження каталог оновиться автоматично.
         </div>
       ) : user ? (
-        <div style={{ fontSize: 12, color: "#B9F6CA", fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif" }}>
+        <div style={{ fontSize: 12, color: "#B9F6CA", fontFamily: ui }}>
           ✓ Дані підтягнуто з кабінету — {user.org || user.name}
         </div>
       ) : (
-        <div style={{ fontSize: 12, color: "#FFE6D0", fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif" }}>
+        <div style={{ fontSize: 12, color: "#FFE6D0", fontFamily: ui }}>
           Ви не увійшли — вкажіть назву організації вручну, або спочатку зареєструйтесь.
         </div>
       )}
-      <Field label={`Фото техніки — до 3 шт. (необов'язково)`}>
-        <input type="file" accept="image/*" multiple onChange={handlePhoto} disabled={form.photos.length >= 3} style={inputStyle} />
+
+      <FormSection title="Фото" hint={`До ${MAX_PHOTOS} шт. Перше фото — обкладинка в каталозі. Краще знімати техніку з різних боків, кабіну та шильдик.`}>
+        <input type="file" accept="image/*" multiple onChange={handlePhoto} disabled={form.photos.length >= MAX_PHOTOS} style={inputStyle} />
         {form.photos.length > 0 && (
-          <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
             {form.photos.map((p, i) => (
-              <div key={i} style={{ position: "relative" }}>
-                <img src={p} alt={`Прев'ю ${i + 1}`} style={{ width: 84, height: 84, objectFit: "cover", border: "1px solid #F2AE7C" }} />
-                <button
-                  type="button"
-                  onClick={() => removePhoto(i)}
-                  aria-label="Прибрати фото"
-                  style={{ position: "absolute", top: -6, right: -6, width: 20, height: 20, borderRadius: "50%", background: "#3A1405", border: "1px solid #F2AE7C", color: "#F4F4F1", fontSize: 12, cursor: "pointer" }}
-                >
-                  ×
-                </button>
+              <div key={p.slice(-40) + i} style={{ position: "relative", width: 92 }}>
+                <img src={p} alt={`Фото ${i + 1}`} style={{ width: 92, height: 92, objectFit: "cover", border: i === 0 ? "2px solid #7CF0AE" : "1px solid #F2AE7C", borderRadius: 6 }} />
+                <button type="button" onClick={() => removePhoto(i)} aria-label="Прибрати фото" style={{ position: "absolute", top: -6, right: -6, width: 22, height: 22, borderRadius: "50%", background: "#3A1405", border: "1px solid #F2AE7C", color: "#F4F4F1", fontSize: 13, cursor: "pointer" }}>×</button>
+                {i === 0 ? (
+                  <div style={{ fontSize: 10.5, color: "#7CF0AE", textAlign: "center", marginTop: 3 }}>обкладинка</div>
+                ) : (
+                  <button type="button" onClick={() => makeCover(i)} style={{ ...smallBtn, width: "100%", marginTop: 3, fontSize: 10.5, padding: "4px 0", minHeight: 0 }}>на обкладинку</button>
+                )}
               </div>
             ))}
           </div>
         )}
-        <span style={{ fontSize: 11, color: "#FFE6D0", marginTop: 4, display: "block" }}>
-          Без фото буде показана іконка типу техніки
-        </span>
-      </Field>
-      <Field label="Від імені (назва організації / ПІБ)">
-        <input value={form.owner} onChange={set("owner")} placeholder="напр. РЕМСЕРВІС-Н" style={inputStyle} />
-      </Field>
-      <Field label="Тип техніки">
-        <select value={form.type} onChange={set("type")} style={inputStyle}>
-          {TYPES.map((ty) => <option key={ty} value={ty}>{tType(ty, lang)}</option>)}
-        </select>
-      </Field>
-      <Field label="Марка / модель">
-        <input value={form.brand} onChange={set("brand")} placeholder="напр. CAT 320" style={inputStyle} />
-      </Field>
-      <Field label="Регіон роботи">
-        <select value={form.region} onChange={set("region")} style={inputStyle}>
-          {REGIONS.map((r) => <option key={r}>{r}</option>)}
-        </select>
-        {form.region === "Інше" && (
-          <input
-            value={form.customRegion || ""}
-            onChange={set("customRegion")}
-            placeholder="Вкажіть місто, селище чи область"
-            style={{ ...inputStyle, marginTop: 8 }}
-          />
-        )}
-      </Field>
-      <div style={{ display: "flex", gap: 10 }}>
-        <Field label="Ціна" style={{ flex: 1 }}>
-          <input type="number" value={form.price} onChange={set("price")} placeholder="Порожньо = договірна" style={inputStyle} />
+        <span style={{ fontSize: 11, color: "#FFE6D0" }}>Без фото буде показана іконка типу техніки. Оголошення з фото переглядають частіше.</span>
+      </FormSection>
+
+      <FormSection title="Про техніку">
+        <Field label="Від імені (назва організації / ПІБ)">
+          <input value={form.owner} onChange={set("owner")} placeholder="напр. РЕМСЕРВІС-Н" style={inputStyle} />
         </Field>
-        <Field label="Одиниця" style={{ width: 100 }}>
-          <select value={form.unit} onChange={set("unit")} style={inputStyle}>
-            <option value="год">₴/год</option>
-            <option value="добу">₴/добу</option>
-            <option value="зміну">₴/зміну</option>
+        <div style={grid}>
+          <Field label="Тип техніки">
+            <select value={form.type} onChange={set("type")} style={inputStyle}>
+              {TYPES.map((ty) => <option key={ty} value={ty}>{tType(ty, lang)}</option>)}
+            </select>
+          </Field>
+          <Field label="Марка / модель">
+            <input value={form.brand} onChange={set("brand")} placeholder="напр. CAT 320" style={inputStyle} />
+          </Field>
+        </div>
+        <Field label="Регіон роботи">
+          <select value={form.region} onChange={set("region")} style={inputStyle}>
+            {REGIONS.map((r) => <option key={r}>{r}</option>)}
           </select>
+          {form.region === "Інше" && (
+            <input value={form.customRegion || ""} onChange={set("customRegion")} placeholder="Вкажіть місто, селище чи область" style={{ ...inputStyle, marginTop: 8 }} />
+          )}
         </Field>
-      </div>
-      <Field label="Зайнято до (необов'язково)">
-        <input type="date" value={form.busyUntil} onChange={set("busyUntil")} style={inputStyle} />
-        <span style={{ fontSize: 11, color: "#FFE6D0", marginTop: 4, display: "block" }}>
-          Залиште порожнім, якщо техніка вільна прямо зараз
-        </span>
-      </Field>
-      <Field label="Параметр 1 (назва)">
-        <input value={form.spec1Key} onChange={set("spec1Key")} style={inputStyle} />
-      </Field>
-      <Field label="Параметр 1 (значення)">
-        <input value={form.spec1Val} onChange={set("spec1Val")} placeholder="20.5 т" style={inputStyle} />
-      </Field>
-      <Field label="Параметр 2 (назва)">
-        <input value={form.spec2Key} onChange={set("spec2Key")} style={inputStyle} />
-      </Field>
-      <Field label="Параметр 2 (значення)">
-        <input value={form.spec2Val} onChange={set("spec2Val")} placeholder="1.2 м³" style={inputStyle} />
-      </Field>
+        <div style={{ display: "flex", gap: 10 }}>
+          <Field label="Ціна" style={{ flex: 1 }}>
+            <input type="number" value={form.price} onChange={set("price")} placeholder="Порожньо = договірна" style={inputStyle} />
+          </Field>
+          <Field label="Одиниця" style={{ width: 110 }}>
+            <select value={form.unit} onChange={set("unit")} style={inputStyle}>
+              <option value="год">₴/год</option>
+              <option value="добу">₴/добу</option>
+              <option value="зміну">₴/зміну</option>
+            </select>
+          </Field>
+        </div>
+      </FormSection>
+
+      <FormSection title="Основні характеристики" hint={`Параметри для типу «${tType(form.type, lang)}». Заповніть, що знаєте: порожні поля не показуються.`}>
+        <div style={grid}>{renderGroup("main")}</div>
+      </FormSection>
+
+      {byGroup("engine").length > 0 && (
+        <FormSection title="Двигун">
+          <div style={grid}>{renderGroup("engine")}</div>
+        </FormSection>
+      )}
+
+      <FormSection title="Стан">
+        <div style={grid}>{renderGroup("state")}</div>
+        <Field label="Зайнято до (необов'язково)">
+          <input type="date" value={form.busyUntil} onChange={set("busyUntil")} style={inputStyle} />
+          <span style={{ fontSize: 11, color: "#FFE6D0", marginTop: 4, display: "block" }}>Залиште порожнім, якщо техніка вільна прямо зараз</span>
+        </Field>
+      </FormSection>
+
+      <FormSection title="Опис" hint="Комплектація, навісне обладнання, умови оренди, чи є оператор, доставка. Пишіть конкретно: це читають клієнти й пошукові системи.">
+        <textarea value={form.description || ""} onChange={set("description")} maxLength={3000} rows={6} placeholder="Напр.: Міні-екскаватор 2023 року без напрацювання. Ковші 30/60 см, гідромолот за домовленістю. Доставка трейлером по Миколаєву і області." style={{ ...inputStyle, resize: "vertical", minHeight: 120, lineHeight: 1.5 }} />
+        <span style={{ fontSize: 11, color: "#FFE6D0", textAlign: "right" }}>{(form.description || "").length}/3000</span>
+      </FormSection>
+
+      <FormSection title="Додатково" hint="Колір, номер, будь-які інші параметри.">
+        <div style={grid}>{renderGroup("extra")}</div>
+        {(form.extras || []).map((r, i) => (
+          <div key={i} style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <input value={r[0]} onChange={setExtra(i, 0)} placeholder="Параметр" aria-label="Назва параметра" style={{ ...inputStyle, flex: 1 }} />
+            <input value={r[1]} onChange={setExtra(i, 1)} placeholder="Значення" aria-label="Значення параметра" style={{ ...inputStyle, flex: 1 }} />
+            <button type="button" onClick={() => delExtra(i)} aria-label="Прибрати параметр" style={{ ...smallBtn, flexShrink: 0, padding: "8px 12px" }}>×</button>
+          </div>
+        ))}
+        <button type="button" onClick={addExtra} style={{ ...smallBtn, alignSelf: "flex-start" }}>+ Додати свій параметр</button>
+      </FormSection>
+
       <button
         className="btn-premium-hover"
         type="submit"
         disabled={submitting}
-        style={{ ...primaryBtn, marginTop: 8, width: "100%", opacity: submitting ? 0.6 : 1, cursor: submitting ? "default" : "pointer" }}
+        style={{ ...primaryBtn, marginTop: 4, width: "100%", opacity: submitting ? 0.6 : 1, cursor: submitting ? "default" : "pointer" }}
       >
         {submitting ? "Зберігаємо..." : editing ? "Зберегти зміни" : "Додати в каталог"}
       </button>

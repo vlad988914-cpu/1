@@ -3,6 +3,8 @@ import React, { useState } from "react";
 import { Label, RoleTag, primaryBtn, smallBtn, inputStyle, miniBtn } from "./ui.jsx";
 import { CountUp } from "./motion/index.jsx";
 import { fmtDate, fmtPeriod, fmtDateTime, todayLocal, unitLabel } from "./services/deals.js";
+import { summaryLine } from "./listingSpecs.js";
+import { CardCarousel } from "./PhotoGallery.jsx";
 
 const FONT = "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif";
 const GREEN = "#B9F6CA";
@@ -335,7 +337,7 @@ const fmtAgo = (iso) => {
   return d === 1 ? "вчора" : `${d} дн. тому`;
 };
 
-export function EquipmentBoard({ listings, requests, allBookings, onConfirm, onDecline, stats = [] }) {
+export function EquipmentBoard({ listings, requests, allBookings, onConfirm, onDecline, stats = [], onOpen }) {
   const [q, setQ] = useState("");
   const [onlyNew, setOnlyNew] = useState(false);
   const statOf = (id) => stats.find((x) => x.listing_id === id) || {};
@@ -385,7 +387,10 @@ export function EquipmentBoard({ listings, requests, allBookings, onConfirm, onD
                   <b style={{ fontSize: 15 }}>{l.brand}</b> · {l.type} · {l.owner} · {l.region} · {l.price} ₴/{l.unit}
                 </span>
               </span>
-              {!l.available ? <span style={{ color: RED }}>недоступна</span> : nowBooking ? <span style={{ color: RED }}>зайнята до {fmtDate(nowBooking.date_to)}</span> : <span style={{ color: GREEN }}>вільна</span>}
+              <span style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                {!l.available ? <span style={{ color: RED }}>недоступна</span> : nowBooking ? <span style={{ color: RED }}>зайнята до {fmtDate(nowBooking.date_to)}</span> : <span style={{ color: GREEN }}>вільна</span>}
+                {onOpen && <button type="button" onClick={() => onOpen(l)} style={{ ...smallBtn, padding: "4px 12px", fontSize: 12, borderColor: "#7CF0AE", color: "#7CF0AE" }}>В каталозі →</button>}
+              </span>
             </div>
             <div style={{ color: "#FFE6D0" }}>
               {l.createdAt ? `Додана ${fmtAgo(l.createdAt)}` : ""}
@@ -411,6 +416,71 @@ export function EquipmentBoard({ listings, requests, allBookings, onConfirm, onD
           </div>
         );
       })}
+    </div>
+  );
+}
+
+
+// ---- Вкладка «Каталог»: усе, що бачать клієнти, але з усіма станами (також недоступна й нова техніка) ----
+export function CatalogBoard({ listings, stats = [], allBookings = [], onOpen, types = [] }) {
+  const [q, setQ] = useState("");
+  const [type, setType] = useState("Усі");
+  const [avail, setAvail] = useState("all");
+  const today = todayLocal();
+  const statOf = (id) => stats.find((x) => x.listing_id === id) || {};
+  const all = listings.filter((l) => l.ownerId);
+  const typeList = types.length ? types : [...new Set(all.map((l) => l.type))];
+  const isBusyNow = (l) => !l.available || allBookings.some((b) => b.listing_id === l.id && ["reserved", "confirmed"].includes(b.status) && b.date_from <= today && b.date_to >= today);
+  const rows = all
+    .filter((l) => type === "Усі" || l.type === type)
+    .filter((l) => avail === "all" || (avail === "free" ? !isBusyNow(l) : isBusyNow(l)))
+    .filter((l) => !q || `${l.brand} ${l.owner} ${l.type} ${l.region}`.toLowerCase().includes(q.toLowerCase()))
+    .sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
+  const chip = (on) => ({ ...smallBtn, padding: "5px 12px", fontSize: 12, ...(on ? { borderColor: "#7CF0AE", color: "#7CF0AE" } : {}) });
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+        <Stat big label="Усього в каталозі" value={all.length} />
+        <Stat label="Вільна зараз" value={all.filter((l) => !isBusyNow(l)).length} />
+        <Stat label="Зайнята / вимкнена" value={all.filter(isBusyNow).length} />
+      </div>
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }} role="group" aria-label="Тип техніки">
+        <button type="button" aria-pressed={type === "Усі"} onClick={() => setType("Усі")} style={chip(type === "Усі")}>Усі {all.length}</button>
+        {typeList.map((ty) => {
+          const n = all.filter((l) => l.type === ty).length;
+          return n ? <button key={ty} type="button" aria-pressed={type === ty} onClick={() => setType(ty)} style={chip(type === ty)}>{ty} {n}</button> : null;
+        })}
+      </div>
+      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+        <input aria-label="Пошук у каталозі" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Пошук: марка, власник, місто" style={{ ...inputStyle, maxWidth: 320 }} />
+        {[["all", "Уся"], ["free", "Вільна"], ["busy", "Зайнята"]].map(([k, label]) => (
+          <button key={k} type="button" aria-pressed={avail === k} onClick={() => setAvail(k)} style={chip(avail === k)}>{label}</button>
+        ))}
+      </div>
+      {rows.length === 0 && <div style={{ fontFamily: FONT, fontSize: 13, color: "#FFE6D0" }}>За цими фільтрами техніки немає.</div>}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))", gap: 14 }}>
+        {rows.map((l) => {
+          const busy = isBusyNow(l);
+          const st = statOf(l.id);
+          const line = summaryLine(l.specs, 3);
+          return (
+            <div key={l.id} style={{ overflow: "hidden", borderRadius: 12, border: `1px solid ${isFresh(l) ? "rgba(124,240,174,.65)" : "#E99660"}`, background: "rgba(30,12,4,.55)", fontFamily: FONT, display: "flex", flexDirection: "column" }}>
+              <div style={{ position: "relative" }}>
+                <CardCarousel photos={l.photos} alt={`${l.type} ${l.brand} — ${l.region}`} onOpen={() => onOpen && onOpen(l)} fallback={<span style={{ fontSize: 34, opacity: 0.5 }}>{String(l.type || "?").charAt(0)}</span>} />
+                {isFresh(l) && <span style={{ position: "absolute", left: 8, top: 8, background: "#7CF0AE", color: "#052B14", fontWeight: 800, fontSize: 10.5, letterSpacing: ".04em", padding: "2px 7px", borderRadius: 4, pointerEvents: "none" }}>НОВА</span>}
+                <span style={{ position: "absolute", right: 8, top: 8, background: "rgba(20,8,3,.78)", color: busy ? RED : GREEN, fontSize: 11, padding: "3px 8px", borderRadius: 980, pointerEvents: "none" }}>{busy ? "зайнята" : "вільна"}</span>
+              </div>
+              <button type="button" onClick={() => onOpen && onOpen(l)} aria-label={`Відкрити в каталозі: ${l.brand}`} style={{ textAlign: "left", cursor: "pointer", background: "none", border: 0, color: "inherit", fontFamily: FONT, padding: "10px 12px 12px", display: "flex", flexDirection: "column", gap: 4, fontSize: 12.5 }}>
+                <b style={{ fontSize: 15 }}>{l.brand}</b>
+                <span style={{ color: "#FFE6D0" }}>{l.type} · {l.region}</span>
+                {line && <span style={{ color: "#FFE6D0" }}>{line}</span>}
+                <span style={{ fontWeight: 700 }}>{l.price > 0 ? `${l.price} ₴/${l.unit}` : "Договірна"} <span style={{ fontWeight: 400, color: "#FFE6D0" }}>· {l.owner}</span></span>
+                <span style={{ color: "#FFE6D0", fontSize: 11.5 }}>Перегляди: сьогодні {Number(st.views_today || 0)}, всього {Number(st.views_total || 0)}</span>
+              </button>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
