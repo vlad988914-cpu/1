@@ -41,6 +41,12 @@ export const REASON_TEXT = {
   bad_role: "Недопустима роль",
   blocked: "Ваш акаунт заблоковано. Зв'яжіться з диспетчером",
   too_many_days: "Забагато днів за раз — позначайте до року",
+  bad_name: "Вкажіть ім'я (мінімум 2 літери)",
+  bad_contact: "Вкажіть номер телефону (мін. 9 цифр) або Telegram @username",
+  bad_type: "Оберіть тип техніки зі списку",
+  bad_region: "Вкажіть місто чи область",
+  too_many: "Забагато заявок за короткий час. Зачекайте трохи або зателефонуйте нам",
+  use_account: "Ви увійшли в акаунт — заявка подається з кабінету",
 };
 export const reasonText = (res) => REASON_TEXT[res?.reason] || res?.message || "Не вдалося виконати дію";
 
@@ -126,6 +132,36 @@ export async function notifyDispatcher(payload) {
     if (!r.ok) console.warn("notify failed:", r.status);
   } catch (e) {
     console.warn("notify error:", e && e.message);
+  }
+}
+
+// Заявка БЕЗ реєстрації: ім'я + контакт + що потрібно. Сервер перевіряє поля, ліміти та «пастку для ботів» (hp).
+export async function submitGuestRequest(d) {
+  const res = await call("submit_guest_request", {
+    p_type: d.type,
+    p_region: d.region,
+    p_date_from: d.dateFrom || null,
+    p_date_to: d.dateTo || null,
+    p_with_operator: !!d.withOperator,
+    p_comment: d.comment || null,
+    p_contact: d.contact,
+    p_name: d.requesterName,
+    p_hp: d.hp || null,
+  });
+  if (res.ok && res.notify_token) notifyGuestRequest(res.request_id, res.notify_token);
+  return res;
+}
+// Telegram про гостьову заявку: сервер бере дані з бази за одноразовим ключем — підробити повідомлення неможливо
+export async function notifyGuestRequest(requestId, notifyToken) {
+  try {
+    const r = await fetch("/api/notify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ kind: "guest_request", requestId, token: notifyToken }),
+    });
+    if (!r.ok) console.warn("guest notify failed:", r.status);
+  } catch (e) {
+    console.warn("guest notify error:", e && e.message);
   }
 }
 

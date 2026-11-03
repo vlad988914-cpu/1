@@ -1546,15 +1546,12 @@ export default function EquipmentMarketplace() {
   // Додавати техніку можуть лише власники (і диспетчер) — перевіряє також база (RLS)
   // Орендувати може лише зареєстрований користувач: гостя просимо увійти й після входу відкриваємо форму
   const [pendingRequest, setPendingRequest] = useState(null);
+  const [guestDone, setGuestDone] = useState(null); // після заявки без реєстрації: { name }
   const openRequestForm = (prefill = null) => {
-    if (!user) {
-      setPendingRequest({ prefill });
-      setShowAuthForm(true);
-      flashToast("Щоб залишити заявку, увійдіть або зареєструйтесь — це 1 хвилина");
-      return;
-    }
+    // Гостю вхід не потрібен: заявка приймається за ім'ям і телефоном
+    setGuestDone(null);
     setAiPrefill(prefill);
-    setRole("client");
+    if (user) setRole("client");
     setShowRequestForm(true);
   };
   useEffect(() => {
@@ -1732,7 +1729,20 @@ export default function EquipmentMarketplace() {
     flashToast("Оголошення видалено");
   };
 
+  const handleSubmitGuestRequest = async (data) => {
+    const res = await deals.submitGuestRequest(data);
+    if (!res.ok) {
+      flashToast(deals.reasonText(res));
+      return false;
+    }
+    if (res.request_id) trackLead(); // request_id=0 — «пастка» для ботів, у конверсії не рахуємо
+    setAiPrefill(null);
+    setGuestDone({ name: data.requesterName });
+    return true;
+  };
+
   const handleSubmitRequest = async (data) => {
+    if (!user) return handleSubmitGuestRequest(data);
     if (!supabase || !user?.id || !user.hasProfile) {
       setShowRequestForm(false);
       setPendingRequest({ prefill: aiPrefill });
@@ -4021,10 +4031,19 @@ export default function EquipmentMarketplace() {
           onClose={() => {
             setShowRequestForm(false);
             setAiPrefill(null);
+            setGuestDone(null);
           }}
-          title={t("request_title")}
+          title={guestDone ? "Заявку прийнято" : t("request_title")}
         >
-          <RequestForm onSubmit={handleSubmitRequest} user={user} initial={aiPrefill} t={t} lang={lang} />
+          {guestDone ? (
+            <GuestRequestDone
+              name={guestDone.name}
+              onClose={() => { setShowRequestForm(false); setGuestDone(null); }}
+              onRegister={() => { setShowRequestForm(false); setGuestDone(null); setShowAuthForm(true); }}
+            />
+          ) : (
+            <RequestForm onSubmit={handleSubmitRequest} user={user} initial={aiPrefill} t={t} lang={lang} />
+          )}
         </Modal>
       )}
       {showMyRequests && user && (
@@ -5854,8 +5873,11 @@ function RequestForm({ onSubmit, user, initial, t, lang }) {
     comment: initial?.comment || "",
     contact: user?.phone || "",
     requesterName: user?.name || "",
+    hp: "",
   }, { skipRestore: !!initial });
+  const guest = !user; // без реєстрації: коротка форма — ім'я, контакт, що потрібно
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
+  const [nameError, setNameError] = useState(false);
   const [contactError, setContactError] = useState(false);
   const [dateError, setDateError] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -5869,9 +5891,12 @@ function RequestForm({ onSubmit, user, initial, t, lang }) {
     e.preventDefault();
     const badContact = !form.contact || !isValidContact(form.contact);
     const badDates = !!(form.dateFrom && form.dateTo && form.dateTo < form.dateFrom);
+    const badName = guest && (form.requesterName || "").trim().length < 2;
+    const pastDate = !!(form.dateFrom && form.dateFrom < deals.todayLocal()); // база теж відхилить минулу дату
     setContactError(badContact);
-    setDateError(badDates);
-    if (badContact || badDates) return;
+    setDateError(badDates || pastDate);
+    setNameError(badName);
+    if (badContact || badDates || badName || pastDate) return;
     setSubmitting(true);
     Promise.resolve(onSubmit({ ...form, region: form.region === "Інше" ? (form.customRegion || "Інше") : form.region }))
       .then((ok) => {
@@ -5893,8 +5918,8 @@ function RequestForm({ onSubmit, user, initial, t, lang }) {
           ✓ Заявка від: {user.name}{user.org ? ` · ${user.org}` : ""}
         </div>
       ) : (
-        <div style={{ fontSize: 12, color: "#FFE6D0", fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif" }}>
-          Ви не увійшли — контакт доведеться вказати вручну.
+        <div style={{ fontSize: 13, lineHeight: 1.45, color: "#FFE6D0", fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif" }}>
+          ✓ Без реєстрації: вкажіть, що потрібно, ім'я й телефон — диспетчер передзвонить і підбере техніку.
         </div>
       )}
 
@@ -5938,11 +5963,13 @@ function RequestForm({ onSubmit, user, initial, t, lang }) {
           <input type="date" value={form.dateTo} onChange={(e) => { setDateError(false); set("dateTo")(e); }} style={inputStyle} />
         </Field>
       </div>
-      {dateError && <ErrorText>Кінець періоду не може бути раніше за початок</ErrorText>}
+      {dateError && <ErrorText>Перевірте дати: початок — сьогодні або пізніше, кінець — не раніше за початок</ErrorText>}
       <label style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif", fontSize: 13, color: "#FFE6D0", cursor: "pointer" }}>
         <input type="checkbox" checked={!!form.withOperator} onChange={(e) => setForm((f) => ({ ...f, withOperator: e.target.checked }))} style={{ accentColor: "#FFE3BD", width: 18, height: 18 }} />
         Потрібна техніка з оператором
       </label>
+      {!guest && (
+        <>
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
         <Field label="Ціна, яку готові заплатити (₴)" style={{ flex: "1 1 150px" }}>
           <input type="number" min="0" value={form.budget} onChange={set("budget")} placeholder="2000" style={inputStyle} />
@@ -5967,7 +5994,29 @@ function RequestForm({ onSubmit, user, initial, t, lang }) {
         </span>
       </label>
 
+        </>
+      )}
+
       <StepLabel n={4} of={4} text={t("request_step_4")} />
+      {guest && (
+        <Field label="Ваше ім'я">
+          <input
+            value={form.requesterName}
+            onChange={(e) => { setNameError(false); set("requesterName")(e); }}
+            placeholder="Як до вас звертатись"
+            autoComplete="name"
+            maxLength={60}
+            style={inputStyle}
+          />
+          {nameError && <ErrorText>Вкажіть ім'я</ErrorText>}
+        </Field>
+      )}
+      {guest && (
+        // пастка для ботів: людина цього поля не бачить
+        <div aria-hidden="true" style={{ position: "absolute", left: "-9999px", width: 1, height: 1, overflow: "hidden" }}>
+          <label>Не заповнюйте це поле<input name="hp_chk" type="text" tabIndex={-1} autoComplete="off" data-lpignore="true" data-1p-ignore="true" value={form.hp || ""} onChange={set("hp")} /></label>
+        </div>
+      )}
       <Field label="Контакт для зв'язку (телефон/Telegram)">
         <input
           value={form.contact}
@@ -5976,6 +6025,8 @@ function RequestForm({ onSubmit, user, initial, t, lang }) {
             set("contact")(e);
           }}
           placeholder="+380... або @username"
+          autoComplete={guest ? "tel" : undefined}
+          inputMode={guest ? "tel" : undefined}
           style={inputStyle}
         />
         {contactError && <ErrorText>Вкажіть номер телефону (мін. 9 цифр) або Telegram @username</ErrorText>}
@@ -5989,6 +6040,24 @@ function RequestForm({ onSubmit, user, initial, t, lang }) {
         {submitting ? "Надсилаємо..." : "Надіслати заявку"}
       </button>
     </form>
+  );
+}
+
+function GuestRequestDone({ name, onClose, onRegister }) {
+  const f = "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif";
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 14, fontFamily: f, color: "#FFF1E3" }} data-testid="guest-request-done">
+      <div style={{ fontSize: 40, lineHeight: 1 }}>✅</div>
+      <div style={{ fontSize: 17, fontWeight: 700 }}>Дякуємо{name ? `, ${String(name).split(" ")[0]}` : ""}! Заявку отримано.</div>
+      <div style={{ fontSize: 14, lineHeight: 1.5, color: "#FFE6D0" }}>
+        Диспетчер зателефонує або напише вам найближчим часом і підбере техніку. Нічого більше робити не потрібно.
+      </div>
+      <div style={{ fontSize: 13, lineHeight: 1.5, color: "#FFD3B0", borderTop: "1px solid #EFA06A", paddingTop: 12 }}>
+        Хочете стежити за заявкою, отримувати пропозиції від власників і швидко оформлювати наступні? Створіть безкоштовний акаунт — це 1 хвилина.
+      </div>
+      <button className="btn-premium-hover" type="button" onClick={onRegister} style={{ ...primaryBtn, width: "100%" }}>Створити акаунт</button>
+      <button type="button" onClick={onClose} style={{ background: "transparent", border: "1px solid #EFA06A", color: "#FFE6D0", borderRadius: 12, minHeight: 44, cursor: "pointer", fontFamily: f, fontSize: 14 }}>Закрити</button>
+    </div>
   );
 }
 

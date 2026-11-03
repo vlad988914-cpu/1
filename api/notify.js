@@ -30,18 +30,51 @@ const cut = (s, n) => esc(String(s ?? "").slice(0, n));
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
-  const user = await verifyUser(req.headers.authorization);
-  if (!user) return res.status(401).json({ error: "Sign in required" });
+  const b = req.body || {};
+  const isGuest = b.kind === "guest_request";
+
+  // Гостьова заявка приходить без входу: її підтверджує одноразовий ключ (див. claim_guest_request_notice).
+  const user = isGuest ? null : await verifyUser(req.headers.authorization);
+  if (!isGuest && !user) return res.status(401).json({ error: "Sign in required" });
 
   // .trim() рятує від випадкового пробілу в кінці значення, вставленого в Vercel
   const token = (process.env.TELEGRAM_BOT_TOKEN || "").trim();
   const chatId = (process.env.TELEGRAM_CHAT_ID || "").trim();
   if (!token || !chatId) return res.status(500).json({ error: "Telegram is not configured" });
 
-  const b = req.body || {};
   let lines;
 
-  if (b.kind === "new_user" || b.kind === "new_listing") {
+  if (isGuest) {
+    const rid = Number(b.requestId);
+    const tk = typeof b.token === "string" ? b.token : "";
+    if (!Number.isInteger(rid) || rid <= 0 || !/^[a-f0-9]{32,80}$/.test(tk)) return res.status(400).json({ error: "Invalid request" });
+    let c;
+    try {
+      const rr = await fetch(`${SB_URL}/rest/v1/rpc/claim_guest_request_notice`, {
+        method: "POST",
+        headers: { apikey: SB_KEY, "Content-Type": "application/json" },
+        body: JSON.stringify({ p_request_id: rid, p_token: tk }),
+      });
+      c = await rr.json().catch(() => null);
+    } catch (e) {
+      return res.status(502).json({ error: "Database unreachable" });
+    }
+    if (!c || c.ok !== true) return res.status(403).json({ error: "Invalid or used key" });
+    const when = c.date_from ? cut(c.date_from, 12) + (c.date_to ? " — " + cut(c.date_to, 12) : "") : "—";
+    lines = [
+      "🆕 <b>Нова заявка БЕЗ реєстрації (гість)</b>",
+      "",
+      `<b>Техніка:</b> ${cut(c.type, 50)}${c.with_operator ? " · з оператором" : ""}`,
+      `<b>Регіон:</b> ${cut(c.region, 80) || "—"}`,
+      `<b>Коли потрібно:</b> ${when}`,
+      `<b>Опис:</b> ${cut(c.comment, 500) || "—"}`,
+      "",
+      `<b>Клієнт:</b> ${cut(c.name, 60) || "—"}`,
+      `<b>Контакт:</b> ${cut(c.contact, 40)}`,
+      "",
+      "Передзвоніть клієнту — акаунта в нього немає.",
+    ];
+  } else if (b.kind === "new_user" || b.kind === "new_listing") {
     // Дані беремо з бази, а не з запиту: так ніхто не підробить повідомлення. Права — токен самого користувача.
     const sbHeaders = { apikey: SB_KEY, Authorization: req.headers.authorization };
     try {
