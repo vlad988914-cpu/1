@@ -1568,6 +1568,18 @@ export default function EquipmentMarketplace() {
     }
   }, [user, pendingRequest]);
 
+  // Рекламні/SEO-сторінки ведуть на «/?request=1» — одразу відкриваємо форму заявки (гостю — вхід, потім форма)
+  const reqLinkDone = useRef(false);
+  useEffect(() => {
+    if (reqLinkDone.current || !authReady) return;
+    let want = false;
+    try { const q = new URLSearchParams(window.location.search); want = q.get("request") === "1" && !q.has("model") && !q.has("tech"); } catch {}
+    reqLinkDone.current = true;
+    if (!want) return;
+    try { history.replaceState({}, "", window.location.pathname); } catch {}
+    openRequestForm();
+  }, [authReady]); // eslint-disable-line
+
   const openAddListing = () => {
     if (!user) {
       setShowAuthForm(true);
