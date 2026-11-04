@@ -100,13 +100,13 @@ function injectOwners(file, html) {
   writeFileSync(file, src.replace(re, (_, open, close) => open + html + close));
 }
 
-function homeStaticHtml(listings) {
+function homeStaticHtml(listings, prevLatest) {
   const latest = listings ? listings.slice(0, HOME_LIMIT) : null;
   const text = HOME_SEO.sections
     .map((sec) => `<h3>${esc(sec.h)}</h3>${sec.ps.map((p) => `<p>${esc(p)}</p>`).join("")}`)
     .join("");
   const latestHtml = !latest
-    ? ""
+    ? (prevLatest || "")
     : `<h2>Останні оголошення</h2>${latest.length
       ? `<ul>${latest.map((r) => `<li><a href="${esc(groupHref(r.type))}">${esc(r.brand)}</a>, ${esc(r.region)}: ${priceOf(r)}</li>`).join("")}</ul>`
       : "<p>Оголошень поки немає.</p>"}`;
@@ -126,19 +126,20 @@ ${latestHtml}
 function injectAvail(file, group, listings) {
   const counts = {};
   for (const r of listings) {
-    if (r.type !== group.type) continue;
+    if (r.type !== group.type || !r.available) continue;
     const mid = modelIn(group.models, r.brand);
     if (mid) counts[mid] = (counts[mid] || 0) + 1;
   }
   let src = readFileSync(file, "utf8");
-  src = src.replace(/<span class="avail" data-avail="([^"]+)"><\/span>/g, (m, id) =>
-    counts[id] ? `<span class="avail" data-avail="${id}">Є в оренду: ${counts[id]}</span>` : m);
+  src = src.replace(/<span class="avail" data-avail="([^"]+)">[^<]*<\/span>/g, (m, id) =>
+    `<span class="avail" data-avail="${id}">${counts[id] ? `Є в оренду: ${counts[id]}` : ""}</span>`);
   writeFileSync(file, src);
 }
 
 function injectHome(listings) {
   let html = readFileSync(INDEX, "utf8");
-  const block = `<div id="root">${START}${homeStaticHtml(listings)}${END}</div>`;
+  const prev = html.match(/<h2>Останні оголошення<\/h2>[\s\S]*?(?=\n<h2>Техніка в каталозі<\/h2>)/);
+  const block = `<div id="root">${START}${homeStaticHtml(listings, prev ? prev[0] : "")}${END}</div>`;
   const marked = new RegExp(`<div id="root">${START}[\\s\\S]*?${END}</div>`);
   if (marked.test(html)) html = html.replace(marked, () => block);
   else if (html.includes('<div id="root"></div>')) html = html.replace('<div id="root"></div>', () => block);

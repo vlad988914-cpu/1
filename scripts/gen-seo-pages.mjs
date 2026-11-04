@@ -81,6 +81,7 @@ const SEO = {
   "gidromolot": { short: "руйнування бетону й асфальту", desc: "Оренда гідромолота в Україні для руйнування бетону, асфальту й скельного ґрунту. Клас молота має відповідати масі екскаватора-носія. Залиште заявку." }
 };
 const cityDesc = (c, ci) => `Оренда ${c.gen} ${ci.loc}: ${SEO[c.slug].short}. Залиште заявку з датами, диспетчер підбере вільну техніку і підтвердить.`;
+const modelsWord = (n) => (n % 10 === 1 && n % 100 !== 11 ? "модель" : [2,3,4].includes(n % 10) && ![12,13,14].includes(n % 100) ? "моделі" : "моделей");
 const checkDesc = (t) => { t = String(t); if (t.length > 160) throw new Error(`meta description ${t.length} > 160: ${t}`); return t; };
 const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const css = `*{box-sizing:border-box}html{scroll-behavior:smooth;background:repeating-linear-gradient(90deg,rgba(124,240,174,0) 0,rgba(124,240,174,.26) 1px,rgba(46,204,113,.14) 2.5px,rgba(30,170,100,.03) 6px,rgba(255,255,255,.012) 10px,rgba(0,0,0,.16) 19px,rgba(0,0,0,.26) 24px),linear-gradient(180deg,#1B0B0A,#0B0506);background-color:#0B0506;-webkit-text-size-adjust:100%}
@@ -202,15 +203,15 @@ var box=document.getElementById("owners"),type=box.dataset.type,from=box.dataset
 function modelFor(b){var a=nm(b);if(a.length<5)return null;for(var i=0;i<M.length;i++){var x=nm(M[i].n);if(x.indexOf(a)>-1||a.indexOf(x)>-1)return M[i].id}return null}
 fetch(U+"/rest/v1/listings?select=id,brand,region,price,unit,available,created_at,specs&type=eq."+encodeURIComponent(type)+"&order=created_at.desc",{headers:{apikey:K,Authorization:"Bearer "+K}}).then(function(r){return r.json()}).then(function(rows){
 if(!Array.isArray(rows)||!rows.length){box.innerHTML='<p class="ms">Оголошень цієї техніки поки немає. Залиште заявку — диспетчер підбере варіант, а власники відгукнуться на «Дошці оголошень».</p>';return}
-var cnt={};box.innerHTML='<ul class="models">'+rows.map(function(r){var mid=modelFor(r.brand);if(mid)cnt[mid]=(cnt[mid]||0)+1;
+var cnt={};box.innerHTML='<ul class="models">'+rows.map(function(r){var mid=modelFor(r.brand);if(mid&&r.available)cnt[mid]=(cnt[mid]||0)+1;
 var href=mid?"/?model="+mid+"&sel="+r.id+"&from="+encodeURIComponent(from):"/?tech="+r.id+"&from="+encodeURIComponent(from);
 var isNew=Date.now()-new Date(r.created_at).getTime()<14*864e5;
 return '<li><a class="orow" href="'+href+'"><span class="t"><b>'+esc(r.brand)+'</b>'+(isNew?' <i class="nw">НОВЕ</i>':'')+'<br><span class="mb">📍 '+esc(r.region)+' · '+(r.available?"доступна":"зараз зайнята")+'</span></span><span class="op">'+(Number(r.price)>0?esc(r.price)+" ₴/"+esc(r.unit):"Договірна")+'</span>'+(r.specs&&typeof r.specs==="object"&&Object.keys(r.specs).filter(function(k){return k.charAt(0)!=="_"}).length?'<span class="sp">'+Object.keys(r.specs).filter(function(k){return k.charAt(0)!=="_"&&r.specs[k]&&r.specs[k]!=="—"}).slice(0,6).map(function(k){return '<i>'+esc(k)+': <b>'+esc(r.specs[k])+'</b></i>'}).join("")+'</span>':"")+'<span class="mm">Дати й бронь →</span></a></li>'}).join("")+'</ul>';
 Object.keys(cnt).forEach(function(id){var e=document.querySelector('[data-avail="'+id+'"]');if(e)e.textContent="Є в оренду: "+cnt[id]})
 }).catch(function(){box.innerHTML='<p class="ms">Не вдалося завантажити оголошення. Оновіть сторінку.</p>'});
 var h=location.hash.slice(1);if(h){var d=document.getElementById(h);if(d&&d.tagName==="DETAILS"){d.open=true;setTimeout(function(){d.scrollIntoView()},100)}}})();</script>`;
-  const ld = g.models.length ? { "@type": "ItemList", name: g.name, itemListElement: g.models.map((m, i) => ({ "@type": "ListItem", position: i + 1, name: m.name, url: `${SITE}${path}#${m.id}` })) } : null;
-  write(path, page({ path, title: `${g.name} в оренду — ТехМайданчик`, desc: (g.models.length ? `${g.name} в оренду: оголошення власників, характеристики ${g.models.length} моделей за даними виробників і календар вільних дат.` : `${g.name} в оренду: оголошення власників, календар вільних дат і бронювання. Залиште заявку — диспетчер підбере техніку.`), h1: g.h1, body, crumbs: [["Головна", "/"], ["Каталог техніки", "/katalog/"], [g.name, path]], ld: ld ? [ld] : [], back: true }));
+  const ld = g.models.length ? { "@type": "ItemList", name: g.name, itemListElement: g.models.map((m, i) => ({ "@type": "ListItem", position: i + 1, name: m.name, url: `${SITE}${path}${m.id}/` })) } : null;
+  write(path, page({ path, title: `${g.name} в оренду — ТехМайданчик`, desc: (g.models.length ? `${g.name} в оренду: оголошення власників, характеристики ${g.models.length} ${modelsWord(g.models.length)} за даними виробників і календар вільних дат.` : `${g.name} в оренду: оголошення власників, календар вільних дат і бронювання. Залиште заявку — диспетчер підбере техніку.`), h1: g.h1, body, crumbs: [["Головна", "/"], ["Каталог техніки", "/katalog/"], [g.name, path]], ld: ld ? [ld] : [], back: true }));
 }
 // сторінки окремих моделей: /katalog/<категорія>/<модель>/ — для запитів «Cat M320 характеристики»
 for (const g of GROUPS) {
@@ -219,7 +220,7 @@ for (const g of GROUPS) {
     const path = `${gp}${m.id}/`;
     const related = g.models.filter((x) => x !== m);
     const rent = CATS.find((c) => c.name === g.type || (g.type === "Маніпулятор" && c.slug === "manipulyator"));
-    const body = `<p>${esc(m.brand)} ${esc(m.name)} — ${esc(g.type.toLowerCase())} (${esc(m.kind.toLowerCase())}). Нижче характеристики за даними виробника та оголошення власників, які здають цю техніку в оренду.</p>
+    const body = `<p>${esc(m.name)} — ${esc(g.type.toLowerCase())} (${esc(m.kind.toLowerCase())}). Нижче характеристики за даними виробника та оголошення власників, які здають цю техніку в оренду.</p>
 <div class="mk" style="display:flex;flex-wrap:wrap;gap:8px;margin:16px 0">${m.key.map((k) => `<span style="background:#A53C0D;border:1px solid #E99660;border-radius:980px;padding:5px 14px;color:#FFF0D2">${esc(k)}</span>`).join("")}</div>
 ${cta("Залишити заявку")}
 <h2>Технічні характеристики ${esc(m.name)}</h2><div class="box"><table style="width:100%;border-collapse:collapse">${m.specs.map(([a, b]) => `<tr><td style="padding:9px 0;border-top:1px solid #EFA06A;color:#FFE6D0;width:48%;padding-right:12px;vertical-align:top">${esc(a)}</td><td style="padding:9px 0;border-top:1px solid #EFA06A">${esc(b)}</td></tr>`).join("")}</table>${m.note ? `<p style="font-size:13px;color:#FFE6D0">${esc(m.note)}</p>` : ""}</div>
@@ -237,9 +238,9 @@ rows=Array.isArray(rows)?rows.filter(function(r){return modelFor(r.brand)===MID}
 if(!rows.length){box.innerHTML='<p class="ms">Оголошень цієї моделі поки немає. Залиште заявку — диспетчер підбере таку або схожу техніку, а власники відгукнуться на «Дошці оголошень».</p>';return}
 box.innerHTML='<ul class="models">'+rows.map(function(r){return '<li><a class="orow" href="/?model='+MID+'&sel='+r.id+'&from='+encodeURIComponent(from)+'"><span><b>'+esc(r.brand)+'</b><br><span class="mb">'+esc(r.region)+' · '+(r.available?"доступна":"зараз зайнята")+'</span></span><span class="op">'+(Number(r.price)>0?esc(r.price)+" ₴/"+esc(r.unit):"Договірна")+'</span><span class="mm">Дати й бронь →</span></a></li>'}).join("")+'</ul>'
 }).catch(function(){box.innerHTML='<p class="ms">Не вдалося завантажити оголошення. Оновіть сторінку.</p>'})})();</script>`;
-    const ld = [{ "@type": "Product", name: m.name, brand: { "@type": "Brand", name: m.brand }, category: g.type, description: `${m.brand} ${m.name}: ${m.key.join(", ")}.`, url: `${SITE}${path}`, image: `${SITE}/story/poster.jpg` }];
+    const ld = [{ "@type": "Product", name: m.name, brand: { "@type": "Brand", name: m.brand }, category: g.type, description: `${m.name}: ${m.key.join(", ")}.`, url: `${SITE}${path}`, image: `${SITE}/story/poster.jpg` }];
     const title = (`${m.name} — характеристики та оренда | ТехМайданчик`.length <= 60 ? `${m.name} — характеристики та оренда | ТехМайданчик` : `${m.name} — характеристики, оренда`);
-    const desc = `${m.brand} ${m.name}: ${m.key.join(", ")}. Характеристики за даними виробника, оголошення власників, календар і бронювання.`;
+    const desc = `${m.name}: ${m.key.join(", ")}. Характеристики за даними виробника, оголошення власників, календар і бронювання.`;
     write(path, page({ path, title, desc, h1: `${m.name}: характеристики та оренда`, body, crumbs: [["Головна", "/"], ["Каталог техніки", "/katalog/"], [g.name, gp], [m.name, path]], ld, back: true }));
   }
 }
