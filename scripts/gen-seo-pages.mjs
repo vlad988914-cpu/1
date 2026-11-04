@@ -61,13 +61,27 @@ const CITIES = [
   { slug: "kyiv", name: "Київ", loc: "у Києві", obl: "Київ і область" },
   { slug: "voznesensk", name: "Вознесенськ", loc: "у Вознесенську", obl: "Миколаївська область" },
   { slug: "pervomaisk", name: "Первомайськ", loc: "у Первомайську", obl: "Миколаївська область" },
-  { slug: "pivdennoukrainsk", name: "Южноукраїнськ", loc: "в Южноукраїнську", obl: "Миколаївська область" },
+  { slug: "pivdennoukrainsk", name: "Південноукраїнськ", loc: "в Південноукраїнську", obl: "Миколаївська область" },
   { slug: "ochakiv", name: "Очаків", loc: "в Очакові", obl: "Миколаївська область" },
   { slug: "dnipro", name: "Дніпро", loc: "у Дніпрі", obl: "Дніпропетровська область" },
   { slug: "lviv", name: "Львів", loc: "у Львові", obl: "Львівська область" },
 ];
 
-const cut160 = (t) => { t = String(t); if (t.length <= 160) return t; const c = t.slice(0, 157); return c.slice(0, c.lastIndexOf(" ")).replace(/[,;:\s—-]+$/, "") + "…"; };
+const SEO = {
+  "ekskavator": { short: "котловани, траншеї, демонтаж", desc: "Оренда екскаватора в Україні: котловани, траншеї й демонтаж. Підберемо ковш і тип ходу під ваш ґрунт. Залиште заявку — диспетчер відповість." },
+  "navantazhuvach": { short: "вантаження сипких матеріалів", desc: "Оренда навантажувача в Україні: піски, щебінь, піддони на складі й майданчику. Підберемо ківш або вилки за вантажопідйомністю. Залиште заявку." },
+  "samoskyd": { short: "вивезення ґрунту й сміття", desc: "Оренда самоскида в Україні: вивезення ґрунту, доставка піску й щебеню. Оплата за годину, зміну або рейс — як узгодите з власником. Заявка з датами." },
+  "kran": { short: "монтаж конструкцій і плит", desc: "Оренда крана в Україні для монтажу плит і конструкцій. Перевіримо вантажопідйомність на потрібному виносі стріли. Залиште заявку з майданчиком." },
+  "katok": { short: "ущільнення основи під асфальт", desc: "Оренда катка в Україні: ущільнення ґрунту, щебеню й основи під асфальт і бруківку. Гладкий чи кулачковий валець — підберемо за вашим покриттям." },
+  "buldozer": { short: "планування великих ділянок", desc: "Оренда бульдозера в Україні: планування ділянок, розчищення території, насипання ґрунту. Потужність і тип відвалу підбираємо під площу й ґрунт." },
+  "mini-ekskavator": { short: "траншеї під кабель і комунікації", desc: "Оренда міні-екскаватора в Україні для дворів, підвалів і вузьких ділянок. Перевіримо габарити й чи проїде у ворота. Залиште заявку — відповімо." },
+  "manipulyator": { short: "доставка й розвантаження плит", desc: "Оренда маніпулятора в Україні: доставка й розвантаження плит, блоків, труб і бордюрів. Вкажіть відстань і вагу вантажу — диспетчер підбере техніку." },
+  "avtovyshka": { short: "роботи на висоті без риштувань", desc: "Оренда автовишки в Україні для робіт на висоті: фасади, освітлення, обрізання дерев. Підберемо робочу висоту з запасом на виліт стріли." },
+  "greider": { short: "профілювання доріг", desc: "Оренда грейдера в Україні: профілювання ґрунтових і щебеневих доріг, підготовка основи під покриття. Ширина відвалу й потужність — під вашу ділянку." },
+  "gidromolot": { short: "руйнування бетону й асфальту", desc: "Оренда гідромолота в Україні для руйнування бетону, асфальту й скельного ґрунту. Клас молота має відповідати масі екскаватора-носія. Залиште заявку." }
+};
+const cityDesc = (c, ci) => `Оренда ${c.gen} ${ci.loc}: ${SEO[c.slug].short}. Залиште заявку з датами, диспетчер підбере вільну техніку і підтвердить.`;
+const checkDesc = (t) => { t = String(t); if (t.length > 160) throw new Error(`meta description ${t.length} > 160: ${t}`); return t; };
 const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const css = `*{box-sizing:border-box}html{scroll-behavior:smooth;background:repeating-linear-gradient(90deg,rgba(124,240,174,0) 0,rgba(124,240,174,.26) 1px,rgba(46,204,113,.14) 2.5px,rgba(30,170,100,.03) 6px,rgba(255,255,255,.012) 10px,rgba(0,0,0,.16) 19px,rgba(0,0,0,.26) 24px),linear-gradient(180deg,#1B0B0A,#0B0506);background-color:#0B0506;-webkit-text-size-adjust:100%}
 body{margin:0;min-height:100vh;background:transparent;color:#F7F1EA;font:16px/1.65 Manrope,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;position:relative;overflow-x:hidden}
@@ -119,7 +133,7 @@ function page({ path, title, desc, h1, body, crumbs, ld, back }) {
   const url = `${SITE}${path}`;
   const bc = { "@type": "BreadcrumbList", itemListElement: crumbs.map((c, i) => ({ "@type": "ListItem", position: i + 1, name: c[0], item: `${SITE}${c[1]}` })) };
   return `<!doctype html><html lang="uk" translate="no"><head><meta name="google" content="notranslate"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Unbounded:wght@600;700;800&display=swap">
-<title>${esc(title)}</title><meta name="description" content="${esc(cut160(desc))}"><link rel="canonical" href="${url}"><meta name="robots" content="index, follow, max-image-preview:large">
+<title>${esc(title)}</title><meta name="description" content="${esc(checkDesc(desc))}"><link rel="canonical" href="${url}"><meta name="robots" content="index, follow, max-image-preview:large">
 <meta name="theme-color" content="#3A1405"><meta property="og:type" content="website"><meta property="og:locale" content="uk_UA"><meta property="og:site_name" content="ТехМайданчик"><meta property="og:title" content="${esc(title)}"><meta property="og:description" content="${esc(desc)}"><meta property="og:url" content="${url}"><meta property="og:image" content="${SITE}/story/poster.jpg">
 <meta name="twitter:card" content="summary_large_image"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="manifest" href="/manifest.webmanifest">
 <script type="application/ld+json">${JSON.stringify({ "@context": "https://schema.org", "@graph": [bc, ...ld] })}</script><style>${css}</style><script async src="https://www.googletagmanager.com/gtag/js?id=AW-18540775028"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date());gtag("config","AW-18540775028");document.addEventListener("click",function(e){var a=e.target.closest&&e.target.closest('a[href^="tel:"]');if(a)gtag("event","phone_call_click")})</script></head>
@@ -143,7 +157,7 @@ function write(path, html) { const d = join(ROOT, path); mkdirSync(d, { recursiv
   const body = `<p>ТехМайданчик — біржа, де власники будівельної техніки та замовники знаходять одне одного. Оберіть тип техніки й місто або залиште заявку — диспетчер підбере варіант під вашу роботу.</p>
 ${cta()}<h2>Техніка в оренду</h2><ul class="grid">${CATS.map((c) => `<li><a href="/orenda/${c.slug}/">Оренда ${c.gen}</a></li>`).join("")}</ul>
 <h2>За містами</h2>${CITIES.map((ci) => `<h3>${ci.name}</h3><ul class="grid">${CATS.map((c) => `<li><a href="/orenda/${c.slug}-${ci.slug}/">${c.name} ${ci.loc}</a></li>`).join("")}</ul>`).join("")}${howto}`;
-  write("/orenda/", page({ path: "/orenda/", title: "Оренда будівельної техніки в Україні — ТехМайданчик", desc: "Оренда екскаваторів, міні-екскаваторів, навантажувачів, самоскидів, кранів, котків, бульдозерів, грейдерів і гідромолотів. Залиште заявку — диспетчер підбере техніку.", h1: "Оренда будівельної техніки", body, crumbs: [["Головна", "/"], ["Оренда техніки", "/orenda/"]], ld: [] }));
+  write("/orenda/", page({ path: "/orenda/", title: "Оренда будівельної техніки в Україні — ТехМайданчик", desc: "Оренда будівельної техніки в Україні: екскаватори, навантажувачі, самоскиди, крани, катки, бульдозери. Заявка з датами — диспетчер підбере техніку.", h1: "Оренда будівельної техніки", body, crumbs: [["Головна", "/"], ["Оренда техніки", "/orenda/"]], ld: [] }));
 }
 // категорії
 for (const c of CATS) {
@@ -153,7 +167,7 @@ for (const c of CATS) {
 <h2>На що звернути увагу при виборі</h2><ul>${c.pick.map((t) => `<li>${esc(t)}</li>`).join("")}</ul>
 <div class="box"><strong>Не впевнені, що саме потрібно?</strong><p>Опишіть задачу в заявці: що робимо, де, коли і який обсяг. Диспетчер допоможе підібрати техніку.</p>${cta("Описати задачу")}</div>
 <h2>Оренда ${c.gen} по містах</h2><ul class="grid">${CITIES.map((ci) => `<li><a href="/orenda/${c.slug}-${ci.slug}/">${c.name} ${ci.loc}</a></li>`).join("")}</ul>${howto}${faqHtml(c.faq)}`;
-  write(path, page({ path, title: `Оренда ${c.gen} в Україні — ТехМайданчик`, desc: `Оренда ${c.gen} в Україні: для яких робіт потрібен, на що звернути увагу при виборі, як замовити. Залиште заявку — диспетчер підбере ${c.name.toLowerCase()} і підтвердить.`, h1: `Оренда ${c.gen}`, body, crumbs: [["Головна", "/"], ["Оренда техніки", "/orenda/"], [`Оренда ${c.gen}`, path]], ld: [svc(`Оренда ${c.gen}`, "Україна", path), faqLd(c.faq)] }));
+  write(path, page({ path, title: `Оренда ${c.gen} в Україні — ТехМайданчик`, desc: SEO[c.slug].desc, h1: `Оренда ${c.gen}`, body, crumbs: [["Головна", "/"], ["Оренда техніки", "/orenda/"], [`Оренда ${c.gen}`, path]], ld: [svc(`Оренда ${c.gen}`, "Україна", path), faqLd(c.faq)] }));
   // категорія × місто
   for (const ci of CITIES) {
     const p2 = `/orenda/${c.slug}-${ci.slug}/`;
@@ -163,7 +177,7 @@ for (const c of CATS) {
 <h2>Що вказати в заявці</h2><ul><li>Адреса або район об'єкта ${ci.loc}.</li><li>Дати й орієнтовна тривалість робіт.</li>${c.pick.map((t) => `<li>${esc(t[0].toUpperCase() + t.slice(1))}</li>`).join("")}</ul>${howto}${faqHtml(faq)}
 <h2>Інша техніка ${ci.loc}</h2><ul class="grid">${CATS.filter((x) => x !== c).map((x) => `<li><a href="/orenda/${x.slug}-${ci.slug}/">${x.name} ${ci.loc}</a></li>`).join("")}</ul>
 <p><a href="${path}">Оренда ${c.gen} в Україні</a></p>`;
-    write(p2, page({ path: p2, title: `Оренда ${c.gen} ${ci.loc} — ТехМайданчик`, desc: `Оренда ${c.gen} ${ci.loc}: залиште заявку з датами та адресою об'єкта, диспетчер підбере вільну техніку (${ci.obl}) і підтвердить. Умови визначає власник.`, h1: `Оренда ${c.gen} ${ci.loc}`, body: body2, crumbs: [["Головна", "/"], ["Оренда техніки", "/orenda/"], [`Оренда ${c.gen}`, path], [ci.name, p2]], ld: [svc(`Оренда ${c.gen} ${ci.loc}`, ci.name, p2), faqLd(faq)] }));
+    write(p2, page({ path: p2, title: `Оренда ${c.gen} ${ci.loc} — ТехМайданчик`, desc: cityDesc(c, ci), h1: `Оренда ${c.gen} ${ci.loc}`, body: body2, crumbs: [["Головна", "/"], ["Оренда техніки", "/orenda/"], [`Оренда ${c.gen}`, path], [ci.name, p2]], ld: [svc(`Оренда ${c.gen} ${ci.loc}`, ci.name, p2), faqLd(faq)] }));
   }
 }
 // каталог моделей
@@ -196,7 +210,7 @@ Object.keys(cnt).forEach(function(id){var e=document.querySelector('[data-avail=
 }).catch(function(){box.innerHTML='<p class="ms">Не вдалося завантажити оголошення. Оновіть сторінку.</p>'});
 var h=location.hash.slice(1);if(h){var d=document.getElementById(h);if(d&&d.tagName==="DETAILS"){d.open=true;setTimeout(function(){d.scrollIntoView()},100)}}})();</script>`;
   const ld = g.models.length ? { "@type": "ItemList", name: g.name, itemListElement: g.models.map((m, i) => ({ "@type": "ListItem", position: i + 1, name: m.name, url: `${SITE}${path}#${m.id}` })) } : null;
-  write(path, page({ path, title: `${g.name} в оренду — ТехМайданчик`, desc: (g.models.length ? `${g.name} в оренду: ${g.models.map((m) => m.name).join(", ")}. Оголошення власників, характеристики за даними виробників, календар вільних дат і бронювання.` : `${g.name} в оренду: оголошення власників, календар вільних дат і бронювання. Залиште заявку — диспетчер ТехМайданчика підбере техніку й підтвердить.`).slice(0, 160), h1: g.h1, body, crumbs: [["Головна", "/"], ["Каталог техніки", "/katalog/"], [g.name, path]], ld: ld ? [ld] : [], back: true }));
+  write(path, page({ path, title: `${g.name} в оренду — ТехМайданчик`, desc: (g.models.length ? `${g.name} в оренду: оголошення власників, характеристики ${g.models.length} моделей за даними виробників і календар вільних дат.` : `${g.name} в оренду: оголошення власників, календар вільних дат і бронювання. Залиште заявку — диспетчер підбере техніку.`), h1: g.h1, body, crumbs: [["Головна", "/"], ["Каталог техніки", "/katalog/"], [g.name, path]], ld: ld ? [ld] : [], back: true }));
 }
 // сторінки окремих моделей: /katalog/<категорія>/<модель>/ — для запитів «Cat M320 характеристики»
 for (const g of GROUPS) {
@@ -225,13 +239,13 @@ box.innerHTML='<ul class="models">'+rows.map(function(r){return '<li><a class="o
 }).catch(function(){box.innerHTML='<p class="ms">Не вдалося завантажити оголошення. Оновіть сторінку.</p>'})})();</script>`;
     const ld = [{ "@type": "Product", name: m.name, brand: { "@type": "Brand", name: m.brand }, category: g.type, description: `${m.brand} ${m.name}: ${m.key.join(", ")}.`, url: `${SITE}${path}`, image: `${SITE}/story/poster.jpg` }];
     const title = (`${m.name} — характеристики та оренда | ТехМайданчик`.length <= 60 ? `${m.name} — характеристики та оренда | ТехМайданчик` : `${m.name} — характеристики, оренда`);
-    const desc = `${m.brand} ${m.name}: ${m.key.join(", ")}. Технічні характеристики за даними виробника, оголошення власників, календар вільних дат і бронювання.`.slice(0, 160);
+    const desc = `${m.brand} ${m.name}: ${m.key.join(", ")}. Характеристики за даними виробника, оголошення власників, календар і бронювання.`;
     write(path, page({ path, title, desc, h1: `${m.name}: характеристики та оренда`, body, crumbs: [["Головна", "/"], ["Каталог техніки", "/katalog/"], [g.name, gp], [m.name, path]], ld, back: true }));
   }
 }
 {
   const body = `<p>Моделі техніки з характеристиками за даними виробників. Оберіть категорію.</p><ul class="grid">${GROUPS.map((g) => `<li><a href="/katalog/${g.slug}/">${g.name}</a></li>`).join("")}</ul>${cta()}`;
-  write("/katalog/", page({ path: "/katalog/", title: "Каталог техніки: моделі та характеристики — ТехМайданчик", desc: "Каталог будівельної техніки: екскаватори, міні-екскаватори, автокрани, катки й навантажувачі. Моделі та характеристики за даними виробників, оголошення власників.", h1: "Каталог техніки", body, crumbs: [["Головна", "/"], ["Каталог техніки", "/katalog/"]], ld: [], back: true }));
+  write("/katalog/", page({ path: "/katalog/", title: "Каталог техніки: моделі та характеристики — ТехМайданчик", desc: "Каталог будівельної техніки: екскаватори, міні-екскаватори, автокрани, катки й навантажувачі. Моделі та характеристики за даними виробників.", h1: "Каталог техніки", body, crumbs: [["Головна", "/"], ["Каталог техніки", "/katalog/"]], ld: [], back: true }));
 }
 const today = new Date().toISOString().slice(0, 10);
 writeFileSync(join(ROOT, "sitemap.xml"), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls.map((u) => `<url><loc>${SITE}${u}</loc><lastmod>${today}</lastmod><priority>${u === "/" ? "1.0" : u === "/orenda/" || u === "/katalog/" ? "0.8" : u.split("/").filter(Boolean).length === 3 && u.startsWith("/katalog/") ? "0.7" : "0.6"}</priority></url>`).join("")}</urlset>\n`);

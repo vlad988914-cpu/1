@@ -6,7 +6,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "node --test tests/story.test.mjs"
+    "test": "node --test tests/story.test.mjs",
+    "seo": "node scripts/gen-seo-pages.mjs && node scripts/prerender-listings.mjs && node --test tests/seo-meta.test.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.58.0",

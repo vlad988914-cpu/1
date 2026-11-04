@@ -8,6 +8,7 @@ import { ClientCabinet, OwnerCabinet, NotificationsPanel, BookingForm, Availabil
 import { WantedBoard, RespondForm } from "./wanted.jsx";
 import { ListingReviews } from "./reviews.jsx";
 import { GROUPS as MODEL_GROUPS } from "../shared/models-data.js";
+import { HOME_SEO } from "../shared/home-seo.js";
 import HeaderForge from "./forge/Forge.jsx";
 import ScrollStory from "./story/ScrollStory.jsx";
 import PhotoGallery from "./PhotoGallery.jsx";
@@ -800,6 +801,23 @@ function HoverVideo({ src, poster }) {
         <source src={src.replace(/\.mp4$/, ".webm")} type="video/webm" />
       </video>
     </span>
+  );
+}
+
+// Текстовий блок для головної (українська версія). Той самий текст є в статичному HTML — див. shared/home-seo.js
+function SeoIntro() {
+  return (
+    <section data-scene style={{ padding: "8px 24px 40px", maxWidth: 760, margin: "0 auto" }}>
+      <h2 style={{ fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif", fontWeight: 600, fontSize: 26, margin: "0 0 16px" }}>{HOME_SEO.title}</h2>
+      {HOME_SEO.sections.map((sec) => (
+        <div key={sec.h} style={{ marginBottom: 20 }}>
+          <h3 style={{ fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif", fontWeight: 600, fontSize: 19, margin: "0 0 8px" }}>{sec.h}</h3>
+          {sec.ps.map((p, i) => (
+            <p key={i} style={{ fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif", fontSize: 15.5, lineHeight: 1.6, color: "#FFE6D0", margin: "0 0 10px" }}>{p}</p>
+          ))}
+        </div>
+      ))}
+    </section>
   );
 }
 
@@ -3711,6 +3729,8 @@ export default function EquipmentMarketplace() {
           flashToast("Щоб відгукнутись, увійдіть як власник техніки");
         }}
       />
+
+      {lang === "uk" && <SeoIntro />}
 
       {/* FAQ */}
       <div data-scene style={{ padding: "8px 24px 64px", maxWidth: 640, margin: "0 auto" }}>
