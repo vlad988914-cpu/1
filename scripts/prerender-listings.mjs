@@ -122,6 +122,20 @@ ${latestHtml}
 </main>`;
 }
 
+// лічильники «Є в оренду: N» у статиці (як у скрипті сторінки: лише для моделей з оголошеннями)
+function injectAvail(file, group, listings) {
+  const counts = {};
+  for (const r of listings) {
+    if (r.type !== group.type) continue;
+    const mid = modelIn(group.models, r.brand);
+    if (mid) counts[mid] = (counts[mid] || 0) + 1;
+  }
+  let src = readFileSync(file, "utf8");
+  src = src.replace(/<span class="avail" data-avail="([^"]+)"><\/span>/g, (m, id) =>
+    counts[id] ? `<span class="avail" data-avail="${id}">Є в оренду: ${counts[id]}</span>` : m);
+  writeFileSync(file, src);
+}
+
 function injectHome(listings) {
   let html = readFileSync(INDEX, "utf8");
   const block = `<div id="root">${START}${homeStaticHtml(listings)}${END}</div>`;
@@ -137,6 +151,7 @@ const listings = raw && raw.slice().sort((a, b) => String(b.created_at).localeCo
 if (listings) {
   for (const g of GROUPS) {
     injectOwners(join(PUBLIC, "katalog", g.slug, "index.html"), ownersHtml(g, listings));
+    injectAvail(join(PUBLIC, "katalog", g.slug, "index.html"), g, listings);
     for (const m of g.models) {
       injectOwners(join(PUBLIC, "katalog", g.slug, m.id, "index.html"), modelOwnersHtml(g, m, listings));
     }
