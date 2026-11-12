@@ -132,7 +132,7 @@ p,li{color:#FFF1E3}ul{padding-left:20px}li{margin:6px 0}ol li::marker{color:#FFB
 @media(prefers-reduced-motion:reduce){body:before,body:after,h1,.nw{animation:none}.rvp{opacity:1;transform:none;transition:none}.btn,.orow,.mrow,.grid a{transition:none}}
 footer{border-top:1px solid rgba(255,160,90,.3);margin-top:60px;padding:28px 0 48px;color:#FFD3AE;font-size:14px}details{border-top:1px solid rgba(255,170,90,.3);padding:14px 0}summary{cursor:pointer;font-weight:700}details[open] summary{color:#FFB81C}`;
 
-function page({ path, title, desc, h1, body, crumbs, ld, back }) {
+function page({ path, title, desc, h1, body, crumbs, ld, back, headCta }) {
   const url = `${SITE}${path}`;
   const bc = { "@type": "BreadcrumbList", itemListElement: crumbs.map((c, i) => ({ "@type": "ListItem", position: i + 1, name: c[0], item: `${SITE}${c[1]}` })) };
   return `<!doctype html><html lang="uk" translate="no"><head><meta name="google" content="notranslate"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Unbounded:wght@600;700;800&display=swap">
@@ -140,7 +140,7 @@ function page({ path, title, desc, h1, body, crumbs, ld, back }) {
 <meta name="theme-color" content="#3A1405"><meta property="og:type" content="website"><meta property="og:locale" content="uk_UA"><meta property="og:site_name" content="ТехМайданчик"><meta property="og:title" content="${esc(title)}"><meta property="og:description" content="${esc(desc)}"><meta property="og:url" content="${url}"><meta property="og:image" content="${SITE}/story/poster.jpg">
 <meta name="twitter:card" content="summary_large_image"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="manifest" href="/manifest.webmanifest">
 <script type="application/ld+json">${JSON.stringify({ "@context": "https://schema.org", "@graph": [bc, ...ld] })}</script><style>${css}</style><script async src="https://www.googletagmanager.com/gtag/js?id=AW-18540775028"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date());gtag("config","AW-18540775028");document.addEventListener("click",function(e){var a=e.target.closest&&e.target.closest('a[href^="tel:"]');if(a)gtag("event","phone_call_click")})</script>${PH}</head>
-<body><header><div class="w"><a class="logo" href="/">ТЕХ<b>МАЙДАНЧИК</b></a><a class="btn" href="/?request=1">Залишити заявку</a></div></header>
+<body><header><div class="w"><a class="logo" href="/">ТЕХ<b>МАЙДАНЧИК</b></a><a class="btn" href="${headCta ? headCta[1] : "/?request=1"}">${headCta ? headCta[0] : "Залишити заявку"}</a></div></header>
 <main class="w">${back ? `<a class="back" href="/">← На головну</a>` : ""}<nav class="bc" aria-label="Навігація">${crumbs.map((c, i) => (i < crumbs.length - 1 ? `<a href="${c[1]}">${esc(c[0])}</a> / ` : esc(c[0]))).join("")}</nav>
 <h1>${esc(h1)}</h1>${body}</main>
 <footer><div class="w"><p><a href="/">ТехМайданчик</a> — біржа будівельної техніки. Диспетчер, Миколаїв: <a href="tel:${PHONE}">${PHONE_FMT}</a>, <a href="mailto:${EMAIL}">${EMAIL}</a>.</p><p><a href="/orenda/">Уся техніка</a> · <a href="https://share.google/pR0mdWI94lEWL1dFs" target="_blank" rel="noopener">Ми на Google Картах</a> · <a href="/api/tg-subscribe?role=clients" rel="noopener">Новини в Telegram</a></p></div></footer><script>(function(){var d=document;if(!("IntersectionObserver" in window)||matchMedia("(prefers-reduced-motion:reduce)").matches)return;var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add("in");io.unobserve(e.target)}})},{rootMargin:"0px 0px -6% 0px",threshold:.08});var n=0;function rv(){d.querySelectorAll("main h2,main .mrow,main .box,main .grid li,main details,main .orow,main ol li,main nav.bc").forEach(function(e){if(e.dataset.rv)return;e.dataset.rv=1;e.classList.add("rvp");e.style.transitionDelay=Math.min((n++%6)*60,300)+"ms";io.observe(e)})}window.__rv=rv;rv();new MutationObserver(rv).observe(d.querySelector("main"),{childList:true,subtree:true})})()</script></body></html>`;
@@ -250,6 +250,27 @@ box.innerHTML='<ul class="models">'+rows.map(function(r){return '<li><a class="o
   const body = `<p>Моделі техніки з характеристиками за даними виробників. Оберіть категорію.</p><ul class="grid">${GROUPS.map((g) => `<li><a href="/katalog/${g.slug}/">${g.name}</a></li>`).join("")}</ul>${cta()}`;
   write("/katalog/", page({ path: "/katalog/", title: "Каталог техніки: моделі та характеристики — ТехМайданчик", desc: "Каталог будівельної техніки: екскаватори, міні-екскаватори, автокрани, катки й навантажувачі. Моделі та характеристики за даними виробників.", h1: "Каталог техніки", body, crumbs: [["Головна", "/"], ["Каталог техніки", "/katalog/"]], ld: [], back: true }));
 }
+// сторінка для власників техніки (посадкова для реклами «здати техніку в оренду»)
+{
+  const path = "/vlasnykam/";
+  const add = (t = "Додати техніку") => `<p><a class="btn" href="/?owner=1">${t}</a> <a class="btn o" href="tel:${PHONE}">${PHONE_FMT}</a></p>`;
+  const faq = [
+    ["Скільки коштує розміщення техніки?", "Реєстрація та додавання оголошень безкоштовні. Ми не беремо комісію з угод — власник і клієнт домовляються напряму."],
+    ["Хто визначає ціну й умови оренди?", "Ви самі. Ціну за годину, зміну чи рейс, роботу з оператором і доставку ви вказуєте в оголошенні та узгоджуєте з клієнтом до підтвердження."],
+    ["Як я дізнаюся про заявку?", "Диспетчер надсилає вам заявку клієнта з вашого міста. Ви бачите задачу, місце й дати та вирішуєте, чи брати роботу."],
+    ["Чи можу я відмовитися від заявки?", "Так. Ви відгукуєтеся лише на ті заявки, які вам підходять за датами, місцем і обсягом робіт."],
+    ["Яку техніку можна додати?", "Екскаватори, міні-екскаватори, навантажувачі, самоскиди, маніпулятори, автовишки, бульдозери, грейдери, катки, крани та гідромолоти."],
+    ["З яких міст приймаєте техніку?", "З усієї України. Зараз найбільше шукаємо власників техніки в Одесі, Києві та Львові."],
+  ];
+  const body = `<p>Маєте екскаватор, самоскид, кран чи іншу будівельну техніку? Додайте її на ТехМайданчик — біржу, де замовники залишають заявки на оренду, а диспетчер передає їх власникам техніки з потрібного міста. Вам не треба шукати клієнтів самостійно.</p>${add()}
+<h2>Що ви отримуєте</h2><ul><li>Заявки на оренду від клієнтів з вашого міста — без власної реклами.</li><li>Безкоштовну реєстрацію й розміщення оголошень.</li><li>Жодної комісії з угод: з клієнтом домовляєтеся напряму.</li><li>Власний кабінет: оголошення, календар зайнятості та заявки в одному місці.</li><li>Ціну й умови визначаєте ви.</li></ul>
+<h2>Як це працює</h2><ol><li>Реєструєтеся як власник техніки й додаєте оголошення: тип, модель, місто, ціна.</li><li>Клієнт залишає заявку: яка техніка, де і на які дати.</li><li>Диспетчер перевіряє, чия техніка вільна, і надсилає заявку вам.</li><li>Ви погоджуєтеся — контакти відкриваються обом сторонам, деталі узгоджуєте напряму.</li></ol>
+<div class="box"><strong>Шукаємо власників техніки в Одесі, Києві та Львові</strong><p>Приймаємо техніку з усієї України. Додайте оголошення зараз, щоб отримувати заявки серед перших у своєму місті.</p>${add("Додати техніку безкоштовно")}</div>
+<h2>Яку техніку можна додати</h2><ul class="grid">${CATS.map((c) => `<li><a href="/orenda/${c.slug}/">${c.name}</a></li>`).join("")}</ul>
+${faqHtml(faq)}
+<h2>Залишилися питання?</h2><p>Зателефонуйте диспетчеру: <a href="tel:${PHONE}">${PHONE_FMT}</a> або підпишіться на <a href="/api/tg-subscribe?role=owners" rel="noopener">новини для власників у Telegram</a>.</p>`;
+  write(path, page({ path, title: "Здати будівельну техніку в оренду — ТехМайданчик", desc: "Власникам техніки: додайте екскаватор, самоскид чи кран і отримуйте заявки на оренду. Розміщення безкоштовне, без комісії. Одеса, Київ, Львів.", h1: "Здайте техніку в оренду — отримуйте заявки", body, crumbs: [["Головна", "/"], ["Власникам техніки", path]], ld: [faqLd(faq)], back: true, headCta: ["Додати техніку", "/?owner=1"] }));
+}
 const today = new Date().toISOString().slice(0, 10);
-writeFileSync(join(ROOT, "sitemap.xml"), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls.map((u) => `<url><loc>${SITE}${u}</loc><lastmod>${today}</lastmod><priority>${u === "/" ? "1.0" : u === "/orenda/" || u === "/katalog/" ? "0.8" : u.split("/").filter(Boolean).length === 3 && u.startsWith("/katalog/") ? "0.7" : "0.6"}</priority></url>`).join("")}</urlset>\n`);
+writeFileSync(join(ROOT, "sitemap.xml"), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls.map((u) => `<url><loc>${SITE}${u}</loc><lastmod>${today}</lastmod><priority>${u === "/" ? "1.0" : u === "/orenda/" || u === "/katalog/" || u === "/vlasnykam/" ? "0.8" : u.split("/").filter(Boolean).length === 3 && u.startsWith("/katalog/") ? "0.7" : "0.6"}</priority></url>`).join("")}</urlset>\n`);
 console.log(`Згенеровано ${urls.length - 1} сторінок + sitemap (${SITE})`);
