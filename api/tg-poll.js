@@ -1,5 +1,11 @@
 // Крок 3: сайт перевіряє, чи клієнт уже підтвердив номер у боті. Якщо так — видає одноразовий токен входу Supabase.
-import { configured, sbRest, sbHeaders, SB_URL, safeEq, fresh } from "./_tg.js";
+import { configured, sbRest, sbHeaders, SB_URL, safeEq, fresh, tg } from "./_tg.js";
+
+// Вітальне повідомлення в Telegram одразу після ПЕРШОЇ реєстрації (повторний вхід його не надсилає)
+const WELCOME = {
+  client: "Дякуємо за реєстрацію на ТехМайданчику! 🙌\n\nДиспетчер скоро зв'яжеться з вами. Якщо техніка потрібна вже зараз — залиште заявку на сайті: https://www.tehmaydan.com/?request=1",
+  owner: "Дякуємо за реєстрацію на ТехМайданчику! 🙌\n\nДиспетчер скоро зв'яжеться з вами. Додайте свою техніку, щоб отримувати заявки клієнтів: https://www.tehmaydan.com/?owner=1",
+};
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
@@ -21,7 +27,9 @@ export default async function handler(req, res) {
     const email = `tg${row.tg_id}@tg.tehmaydan.com`;
     const meta = { name: row.tg_name || "Клієнт", phone: row.phone || "", org: "", role: row.role === "owner" ? "owner" : "client", telegram_id: row.tg_id };
     // створюємо користувача (якщо вже є — Supabase поверне помилку, це нормально)
-    await fetch(`${SB_URL}/auth/v1/admin/users`, { method: "POST", headers: sbHeaders(), body: JSON.stringify({ email, email_confirm: true, user_metadata: meta }) });
+    const created = await fetch(`${SB_URL}/auth/v1/admin/users`, { method: "POST", headers: sbHeaders(), body: JSON.stringify({ email, email_confirm: true, user_metadata: meta }) });
+    // акаунт щойно створено — дякуємо в тому ж чаті, де людина підтвердила номер (помилка надсилання вхід не зриває)
+    if (created.ok) await tg("sendMessage", { chat_id: row.tg_id, text: WELCOME[meta.role] || WELCOME.client, disable_web_page_preview: true }).catch(() => {});
     const gl = await fetch(`${SB_URL}/auth/v1/admin/generate_link`, { method: "POST", headers: sbHeaders(), body: JSON.stringify({ type: "magiclink", email }) }).then((r) => r.json());
     if (!gl || !gl.hashed_token) return res.status(500).json({ error: "Could not create session" });
     // якщо в профілі ще немає телефону — підставляємо підтверджений

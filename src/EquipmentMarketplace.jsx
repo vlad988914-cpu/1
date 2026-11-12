@@ -2045,7 +2045,7 @@ export default function EquipmentMarketplace() {
     const nameOf = (id) => (id ? (owners.find((o) => o.id === id) || {}).name || "Власник" : user.org || user.name || "Диспетчер");
     const fmt = (iso) => new Date(iso).toLocaleTimeString("uk-UA", { hour: "2-digit", minute: "2-digit" });
     setRequests(
-      (reqRes.data || []).map((r) => {
+      (reqRes.data || []).filter((r) => !r.archived_at).map((r) => {
         const rows = (dispRes.data || []).filter((d) => d.request_id === r.id);
         const ownerStatuses = {};
         const log = [];
@@ -2110,6 +2110,14 @@ export default function EquipmentMarketplace() {
     dealResult(await deals.proposeOffer(reqId, listingId, from, to), "Пропозицію надіслано клієнту");
   const handleManualBooking = async (reqId, listingId, from, to) =>
     dealResult(await deals.createManualBooking(reqId, listingId, from, to), "Оренду підтверджено: клієнт і власник бачать контакти одне одного");
+  const handleArchiveRequests = async (ids) => {
+    const res = await deals.archiveRequests(ids);
+    if (!res.ok && /archive_requests/.test(res.message || "")) {
+      flashToast("Спершу запустіть у Supabase файл db/RUN-ME-stale-requests.sql");
+      return false;
+    }
+    return dealResult(res, ids.length > 1 ? `Прибрано неактуальних заявок: ${res.count ?? ids.length}` : "Заявку прибрано з диспетчерської");
+  };
   const handleDeclineRequest = async (reqId, reason) =>
     dealResult(await deals.declineListingRequest(reqId, reason), "Відхилено. Клієнта сповіщено, заявка чекає на альтернативу");
   const handleDeleteUser = async (userId) => {
@@ -3706,7 +3714,7 @@ export default function EquipmentMarketplace() {
       )}
 
       {role === "dispatcher" && (
-        <DispatcherPanel requests={requests} owners={dispatchOwners} listings={listings} allBookings={dealsData.bookings} offers={dealsData.offers} onDispatch={handleDispatch} onOwnerAction={handleOwnerAction} onRefresh={loadDispatcherData} onPropose={handlePropose} onManual={handleManualBooking} onConfirm={handleConfirmBooking} onCancel={handleCancelBooking} onDecline={handleDeclineRequest} users={dispatchUsers} onSetRole={handleSetRole} onDeleteUser={handleDeleteUser} onBlockUser={handleBlockUser} viewRequest={dispatcherViewRequest} stats={listingStats} onOpenListing={openDetail} user={user} t={t} />
+        <DispatcherPanel requests={requests} owners={dispatchOwners} listings={listings} allBookings={dealsData.bookings} offers={dealsData.offers} onDispatch={handleDispatch} onOwnerAction={handleOwnerAction} onRefresh={loadDispatcherData} onPropose={handlePropose} onManual={handleManualBooking} onConfirm={handleConfirmBooking} onCancel={handleCancelBooking} onDecline={handleDeclineRequest} onArchive={handleArchiveRequests} users={dispatchUsers} onSetRole={handleSetRole} onDeleteUser={handleDeleteUser} onBlockUser={handleBlockUser} viewRequest={dispatcherViewRequest} stats={listingStats} onOpenListing={openDetail} user={user} t={t} />
       )}
 
       {/* Категорії (client view) */}
@@ -4265,7 +4273,7 @@ function DispatcherPanel(props) {
   useEffect(() => {
     if (viewRequest && viewRequest.view) setView(viewRequest.view === "clients" || viewRequest.view === "owners" ? "users" : viewRequest.view);
   }, [viewRequest]);
-  const attention = requests.filter((r) => r.status === "new" || r.status === "booked").length;
+  const attention = requests.filter((r) => (r.status === "new" || r.status === "booked") && !deals.isStaleRequest(r)).length;
   const wanted = requests.filter((r) => r.listingId && ["new", "dispatched", "offered"].includes(r.status)).length;
   const decide =
     requests.filter((r) => ["new", "dispatched", "offered"].includes(r.status) && (r.listingId || (r.responses || []).some((x) => ["sent", "chosen"].includes(x.status)))).length +
@@ -4347,15 +4355,23 @@ function DispatcherPanel(props) {
   );
 }
 
-function DispatcherRequests({ requests, owners, users, listings, allBookings, onDispatch, onOwnerAction, onRefresh, onPropose, onManual, onConfirm, onCancel, onDecline, user, t }) {
+function DispatcherRequests({ requests, owners, users, listings, allBookings, onDispatch, onOwnerAction, onRefresh, onPropose, onManual, onConfirm, onCancel, onDecline, onArchive, user, t }) {
   const [filter, setFilter] = useState("all");
+  const stale = deals.isStaleRequest;
+  const staleList = requests.filter((r) => stale(r));
+  const archiveAll = () => {
+    if (!staleList.length || !onArchive) return;
+    if (!window.confirm(`Прибрати з диспетчерської всі неактуальні заявки (${staleList.length})? Дати робіт у них уже минули.`)) return;
+    onArchive(staleList.map((r) => r.id));
+  };
 
   const categories = [
     { key: "all", label: t("dispatcher_all"), test: () => true },
-    { key: "new", label: t("dispatcher_new"), test: (r) => r.status === "new" },
-    { key: "booked", label: "Очікують підтвердження", test: (r) => r.status === "booked" },
-    { key: "dispatched", label: t("dispatcher_progress"), test: (r) => r.status === "dispatched" || r.status === "offered" },
+    { key: "new", label: t("dispatcher_new"), test: (r) => r.status === "new" && !stale(r) },
+    { key: "booked", label: "Очікують підтвердження", test: (r) => r.status === "booked" && !stale(r) },
+    { key: "dispatched", label: t("dispatcher_progress"), test: (r) => (r.status === "dispatched" || r.status === "offered") && !stale(r) },
     { key: "taken", label: t("dispatcher_done"), test: (r) => r.status === "taken" },
+    { key: "stale", label: "Неактуальні", test: (r) => stale(r) },
   ];
 
   const filtered = requests.filter(categories.find((c) => c.key === filter).test);
@@ -4420,11 +4436,17 @@ function DispatcherRequests({ requests, owners, users, listings, allBookings, on
         })}
       </div>
       <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 16, minWidth: 0 }}>
+        {filter === "stale" && staleList.length > 0 && (
+          <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 12, fontSize: 12.5, color: "#FFE6D0" }}>
+            <span>Дати робіт у цих заявках уже минули. Їх можна прибрати з диспетчерської.</span>
+            <button onClick={archiveAll} style={smallBtn}>Видалити всі неактуальні ({staleList.length})</button>
+          </div>
+        )}
         {filtered.length === 0 ? (
           <div style={{ fontSize: 13, color: "#FFD3B0" }}>Немає заявок у цій категорії.</div>
         ) : (
           filtered.map((req) => (
-            <RequestDispatchCard key={req.id} req={req} owners={owners} users={users} listings={listings} allBookings={allBookings} onDispatch={onDispatch} onOwnerAction={onOwnerAction} onPropose={onPropose} onManual={onManual} onConfirm={onConfirm} onCancel={onCancel} onDecline={onDecline} user={user} />
+            <RequestDispatchCard key={req.id} req={req} owners={owners} users={users} listings={listings} allBookings={allBookings} onDispatch={onDispatch} onOwnerAction={onOwnerAction} onPropose={onPropose} onManual={onManual} onConfirm={onConfirm} onCancel={onCancel} onDecline={onDecline} onArchive={onArchive} user={user} />
           ))
         )}
       </div>
@@ -4544,7 +4566,8 @@ function ReviewBox({ req, onSubmit }) {
   );
 }
 
-function RequestDispatchCard({ req, owners, users, listings, allBookings, onDispatch, onOwnerAction, onPropose, onManual, onConfirm, onCancel, onDecline, user }) {
+function RequestDispatchCard({ req, owners, users, listings, allBookings, onDispatch, onOwnerAction, onPropose, onManual, onConfirm, onCancel, onDecline, onArchive, user }) {
+  const isStale = deals.isStaleRequest(req);
   const contactedIds = new Set(Object.keys(req.ownerStatuses));
   const uncontacted = owners.filter((o) => !contactedIds.has(String(o.id)));
   const suggestedUncontacted = uncontacted.filter((o) => o.types.includes(req.type) && (o.regions || []).includes(req.region));
@@ -4587,6 +4610,8 @@ function RequestDispatchCard({ req, owners, users, listings, allBookings, onDisp
             Заявка #{req.id} ·{" "}
             {req.status === "taken"
               ? "закрито"
+              : isStale
+              ? "неактуальна — дати минули"
               : req.status === "booked"
               ? "клієнт підтвердив — потрібне ваше рішення"
               : req.status === "offered"
@@ -4611,6 +4636,21 @@ function RequestDispatchCard({ req, owners, users, listings, allBookings, onDisp
           <span style={{ ...badgeStyle, background: "rgba(185,246,202,0.15)", color: "#B9F6CA", border: "1px solid #B9F6CA" }}>
             ✓ Взято
           </span>
+        )}
+        {isStale && (
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 8 }}>
+            <span style={{ ...badgeStyle, background: "rgba(255,211,176,0.12)", color: "#FFD3B0", border: "1px solid #FFD3B0" }}>Неактуальна</span>
+            {onArchive && (
+              <button
+                onClick={() => {
+                  if (window.confirm(`Прибрати заявку #${req.id} з диспетчерської? Дати робіт уже минули.`)) onArchive([req.id]);
+                }}
+                style={smallBtn}
+              >
+                Видалити
+              </button>
+            )}
+          </div>
         )}
       </div>
 
