@@ -5030,6 +5030,10 @@ async function callAssistantApi(messages) {
     throw new Error("chat api " + r.status);
   }
   const data = await r.json();
+  if (data && data.configured === false) {
+    aiServerDown = true; // ключ не налаштовано — до кінця сесії відповідаємо з локальної бази знань
+    throw new Error("ai server not configured");
+  }
   const raw = (data.content || []).map((b) => b.text || "").join("");
   const clean = raw.replace(/```json|```/g, "").trim();
   const start = clean.indexOf("{");
