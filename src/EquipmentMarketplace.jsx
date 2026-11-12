@@ -1608,6 +1608,20 @@ export default function EquipmentMarketplace() {
     setShowAddForm(true);
   };
 
+  // Сторінка для власників (/vlasnykam/) веде на «/?owner=1» — одразу пропонуємо додати техніку
+  // (гостю — вхід/реєстрація власника, власнику — форма оголошення)
+  const ownerLinkDone = useRef(false);
+  useEffect(() => {
+    if (ownerLinkDone.current || !authReady) return;
+    let want = false;
+    try { want = new URLSearchParams(window.location.search).get("owner") === "1"; } catch {}
+    ownerLinkDone.current = true;
+    if (!want) return;
+    try { history.replaceState({}, "", window.location.pathname); } catch {}
+    setRole("owner");
+    openAddListing();
+  }, [authReady]); // eslint-disable-line
+
   const handleAddListing = async (data) => {
     if (!supabase || !user?.id || !user.hasProfile) {
       flashToast("Не вдалося зберегти: увійдіть у акаунт");
@@ -4122,7 +4136,7 @@ export default function EquipmentMarketplace() {
 
       {showAuthForm && (
         <Modal onClose={() => setShowAuthForm(false)} title={t("register_title")} splitLeft>
-          <AuthForm onSubmit={handleAuth} onTelegramDone={() => { setShowAuthForm(false); flashToast("Ви увійшли через Telegram"); }} />
+          <AuthForm defaultRole={role} onSubmit={handleAuth} onTelegramDone={() => { setShowAuthForm(false); flashToast("Ви увійшли через Telegram"); }} />
         </Modal>
       )}
       {showProfile && user && (
@@ -4807,9 +4821,9 @@ function TelegramLogin({ role, onDone }) {
   );
 }
 
-function AuthForm({ onSubmit, onTelegramDone }) {
+function AuthForm({ onSubmit, onTelegramDone, defaultRole = "client" }) {
   const [mode, setMode] = useState("signup"); // signup | login
-  const [form, setForm] = useState({ name: "", org: "", phone: "", email: "", password: "", role: "client" });
+  const [form, setForm] = useState({ name: "", org: "", phone: "", email: "", password: "", role: defaultRole === "owner" ? "owner" : "client" });
   const [errors, setErrors] = useState({});
   const [serverError, setServerError] = useState("");
   const [info, setInfo] = useState("");
