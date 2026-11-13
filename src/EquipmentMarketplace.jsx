@@ -3803,7 +3803,7 @@ export default function EquipmentMarketplace() {
               <div style={{ marginTop: 8, fontSize: 12.5, color: "#FFE6D0", lineHeight: 2 }}>
                 <div>{t("footer_terms")}</div>
                 <div>{t("footer_privacy")}</div>
-                <div>{t("footer_for_owners")}</div>
+                <div><a href="/vlasnykam/" style={{ color: "#FFD9A8", textDecoration: "underline" }}>{t("footer_for_owners")}</a></div>
               </div>
             </div>
           </div>
