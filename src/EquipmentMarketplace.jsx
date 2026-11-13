@@ -4902,9 +4902,12 @@ function AuthForm({ onSubmit, onTelegramDone, defaultRole = "client" }) {
   const segBtn = (active) => ({
     flex: 1,
     padding: "9px 10px",
-    ...(active ? lgGlass("255,106,26", 0.4) : { ...lgGlass("255,255,255", 0.06), border: "1px solid rgba(255,255,255,0.22)" }),
+    ...(active
+      ? { background: "#FFF1E0", border: "1px solid #FFFFFF", boxShadow: "0 0 0 2px rgba(255,255,255,0.35)" }
+      : { ...lgGlass("255,255,255", 0.06), border: "1px solid rgba(255,255,255,0.22)" }),
     borderRadius: 980,
-    color: "#ffffff",
+    color: active ? "#7A2E0A" : "#ffffff",
+    fontWeight: active ? 700 : 400,
     fontFamily: font,
     fontSize: 12,
     cursor: "pointer",
@@ -4926,7 +4929,7 @@ function AuthForm({ onSubmit, onTelegramDone, defaultRole = "client" }) {
         <Field label="Я реєструюсь як">
           <div style={{ display: "flex", gap: 8 }}>
             {[{ key: "client", label: "Клієнт" }, { key: "owner", label: "Власник техніки" }].map((r) => (
-              <button type="button" key={r.key} onClick={() => setForm((f) => ({ ...f, role: r.key }))} style={segBtn(form.role === r.key)}>{r.label}</button>
+              <button type="button" key={r.key} onClick={() => setForm((f) => ({ ...f, role: r.key }))} aria-pressed={form.role === r.key} style={segBtn(form.role === r.key)}>{r.label}</button>
             ))}
           </div>
         </Field>
