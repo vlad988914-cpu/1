@@ -72,6 +72,13 @@ export const createManualBooking = (requestId, listingId, dateFrom, dateTo) =>
 
 export const declineListingRequest = (requestId, reason) =>
   call("decline_listing_request", { p_request_id: requestId, p_reason: reason || null });
+// Прибрати з диспетчерської заявки, дати яких уже минули (у базі вони лишаються з позначкою archived_at)
+export const archiveRequests = (ids) => call("archive_requests", { p_ids: ids });
+// Заявка неактуальна: остання дата робіт уже минула, а угоду не закрито
+export const isStaleRequest = (r, today = todayStr()) => {
+  const end = r && (r.dateTo || r.dateFrom);
+  return !!end && String(end).slice(0, 10) < today && r.status !== "taken";
+};
 export const setUserRole = (userId, role) => call("set_user_role", { p_user_id: userId, p_role: role });
 export const deleteUser = (userId) => call("delete_user", { p_user_id: userId });
 export const setUserBlocked = (userId, blocked) => call("set_user_blocked", { p_user_id: userId, p_blocked: !!blocked });

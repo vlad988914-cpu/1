@@ -50,7 +50,9 @@ export default async function handler(req, res) {
 
   const apiKey = (process.env.ANTHROPIC_API_KEY || "").trim();
   if (!apiKey) {
-    return res.status(500).json({ error: "ANTHROPIC_API_KEY is not configured" });
+    // Ключа немає — це штатний режим, а не збій: сайт відповідає з локальної бази знань.
+    // Віддаємо 200, щоб у консолі браузера не з'являлася помилка.
+    return res.status(200).json({ configured: false });
   }
 
   const body = req.body || {};

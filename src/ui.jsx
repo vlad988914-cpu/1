@@ -180,7 +180,8 @@ export function Modal({ children, onClose, title, splitLeft, wide }) {
         alignItems: "center",
         justifyContent: "center",
         padding: 16,
-        zIndex: 50,
+        // Вище за панель AI-помічника (.ai-panel, z-index 70), щоб вона не перекривала форму.
+        zIndex: 80,
       }}
     >
       <div

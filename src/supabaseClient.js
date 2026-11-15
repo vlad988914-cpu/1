@@ -16,9 +16,4 @@ const looksLikeUrl = (v) => /^https:\/\/[a-z0-9]+\.supabase\.co$/.test(v);
 const url = looksLikeUrl(envUrl) ? envUrl : FALLBACK_URL;
 const key = looksLikeKey(envKey) ? envKey : FALLBACK_KEY;
 
-console.log(
-  `Supabase init: key from ${looksLikeKey(envKey) ? "Vercel env" : "built-in fallback"}, ` +
-    `starts="${key.slice(0, 15)}", length=${key.length}`
-);
-
 export const supabase = createClient(url, key);
