@@ -794,10 +794,13 @@ function HoverVideo({ src, poster }) {
     io.observe(v);
     return () => io.disconnect();
   }, []);
+  // на телефоні (вузький екран) беремо легку версію ролика 480 px: /cat/m/…, втричі менше трафіку
+  const small = typeof window !== "undefined" && window.matchMedia && window.matchMedia("(max-width: 899px)").matches;
+  const vsrc = small ? src.replace("/cat/", "/cat/m/") : src;
   return (
     <span className="cat-vid" onMouseEnter={play} onMouseLeave={stop} onFocus={play} onBlur={stop}>
       <video ref={ref} muted loop playsInline preload="metadata" poster={poster} aria-hidden="true" tabIndex={-1}>
-        <source src={src} type="video/mp4" />
+        <source src={vsrc} type="video/mp4" />
         <source src={src.replace(/\.mp4$/, ".webm")} type="video/webm" />
       </video>
     </span>
@@ -3433,6 +3436,7 @@ export default function EquipmentMarketplace() {
 
       {/* Перший екран: «Техніка зблизька». Прокрутка веде камеру по екскаватору; перший етап — заголовок, пошук і кнопки */}
       <ScrollStory
+        hideCorner={!!(showRequestForm || showAuthForm || showAddForm || editListing || detailListing || modelId || bookingListing || respondingWanted || showInbox || showNotifications || showProfile || showMyRequests || aiOpen || dispatcherViewRequest || role !== "client" || (user && user.role === "dispatcher"))}
         onCta={(cta) => {
           setRole("client");
           if (cta && cta.type) setFilterType(cta.type);

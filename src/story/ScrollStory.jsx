@@ -45,7 +45,7 @@ function SpecValue({ value, decimals = 0, active }) {
  * ScrollStory — «залипна» сцена: прокрутка сторінки = перемотка відео, підписи змінюються за етапами.
  * props: config (див. story.config.js), onCta(stage.cta) — клік по кнопці на етапі.
  */
-export default function ScrollStory({ config = defaultStory, onCta, intro }) {
+export default function ScrollStory({ config = defaultStory, onCta, intro, hideCorner = false }) {
   const { video, stops, stages, heightVh } = config;
   const secRef = useRef(null);
   const cardsRef = useRef(null);
@@ -161,7 +161,7 @@ export default function ScrollStory({ config = defaultStory, onCta, intro }) {
             </div>
           </article>
         ))}
-        <OrbitCorner cardsRef={cardsRef} reduced={reduced} />
+        <OrbitCorner cardsRef={cardsRef} reduced={reduced} suppress={hideCorner} />
       </section>
     );
   }

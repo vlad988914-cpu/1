@@ -31,7 +31,7 @@ function at(t) {
   return KF[KF.length - 1].slice(1);
 }
 
-export default function OrbitCorner({ cardsRef, reduced }) {
+export default function OrbitCorner({ cardsRef, reduced, suppress = false }) {
   const vid = useRef(null);
   const canvasRef = useRef(null);
   const imgs = useRef([]);
@@ -40,6 +40,7 @@ export default function OrbitCorner({ cardsRef, reduced }) {
   const dots = useRef([]);
   const [active, setActive] = useState("bucket");
   const [show, setShow] = useState(false);
+  const on = show && !suppress; // віджет лише на головній і лише коли немає відкритої форми чи вікна
 
   // видно, поки на екрані хоч одна картка етапу; активна — та, що біля центру екрана
   useEffect(() => {
@@ -113,7 +114,7 @@ export default function OrbitCorner({ cardsRef, reduced }) {
     const tick = () => {
       if (dead) return;
       raf = requestAnimationFrame(tick);
-      if (!show) return;
+      if (!on) return;
       loadRest();
       target = progress() * (FRAMES - 1);
       cur = cur < 0 ? target : cur + (target - cur) * 0.22;
@@ -124,7 +125,7 @@ export default function OrbitCorner({ cardsRef, reduced }) {
     };
     raf = requestAnimationFrame(tick);
     return () => { dead = true; cancelAnimationFrame(raf); };
-  }, [reduced, fb, show, cardsRef]);
+  }, [reduced, fb, on, cardsRef]);
 
   // запасний варіант (кадри не завантажились): кут крутиться сам, стрілки йдуть за відео
   useEffect(() => {
@@ -153,8 +154,8 @@ export default function OrbitCorner({ cardsRef, reduced }) {
   useEffect(() => {
     const v = vid.current;
     if (!v || reduced || !fb) return;
-    if (show) { const p = v.play(); if (p && p.catch) p.catch(() => {}); } else v.pause();
-  }, [show, reduced, fb]);
+    if (on) { const p = v.play(); if (p && p.catch) p.catch(() => {}); } else v.pause();
+  }, [on, reduced, fb]);
 
   const go = (id) => {
     const el = cardsRef.current && cardsRef.current.querySelector(`.sm-card[data-stage="${id}"]`);
@@ -163,7 +164,7 @@ export default function OrbitCorner({ cardsRef, reduced }) {
 
   if (typeof document === "undefined") return null;
   return createPortal(
-    <div className="oc" data-show={show ? "1" : "0"} aria-hidden={show ? undefined : "true"}>
+    <div className="oc" data-show={on ? "1" : "0"} aria-hidden={on ? undefined : "true"}>
       <div className="oc-frame">
         {reduced ? (
           <img className="oc-media" src="/story/orbit-poster.jpg" alt="" />
