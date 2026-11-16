@@ -861,7 +861,7 @@ function CategoryCatalog({ listings, filterType, onPick, onService, lang, t }) {
           );
         })}
         <button type="button" className="cat-card" data-on="0" data-empty="0" onClick={() => onService && onService()} aria-label="Дроблення бетону на будмайданчику: залишити заявку">
-          <span className="cat-vid"><img src={SERVICE_CARD_PHOTO} alt="Дроблення бетону екскаватором з роторною дробаркою" draggable="false" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "50% 42%", display: "block" }} /></span>
+          <span className="cat-vid"><img src={SERVICE_CARD_PHOTO} alt="Дроблення бетону екскаватором з роторною дробаркою" draggable="false" style={{ width: "100%", height: "100%", objectFit: "contain", background: "#7A2807", display: "block" }} /></span>
           <span className="cat-name">Дроблення бетону</span>
           <span className="cat-desc">Роторна дробарка на екскаваторі: бетонні плити на щебінь прямо на майданчику.</span>
           <span className="cat-count">Миколаїв і обл.</span>
@@ -1376,7 +1376,7 @@ export default function EquipmentMarketplace() {
         const d = y - last;
         if (d > 0) { down += d; up = 0; } else if (d < 0) { up -= d; down = 0; }
         if (down > 14 && y > 120) h.classList.add("hdr-away");
-        else if (up > 110 || y <= 120) h.classList.remove("hdr-away");
+        else if (y <= 4) h.classList.remove("hdr-away"); // на телефоні шапка повертається лише нагорі сторінки
       }
       last = y;
     };
