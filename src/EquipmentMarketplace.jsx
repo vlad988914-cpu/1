@@ -11,6 +11,7 @@ import { GROUPS as MODEL_GROUPS } from "../shared/models-data.js";
 import { HOME_SEO } from "../shared/home-seo.js";
 import HeaderForge from "./forge/Forge.jsx";
 import ScrollStory from "./story/ScrollStory.jsx";
+import ServiceCrushing from "./ServiceCrushing.jsx";
 import PhotoGallery from "./PhotoGallery.jsx";
 import { WEBM_ALPHA_OK } from "./env.js";
 import ScrambleText from "./ScrambleText.jsx";
@@ -3577,6 +3578,9 @@ export default function EquipmentMarketplace() {
           </>
         }
       />
+
+      {/* Окрема послуга: дроблення бетону (Миколаїв і Миколаївська обл.) */}
+      <ServiceCrushing onRequest={() => openRequestForm()} />
 
       {/* 3D viewer temporarily removed — revisit later */}
 
