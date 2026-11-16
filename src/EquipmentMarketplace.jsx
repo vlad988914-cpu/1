@@ -11,7 +11,6 @@ import { GROUPS as MODEL_GROUPS } from "../shared/models-data.js";
 import { HOME_SEO } from "../shared/home-seo.js";
 import HeaderForge from "./forge/Forge.jsx";
 import ScrollStory from "./story/ScrollStory.jsx";
-import ServiceCrushing from "./ServiceCrushing.jsx";
 import PhotoGallery from "./PhotoGallery.jsx";
 import { WEBM_ALPHA_OK } from "./env.js";
 import ScrambleText from "./ScrambleText.jsx";
@@ -825,7 +824,9 @@ function SeoIntro() {
   );
 }
 
-function CategoryCatalog({ listings, filterType, onPick, lang, t }) {
+const SERVICE_CARD_VIDEO = { src: "/service/droblennya-betonu.mp4", poster: "/service/droblennya-betonu-poster.jpg" };
+
+function CategoryCatalog({ listings, filterType, onPick, onService, lang, t }) {
   const ui = CAT_UI[lang] || CAT_UI.uk;
   const counts = {};
   listings.forEach((l) => { counts[l.type] = (counts[l.type] || 0) + 1; });
@@ -859,6 +860,13 @@ function CategoryCatalog({ listings, filterType, onPick, lang, t }) {
             </button>
           );
         })}
+        <button type="button" className="cat-card" data-on="0" data-empty="0" onClick={() => onService && onService()} aria-label="Дроблення бетону на будмайданчику: залишити заявку">
+          <HoverVideo src={SERVICE_CARD_VIDEO.src} poster={SERVICE_CARD_VIDEO.poster} />
+          <span className="cat-name">Дроблення бетону</span>
+          <span className="cat-desc">Роторна дробарка на екскаваторі: бетонні плити на щебінь прямо на майданчику.</span>
+          <span className="cat-count">Миколаїв і обл.</span>
+          <span className="cat-go">Залишити заявку</span>
+        </button>
       </div>
     </div>
   );
@@ -3579,9 +3587,6 @@ export default function EquipmentMarketplace() {
         }
       />
 
-      {/* Окрема послуга: дроблення бетону (Миколаїв і Миколаївська обл.) */}
-      <ServiceCrushing onRequest={() => openRequestForm()} />
-
       {/* 3D viewer temporarily removed — revisit later */}
 
       {/* How it works — the request workflow, as a technical process line */}
@@ -3730,6 +3735,7 @@ export default function EquipmentMarketplace() {
         <CategoryCatalog
           listings={listings}
           filterType={filterType}
+          onService={() => openRequestForm()}
           lang={lang}
           t={t}
           onPick={(ty) => {
