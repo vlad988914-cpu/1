@@ -112,6 +112,9 @@ p,li{color:#FFF1E3}ul{padding-left:20px}li{margin:6px 0}ol li::marker{color:#FFB
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;padding:0;list-style:none}
 .grid a{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border:1px solid rgba(255,170,90,.38);border-radius:14px;text-decoration:none;color:#F7F1EA;font-weight:600;background:rgba(255,255,255,.035);transition:all .25s}.grid a:after{content:"→";color:#FFB81C;transition:transform .25s}
 .grid a:hover{border-color:#FFB81C;background:linear-gradient(120deg,rgba(255,130,40,.25),rgba(255,184,28,.08));transform:translateY(-3px);box-shadow:0 12px 28px -12px rgba(255,120,30,.8)}.grid a:hover:after{transform:translateX(4px)}
+.rel-h{font-size:clamp(23px,4.2vw,30px);animation:relblink 1.8s ease-in-out infinite}@keyframes relblink{0%,100%{color:#FFF7EC;text-shadow:0 0 0 rgba(255,184,28,0)}50%{color:#FFB81C;text-shadow:0 0 16px rgba(255,160,40,.95)}}
+.rel a{position:relative;isolation:isolate;overflow:hidden;transition:color .3s,border-color .3s,box-shadow .3s,transform .25s}.rel a:before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(120deg,#FFD15C,#FF7A1F 60%,#F2441D);opacity:0;transition:opacity .3s}
+.rel a:hover{color:#2A0E03;border-color:#FFD15C;background:none}.rel a:hover:before{opacity:1}.rel a:hover:after{color:#2A0E03}
 .models{list-style:none;padding:0;margin:20px 0}
 .mrow,.orow{border:1px solid rgba(255,170,90,.42);border-radius:20px;background:linear-gradient(145deg,rgba(255,120,40,.20),rgba(255,120,40,.04) 55%),rgba(22,12,8,.80);margin:12px 0;box-shadow:0 14px 40px -26px rgba(255,100,30,.9),inset 0 1px 0 rgba(255,225,190,.16);transition:transform .3s cubic-bezier(.2,.8,.2,1),border-color .3s,box-shadow .3s}
 .models li:nth-child(3n+2) .orow{background:linear-gradient(145deg,rgba(255,184,28,.18),rgba(255,184,28,.03) 55%),rgba(22,12,8,.80)}.models li:nth-child(3n) .orow{background:linear-gradient(145deg,rgba(240,70,60,.20),rgba(240,70,60,.03) 55%),rgba(22,12,8,.80)}
@@ -129,7 +132,7 @@ p,li{color:#FFF1E3}ul{padding-left:20px}li{margin:6px 0}ol li::marker{color:#FFB
 .rvp{opacity:0;transform:translateY(22px) scale(.985);transition:opacity .7s cubic-bezier(.2,.8,.2,1),transform .7s cubic-bezier(.2,.8,.2,1)}.rvp.in{opacity:1;transform:none}
 @media(min-width:700px){.mrow summary{grid-template-columns:minmax(200px,1.1fr) 1.6fr auto;align-items:center}}
 @media(max-width:520px){.orow{grid-template-columns:1fr;grid-template-areas:"t" "p" "s" "m"}.orow .op{justify-self:start}}
-@media(prefers-reduced-motion:reduce){body:before,body:after,h1,.nw{animation:none}.rvp{opacity:1;transform:none;transition:none}.btn,.orow,.mrow,.grid a{transition:none}}
+@media(prefers-reduced-motion:reduce){body:before,body:after,h1,.nw,.rel-h{animation:none}.rvp{opacity:1;transform:none;transition:none}.btn,.orow,.mrow,.grid a,.rel a,.rel a:before{transition:none}}
 footer{border-top:1px solid rgba(255,160,90,.3);margin-top:60px;padding:28px 0 48px;color:#FFD3AE;font-size:14px}details{border-top:1px solid rgba(255,170,90,.3);padding:14px 0}summary{cursor:pointer;font-weight:700}details[open] summary{color:#FFB81C}`;
 
 function page({ path, title, desc, h1, body, crumbs, ld, back, headCta }) {
@@ -178,7 +181,7 @@ for (const c of CATS) {
     const body2 = `<p>Шукаєте ${c.name.toLowerCase()} в оренду ${ci.loc}? Залиште заявку — вкажіть адресу об'єкта, дати й задачу. Диспетчер ТехМайданчика перевірить, яка техніка вільна (${ci.obl}), і підтвердить замовлення. Вартість і умови визначає власник техніки.</p>${cta()}
 <h2>Для яких робіт беруть ${c.name.toLowerCase()}</h2><ul>${c.tasks.map((t) => `<li>${esc(t)}</li>`).join("")}</ul>
 <h2>Що вказати в заявці</h2><ul><li>Адреса або район об'єкта ${ci.loc}.</li><li>Дати й орієнтовна тривалість робіт.</li>${c.pick.map((t) => `<li>${esc(t[0].toUpperCase() + t.slice(1))}</li>`).join("")}</ul>${howto}${faqHtml(faq)}
-<h2>Інша техніка ${ci.loc}</h2><ul class="grid">${CATS.filter((x) => x !== c).map((x) => `<li><a href="/orenda/${x.slug}-${ci.slug}/">${x.name} ${ci.loc}</a></li>`).join("")}</ul>
+<h2 class="rel-h">Інша техніка ${ci.loc}</h2><ul class="grid rel">${CATS.filter((x) => x !== c).map((x) => `<li><a href="/orenda/${x.slug}-${ci.slug}/">${x.name} ${ci.loc}</a></li>`).join("")}</ul>
 ${ci.slug === "mykolaiv" ? `<p style="font-size:14px;margin:14px 0 0;opacity:.9">Також у Миколаєві та області: роторна дробарка на екскаваторі, бетонні плити на щебінь прямо на майданчику — <a href="/orenda/droblennya-betonu/">замовити дроблення бетону</a>.</p>` : ""}<p><a href="${path}">Оренда ${c.gen} в Україні</a></p>`;
     write(p2, page({ path: p2, title: `Оренда ${c.gen} ${ci.loc} — ТехМайданчик`, desc: cityDesc(c, ci), h1: `Оренда ${c.gen} ${ci.loc}`, body: body2, crumbs: [["Головна", "/"], ["Оренда техніки", "/orenda/"], [`Оренда ${c.gen}`, path], [ci.name, p2]], ld: [svc(`Оренда ${c.gen} ${ci.loc}`, ci.name, p2), faqLd(faq)] }));
   }

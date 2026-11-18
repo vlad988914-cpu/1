@@ -826,7 +826,7 @@ function SeoIntro() {
 
 const SERVICE_CARD_VIDEO = { src: "/service/droblennya-betonu-karta.mp4", poster: "/service/droblennya-betonu-karta-poster.jpg" };
 
-function CategoryCatalog({ listings, filterType, onPick, onService, lang, t }) {
+function CategoryCatalog({ listings, filterType, onPick, lang, t }) {
   const ui = CAT_UI[lang] || CAT_UI.uk;
   const counts = {};
   listings.forEach((l) => { counts[l.type] = (counts[l.type] || 0) + 1; });
@@ -860,7 +860,7 @@ function CategoryCatalog({ listings, filterType, onPick, onService, lang, t }) {
             </button>
           );
         })}
-        <button type="button" className="cat-card" data-on="0" data-empty="0" onClick={() => onService && onService()} aria-label="Дроблення бетону на будмайданчику: залишити заявку">
+        <button type="button" className="cat-card" data-on="0" data-empty="0" onClick={() => { window.location.href = "/orenda/droblennya-betonu/"; }} aria-label="Дроблення бетону на будмайданчику: відкрити сторінку">
           <HoverVideo src={SERVICE_CARD_VIDEO.src} poster={SERVICE_CARD_VIDEO.poster} />
           <span className="cat-name">Дроблення бетону</span>
           <span className="cat-desc">Роторна дробарка на екскаваторі: бетонні плити на щебінь прямо на майданчику.</span>
@@ -3735,7 +3735,6 @@ export default function EquipmentMarketplace() {
         <CategoryCatalog
           listings={listings}
           filterType={filterType}
-          onService={() => openRequestForm()}
           lang={lang}
           t={t}
           onPick={(ty) => {
