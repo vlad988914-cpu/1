@@ -115,6 +115,9 @@ p,li{color:#FFF1E3}ul{padding-left:20px}li{margin:6px 0}ol li::marker{color:#FFB
 .rel-h{font-size:clamp(23px,4.2vw,30px);animation:relblink 1.8s ease-in-out infinite}@keyframes relblink{0%,100%{color:#FFF7EC;text-shadow:0 0 0 rgba(255,184,28,0)}50%{color:#FFB81C;text-shadow:0 0 16px rgba(255,160,40,.95)}}
 .rel a{position:relative;isolation:isolate;overflow:hidden;transition:color .3s,border-color .3s,box-shadow .3s,transform .25s}.rel a:before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(120deg,#FFD15C,#FF7A1F 60%,#F2441D);opacity:0;transition:opacity .3s}
 .rel a:hover{color:#2A0E03;border-color:#FFD15C;background:none}.rel a:hover:before{opacity:1}.rel a:hover:after{color:#2A0E03}
+.mk-note{font-size:18px;line-height:1.6;margin:18px 0 0}
+a.mk-hl{display:inline-flex;align-items:center;gap:.3em;padding:.15em .7em .15em .45em;border-radius:980px;background:linear-gradient(135deg,#FFB81C 0%,#FF7A1F 55%,#F2441D 100%);color:#2A0E03;font-weight:800;text-decoration:none;box-shadow:0 8px 20px -10px rgba(255,106,26,.9)}
+.mk-hammer{width:1em;height:1em;flex:none}.mk-chisel{transform-box:fill-box;animation:mkhit .5s ease-in-out infinite}@keyframes mkhit{0%,100%{transform:translateY(-2px)}60%{transform:translateY(2px)}}
 .models{list-style:none;padding:0;margin:20px 0}
 .mrow,.orow{border:1px solid rgba(255,170,90,.42);border-radius:20px;background:linear-gradient(145deg,rgba(255,120,40,.20),rgba(255,120,40,.04) 55%),rgba(22,12,8,.80);margin:12px 0;box-shadow:0 14px 40px -26px rgba(255,100,30,.9),inset 0 1px 0 rgba(255,225,190,.16);transition:transform .3s cubic-bezier(.2,.8,.2,1),border-color .3s,box-shadow .3s}
 .models li:nth-child(3n+2) .orow{background:linear-gradient(145deg,rgba(255,184,28,.18),rgba(255,184,28,.03) 55%),rgba(22,12,8,.80)}.models li:nth-child(3n) .orow{background:linear-gradient(145deg,rgba(240,70,60,.20),rgba(240,70,60,.03) 55%),rgba(22,12,8,.80)}
@@ -132,7 +135,7 @@ p,li{color:#FFF1E3}ul{padding-left:20px}li{margin:6px 0}ol li::marker{color:#FFB
 .rvp{opacity:0;transform:translateY(22px) scale(.985);transition:opacity .7s cubic-bezier(.2,.8,.2,1),transform .7s cubic-bezier(.2,.8,.2,1)}.rvp.in{opacity:1;transform:none}
 @media(min-width:700px){.mrow summary{grid-template-columns:minmax(200px,1.1fr) 1.6fr auto;align-items:center}}
 @media(max-width:520px){.orow{grid-template-columns:1fr;grid-template-areas:"t" "p" "s" "m"}.orow .op{justify-self:start}}
-@media(prefers-reduced-motion:reduce){body:before,body:after,h1,.nw,.rel-h{animation:none}.rvp{opacity:1;transform:none;transition:none}.btn,.orow,.mrow,.grid a,.rel a,.rel a:before{transition:none}}
+@media(prefers-reduced-motion:reduce){body:before,body:after,h1,.nw,.rel-h,.mk-chisel{animation:none}.rvp{opacity:1;transform:none;transition:none}.btn,.orow,.mrow,.grid a,.rel a,.rel a:before{transition:none}}
 footer{border-top:1px solid rgba(255,160,90,.3);margin-top:60px;padding:28px 0 48px;color:#FFD3AE;font-size:14px}details{border-top:1px solid rgba(255,170,90,.3);padding:14px 0}summary{cursor:pointer;font-weight:700}details[open] summary{color:#FFB81C}`;
 
 function page({ path, title, desc, h1, body, crumbs, ld, back, headCta }) {
@@ -182,7 +185,7 @@ for (const c of CATS) {
 <h2>Для яких робіт беруть ${c.name.toLowerCase()}</h2><ul>${c.tasks.map((t) => `<li>${esc(t)}</li>`).join("")}</ul>
 <h2>Що вказати в заявці</h2><ul><li>Адреса або район об'єкта ${ci.loc}.</li><li>Дати й орієнтовна тривалість робіт.</li>${c.pick.map((t) => `<li>${esc(t[0].toUpperCase() + t.slice(1))}</li>`).join("")}</ul>${howto}${faqHtml(faq)}
 <h2 class="rel-h">Інша техніка ${ci.loc}</h2><ul class="grid rel">${CATS.filter((x) => x !== c).map((x) => `<li><a href="/orenda/${x.slug}-${ci.slug}/">${x.name} ${ci.loc}</a></li>`).join("")}</ul>
-${ci.slug === "mykolaiv" ? `<p style="font-size:14px;margin:14px 0 0;opacity:.9">Також у Миколаєві та області: роторна дробарка на екскаваторі, бетонні плити на щебінь прямо на майданчику — <a href="/orenda/droblennya-betonu/">замовити дроблення бетону</a>.</p>` : ""}<p><a href="${path}">Оренда ${c.gen} в Україні</a></p>`;
+${ci.slug === "mykolaiv" ? `<p class="mk-note">Також у Миколаєві та області: роторна дробарка на екскаваторі, бетонні плити на щебінь прямо на майданчику — <a class="mk-hl" href="/orenda/droblennya-betonu/"><svg class="mk-hammer" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="7" y="1" width="10" height="8" rx="2" fill="currentColor"/><rect x="11" y="0" width="2" height="2" fill="currentColor"/><g class="mk-chisel"><rect x="10" y="9" width="4" height="8" fill="currentColor"/><polygon points="8.5,17 15.5,17 12,23" fill="currentColor"/></g></svg>замовити дроблення бетону</a>.</p>` : ""}<p><a href="${path}">Оренда ${c.gen} в Україні</a></p>`;
     write(p2, page({ path: p2, title: `Оренда ${c.gen} ${ci.loc} — ТехМайданчик`, desc: cityDesc(c, ci), h1: `Оренда ${c.gen} ${ci.loc}`, body: body2, crumbs: [["Головна", "/"], ["Оренда техніки", "/orenda/"], [`Оренда ${c.gen}`, path], [ci.name, p2]], ld: [svc(`Оренда ${c.gen} ${ci.loc}`, ci.name, p2), faqLd(faq)] }));
   }
 }
